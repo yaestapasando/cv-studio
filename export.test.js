@@ -28,4 +28,8 @@ test('Export Data feature', (t) => {
     t.test('should bind export button click event', () => {
         assert.ok(htmlContent.includes('this.exportBtn.addEventListener(\'click\''), 'Missing export button click event binding');
     });
+
+    t.test('should revoke the object URL after download', () => {
+        assert.ok(htmlContent.includes('URL.revokeObjectURL'), 'Missing URL.revokeObjectURL usage in exportData');
+    });
 });
