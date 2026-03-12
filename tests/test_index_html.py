@@ -53,6 +53,9 @@ class IndexHtmlTest(unittest.TestCase):
         self.assertIn("app", self.parser.ids)
         self.assertIn("editor-panel", self.parser.ids)
         self.assertIn("preview-panel", self.parser.ids)
+        self.assertIn("editor-toolbar", self.parser.ids)
+        self.assertIn("editor-canvas", self.parser.ids)
+        self.assertIn("preview-content", self.parser.ids)
         self.assertIn("workspace-panel", self.parser.class_names)
 
     def test_embeds_style_and_script(self):
@@ -91,6 +94,42 @@ class IndexHtmlTest(unittest.TestCase):
         self.assertIn("Area de trabajo del editor", self.parser.aria_labels)
         self.assertIn("Acciones del editor", self.parser.aria_labels)
         self.assertIn("Vista previa del curriculum", self.parser.aria_labels)
+
+    def test_bootstrap_defines_initial_state_and_capabilities(self):
+        expected_snippets = [
+            'storageKey: "cv-studio-document"',
+            "initialCV: {",
+            'fullName: "Ada Lovelace"',
+            'headline: "Analista y autora de algoritmos"',
+            'activeSection: "basics"',
+            "cv: null,",
+            "detectCapabilities() {",
+            "window.localStorage.setItem(probeKey, \"ok\");",
+            'fileProtocol: window.location.protocol === "file:",',
+            "cloneInitialCV() {",
+            "JSON.parse(JSON.stringify(config.initialCV))",
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_bootstrap_renders_initial_ui_and_binds_interactions(self):
+        expected_snippets = [
+            "renderToolbar() {",
+            "renderEditor() {",
+            "renderPreview() {",
+            "app.render();",
+            "app.bindEvents();",
+            "app.updateStatus();",
+            "ui.toolbar.addEventListener(\"click\"",
+            "event.target.closest(\"[data-section]\")",
+            "document.body.dataset.appReady = \"true\";",
+            "document.body.dataset.activeSection = state.activeSection;",
+            "La app ha arrancado en local con estado inicial en memoria y sin dependencias externas.",
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
 
     def test_defines_internal_html_css_js_sections(self):
         expected_markers = [

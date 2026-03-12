@@ -157,6 +157,18 @@
       font-size: 0.95rem;
     }
 
+    .toolbar-button {
+      cursor: pointer;
+      font: inherit;
+      transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease;
+    }
+
+    .toolbar-button[aria-pressed="true"] {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
     .editor-canvas {
       display: grid;
       align-content: start;
@@ -179,9 +191,18 @@
 
     .editor-field {
       min-height: 46px;
+      padding: 12px 14px;
       border: 1px solid var(--border);
       border-radius: 14px;
       background: #fff;
+    }
+
+    .editor-note {
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: var(--accent-soft);
+      color: var(--text);
+      line-height: 1.5;
     }
 
     .preview-layout {
@@ -216,6 +237,11 @@
 
     .preview-card p {
       margin: 0;
+    }
+
+    .preview-meta {
+      color: var(--muted);
+      font-size: 0.95rem;
     }
 
     /* CSS Section: Responsive */
@@ -257,25 +283,8 @@
         </div>
         <div class="panel-body">
           <div class="editor-layout" aria-label="Area de trabajo del editor">
-            <div class="editor-toolbar" aria-label="Acciones del editor">
-              <span class="toolbar-pill">Datos personales</span>
-              <span class="toolbar-pill">Experiencia</span>
-              <span class="toolbar-pill">Formacion</span>
-            </div>
-            <div class="editor-canvas">
-              <div class="editor-group">
-                <span>Titular profesional</span>
-                <div class="editor-field" aria-hidden="true"></div>
-              </div>
-              <div class="editor-group">
-                <span>Resumen</span>
-                <div class="editor-field" aria-hidden="true"></div>
-              </div>
-              <div class="editor-group">
-                <span>Bloques editables</span>
-                <p>El formulario completo se integrara aqui, manteniendo este panel como zona principal de edicion.</p>
-              </div>
-            </div>
+            <div class="editor-toolbar" id="editor-toolbar" aria-label="Acciones del editor"></div>
+            <div class="editor-canvas" id="editor-canvas"></div>
           </div>
         </div>
       </section>
@@ -288,20 +297,7 @@
         </div>
         <div class="panel-body">
           <div class="preview-layout">
-            <div class="preview-placeholder" aria-label="Vista previa del curriculum">
-              <article class="preview-card">
-                <h3>Perfil</h3>
-                <p>Nombre profesional, titular y resumen se mostraran aqui.</p>
-              </article>
-              <article class="preview-card">
-                <h3>Experiencia</h3>
-                <p>La experiencia laboral renderizada aparecera en esta columna.</p>
-              </article>
-              <article class="preview-card">
-                <h3>Formacion</h3>
-                <p>La informacion academica y certificaciones ocuparan este bloque.</p>
-              </article>
-            </div>
+            <div class="preview-placeholder" id="preview-content" aria-label="Vista previa del curriculum"></div>
           </div>
         </div>
       </section>
@@ -316,24 +312,204 @@
       // JS Module: config
       const config = {
         appName: "CV Studio",
+        storageKey: "cv-studio-document",
+        sections: [
+          { id: "basics", label: "Datos personales" },
+          { id: "experience", label: "Experiencia" },
+          { id: "education", label: "Formacion" },
+        ],
+        initialCV: {
+          basics: {
+            fullName: "Ada Lovelace",
+            headline: "Analista y autora de algoritmos",
+            summary: "Plantilla inicial cargada localmente para validar el arranque de la SPA sin servidor.",
+            email: "ada@example.com",
+            location: "Londres, Reino Unido",
+          },
+          experience: [
+            {
+              role: "Colaboradora en la maquina analitica",
+              company: "Proyecto Babbage",
+              period: "1842 - 1843",
+              summary: "Desarrollo conceptual de secuencias y notas tecnicas aplicadas al calculo programable.",
+            },
+          ],
+          education: [
+            {
+              course: "Matematicas avanzadas",
+              school: "Tutoria privada",
+              period: "1830 - 1835",
+            },
+          ],
+        },
       };
 
       // JS Module: state
       const state = {
         booted: false,
+        activeSection: "basics",
+        capabilities: {
+          storage: false,
+          fileProtocol: false,
+        },
+        cv: null,
       };
 
       // JS Module: ui
       const ui = {
         status: document.getElementById("app-status"),
+        toolbar: document.getElementById("editor-toolbar"),
+        editorCanvas: document.getElementById("editor-canvas"),
+        previewContent: document.getElementById("preview-content"),
+        escapeHtml(value) {
+          return String(value)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll("\"", "&quot;")
+            .replaceAll("'", "&#39;");
+        },
+        renderToolbar() {
+          ui.toolbar.innerHTML = config.sections
+            .map((section) => {
+              const active = section.id === state.activeSection;
+              return "<button"
+                + " type=\"button\""
+                + " class=\"toolbar-pill toolbar-button\""
+                + " data-section=\"" + section.id + "\""
+                + " aria-pressed=\"" + String(active) + "\">"
+                + ui.escapeHtml(section.label)
+                + "</button>";
+            })
+            .join("");
+        },
+        renderEditor() {
+          const basics = state.cv.basics;
+          const experience = state.cv.experience[0];
+          const education = state.cv.education[0];
+          const sections = {
+            basics: ""
+              + "<div class=\"editor-group\">"
+              + "<span>Nombre completo</span>"
+              + "<div class=\"editor-field\">" + ui.escapeHtml(basics.fullName) + "</div>"
+              + "</div>"
+              + "<div class=\"editor-group\">"
+              + "<span>Titular profesional</span>"
+              + "<div class=\"editor-field\">" + ui.escapeHtml(basics.headline) + "</div>"
+              + "</div>"
+              + "<div class=\"editor-group\">"
+              + "<span>Resumen</span>"
+              + "<div class=\"editor-field\">" + ui.escapeHtml(basics.summary) + "</div>"
+              + "</div>",
+            experience: ""
+              + "<div class=\"editor-group\">"
+              + "<span>Puesto y contexto</span>"
+              + "<div class=\"editor-field\">" + ui.escapeHtml(experience.role) + " - " + ui.escapeHtml(experience.company) + "</div>"
+              + "</div>"
+              + "<div class=\"editor-group\">"
+              + "<span>Periodo</span>"
+              + "<div class=\"editor-field\">" + ui.escapeHtml(experience.period) + "</div>"
+              + "</div>"
+              + "<div class=\"editor-group\">"
+              + "<span>Resumen del bloque</span>"
+              + "<div class=\"editor-field\">" + ui.escapeHtml(experience.summary) + "</div>"
+              + "</div>",
+            education: ""
+              + "<div class=\"editor-group\">"
+              + "<span>Programa</span>"
+              + "<div class=\"editor-field\">" + ui.escapeHtml(education.course) + "</div>"
+              + "</div>"
+              + "<div class=\"editor-group\">"
+              + "<span>Centro</span>"
+              + "<div class=\"editor-field\">" + ui.escapeHtml(education.school) + "</div>"
+              + "</div>"
+              + "<div class=\"editor-group\">"
+              + "<span>Periodo</span>"
+              + "<div class=\"editor-field\">" + ui.escapeHtml(education.period) + "</div>"
+              + "</div>",
+          };
+          ui.editorCanvas.innerHTML = ""
+            + "<div class=\"editor-note\">"
+            + "La app ha arrancado en local con estado inicial en memoria y sin dependencias externas."
+            + "</div>"
+            + sections[state.activeSection];
+        },
+        renderPreview() {
+          const basics = state.cv.basics;
+          const experience = state.cv.experience[0];
+          const education = state.cv.education[0];
+          ui.previewContent.innerHTML = ""
+            + "<article class=\"preview-card\">"
+            + "<h3>Perfil</h3>"
+            + "<p>" + ui.escapeHtml(basics.fullName) + "</p>"
+            + "<p class=\"preview-meta\">" + ui.escapeHtml(basics.headline) + "</p>"
+            + "<p>" + ui.escapeHtml(basics.summary) + "</p>"
+            + "</article>"
+            + "<article class=\"preview-card\">"
+            + "<h3>Experiencia</h3>"
+            + "<p>" + ui.escapeHtml(experience.role) + " - " + ui.escapeHtml(experience.company) + "</p>"
+            + "<p class=\"preview-meta\">" + ui.escapeHtml(experience.period) + "</p>"
+            + "<p>" + ui.escapeHtml(experience.summary) + "</p>"
+            + "</article>"
+            + "<article class=\"preview-card\">"
+            + "<h3>Formacion</h3>"
+            + "<p>" + ui.escapeHtml(education.course) + "</p>"
+            + "<p class=\"preview-meta\">" + ui.escapeHtml(education.school) + " - " + ui.escapeHtml(education.period) + "</p>"
+            + "</article>";
+        },
       };
 
       // JS Module: app
       const app = {
+        cloneInitialCV() {
+          return JSON.parse(JSON.stringify(config.initialCV));
+        },
+        detectCapabilities() {
+          let storage = false;
+          try {
+            const probeKey = config.storageKey + "-probe";
+            window.localStorage.setItem(probeKey, "ok");
+            window.localStorage.removeItem(probeKey);
+            storage = true;
+          } catch (error) {
+            storage = false;
+          }
+          return {
+            storage,
+            fileProtocol: window.location.protocol === "file:",
+          };
+        },
+        render() {
+          ui.renderToolbar();
+          ui.renderEditor();
+          ui.renderPreview();
+        },
+        bindEvents() {
+          ui.toolbar.addEventListener("click", (event) => {
+            const button = event.target.closest("[data-section]");
+            if (!button) {
+              return;
+            }
+            state.activeSection = button.dataset.section;
+            document.body.dataset.activeSection = state.activeSection;
+            ui.renderToolbar();
+            ui.renderEditor();
+          });
+        },
+        updateStatus() {
+          const storageLabel = state.capabilities.storage ? "persistencia local disponible" : "persistencia local no disponible";
+          const protocolLabel = state.capabilities.fileProtocol ? "abierta desde archivo" : "abierta desde navegador";
+          ui.status.textContent = config.appName + " listo: " + storageLabel + ", " + protocolLabel;
+        },
         boot() {
+          state.cv = app.cloneInitialCV();
+          state.capabilities = app.detectCapabilities();
           state.booted = true;
-          ui.status.textContent = config.appName + " preparado para inicializar la SPA";
+          app.render();
+          app.bindEvents();
+          app.updateStatus();
           document.body.dataset.appReady = "true";
+          document.body.dataset.activeSection = state.activeSection;
         },
       };
 
