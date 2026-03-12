@@ -294,6 +294,24 @@
       gap: 8px;
     }
 
+    .entry-card-manual-order {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .entry-card-position-input {
+      width: 72px;
+      min-height: 38px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--text);
+      font: inherit;
+      text-align: center;
+    }
+
     .entry-card-title {
       margin: 0;
       font-size: 1rem;
@@ -910,6 +928,21 @@
             + achievements.map((achievement) => "<li>" + ui.escapeHtml(achievement) + "</li>").join("")
             + "</ul>";
         },
+        renderManualReorderControls(sectionName, index, totalEntries) {
+          const targetKey = sectionName + "TargetPosition";
+          return "<div class=\"entry-card-manual-order\">"
+            + "<label class=\"editor-help\" for=\"" + sectionName + "-target-position-" + String(index) + "\">Mover a</label>"
+            + "<input"
+            + " id=\"" + sectionName + "-target-position-" + String(index) + "\""
+            + " class=\"entry-card-position-input\""
+            + " type=\"number\""
+            + " min=\"1\""
+            + " max=\"" + String(totalEntries) + "\""
+            + " value=\"" + String(index + 1) + "\""
+            + " data-" + targetKey + "=\"" + String(index) + "\">"
+            + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"move-" + sectionName + "-entry-to-position\" data-" + sectionName + "-index=\"" + String(index) + "\" aria-pressed=\"false\">Mover</button>"
+            + "</div>";
+        },
         renderToolbar() {
           const sectionButtons = config.sections
             .map((section) => {
@@ -970,6 +1003,7 @@
                 + (index === state.cv.experience.length - 1 ? " disabled" : "")
                 + ">Bajar</button>"
                 + "</div>"
+                + ui.renderManualReorderControls("experience", index, state.cv.experience.length)
                 + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"remove-experience-entry\" data-experience-index=\"" + String(index) + "\" aria-pressed=\"false\">Eliminar</button>"
                 + "</div>"
                 + "</div>"
@@ -1117,6 +1151,7 @@
                 + (index === state.cv.education.length - 1 ? " disabled" : "")
                 + ">Bajar</button>"
                 + "</div>"
+                + ui.renderManualReorderControls("education", index, state.cv.education.length)
                 + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"remove-education-entry\" data-education-index=\"" + String(index) + "\" aria-pressed=\"false\">Eliminar</button>"
                 + "</div>"
                 + "</div>"
@@ -1222,6 +1257,7 @@
                 + (index === state.cv.projects.length - 1 ? " disabled" : "")
                 + ">Bajar</button>"
                 + "</div>"
+                + ui.renderManualReorderControls("project", index, state.cv.projects.length)
                 + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"remove-project-entry\" data-project-index=\"" + String(index) + "\" aria-pressed=\"false\">Eliminar</button>"
                 + "</div>"
                 + "</div>"
@@ -2061,6 +2097,36 @@
             },
           });
         },
+        moveListEntry(collectionName, index, targetIndex, singularLabel, movementLabel) {
+          if (!state.cv || !Array.isArray(state.cv[collectionName])) {
+            return;
+          }
+          if (!Number.isInteger(index) || index < 0 || index >= state.cv[collectionName].length) {
+            return;
+          }
+          if (!Number.isInteger(targetIndex) || targetIndex < 0 || targetIndex >= state.cv[collectionName].length || targetIndex === index) {
+            return;
+          }
+          const nextEntries = [...state.cv[collectionName]];
+          const movedEntry = nextEntries.splice(index, 1)[0];
+          nextEntries.splice(targetIndex, 0, movedEntry);
+          state.update({
+            cv: {
+              ...state.cv,
+              [collectionName]: nextEntries,
+              meta: {
+                ...state.cv.meta,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+            ui: {
+              message: {
+                tone: "success",
+                text: singularLabel + " " + String(index + 1) + " " + movementLabel + " a la posicion " + String(targetIndex + 1) + ".",
+              },
+            },
+          });
+        },
         moveExperienceEntry(index, direction) {
           if (!state.cv || !Array.isArray(state.cv.experience)) {
             return;
@@ -2073,29 +2139,7 @@
             : direction === "down"
               ? index + 1
               : -1;
-          if (targetIndex < 0 || targetIndex >= state.cv.experience.length) {
-            return;
-          }
-          const nextExperience = [...state.cv.experience];
-          const movedEntry = nextExperience[index];
-          nextExperience[index] = nextExperience[targetIndex];
-          nextExperience[targetIndex] = movedEntry;
-          state.update({
-            cv: {
-              ...state.cv,
-              experience: nextExperience,
-              meta: {
-                ...state.cv.meta,
-                updatedAt: new Date().toISOString(),
-              },
-            },
-            ui: {
-              message: {
-                tone: "success",
-                text: "Experiencia " + String(index + 1) + " movida a la posicion " + String(targetIndex + 1) + ".",
-              },
-            },
-          });
+          app.moveListEntry("experience", index, targetIndex, "Experiencia", "movida");
         },
         moveProjectEntry(index, direction) {
           if (!state.cv || !Array.isArray(state.cv.projects)) {
@@ -2109,29 +2153,7 @@
             : direction === "down"
               ? index + 1
               : -1;
-          if (targetIndex < 0 || targetIndex >= state.cv.projects.length) {
-            return;
-          }
-          const nextProjects = [...state.cv.projects];
-          const movedEntry = nextProjects[index];
-          nextProjects[index] = nextProjects[targetIndex];
-          nextProjects[targetIndex] = movedEntry;
-          state.update({
-            cv: {
-              ...state.cv,
-              projects: nextProjects,
-              meta: {
-                ...state.cv.meta,
-                updatedAt: new Date().toISOString(),
-              },
-            },
-            ui: {
-              message: {
-                tone: "success",
-                text: "Proyecto " + String(index + 1) + " movido a la posicion " + String(targetIndex + 1) + ".",
-              },
-            },
-          });
+          app.moveListEntry("projects", index, targetIndex, "Proyecto", "movido");
         },
         moveEducationEntry(index, direction) {
           if (!state.cv || !Array.isArray(state.cv.education)) {
@@ -2145,29 +2167,16 @@
             : direction === "down"
               ? index + 1
               : -1;
-          if (targetIndex < 0 || targetIndex >= state.cv.education.length) {
-            return;
-          }
-          const nextEducation = [...state.cv.education];
-          const movedEntry = nextEducation[index];
-          nextEducation[index] = nextEducation[targetIndex];
-          nextEducation[targetIndex] = movedEntry;
-          state.update({
-            cv: {
-              ...state.cv,
-              education: nextEducation,
-              meta: {
-                ...state.cv.meta,
-                updatedAt: new Date().toISOString(),
-              },
-            },
-            ui: {
-              message: {
-                tone: "success",
-                text: "Formacion " + String(index + 1) + " movida a la posicion " + String(targetIndex + 1) + ".",
-              },
-            },
-          });
+          app.moveListEntry("education", index, targetIndex, "Formacion", "movida");
+        },
+        moveExperienceEntryToPosition(index, rawTargetPosition) {
+          app.moveListEntry("experience", index, Number(rawTargetPosition) - 1, "Experiencia", "movida");
+        },
+        moveProjectEntryToPosition(index, rawTargetPosition) {
+          app.moveListEntry("projects", index, Number(rawTargetPosition) - 1, "Proyecto", "movido");
+        },
+        moveEducationEntryToPosition(index, rawTargetPosition) {
+          app.moveListEntry("education", index, Number(rawTargetPosition) - 1, "Formacion", "movida");
         },
         bindEvents() {
           ui.toolbar.addEventListener("click", (event) => {
@@ -2285,6 +2294,11 @@
               app.moveExperienceEntry(experienceIndex, "down");
               return;
             }
+            if (actionButton.dataset.action === "move-experience-entry-to-position") {
+              const targetInput = ui.editorCanvas.querySelector("[data-experienceTargetPosition=\"" + String(experienceIndex) + "\"]");
+              app.moveExperienceEntryToPosition(experienceIndex, targetInput ? targetInput.value : "");
+              return;
+            }
             const projectIndex = Number(actionButton.dataset.projectIndex);
             if (actionButton.dataset.action === "remove-project-entry") {
               app.removeProjectEntry(projectIndex);
@@ -2298,6 +2312,11 @@
               app.moveProjectEntry(projectIndex, "down");
               return;
             }
+            if (actionButton.dataset.action === "move-project-entry-to-position") {
+              const targetInput = ui.editorCanvas.querySelector("[data-projectTargetPosition=\"" + String(projectIndex) + "\"]");
+              app.moveProjectEntryToPosition(projectIndex, targetInput ? targetInput.value : "");
+              return;
+            }
             const educationIndex = Number(actionButton.dataset.educationIndex);
             if (actionButton.dataset.action === "remove-education-entry") {
               app.removeEducationEntry(educationIndex);
@@ -2309,6 +2328,11 @@
             }
             if (actionButton.dataset.action === "move-education-entry-down") {
               app.moveEducationEntry(educationIndex, "down");
+              return;
+            }
+            if (actionButton.dataset.action === "move-education-entry-to-position") {
+              const targetInput = ui.editorCanvas.querySelector("[data-educationTargetPosition=\"" + String(educationIndex) + "\"]");
+              app.moveEducationEntryToPosition(educationIndex, targetInput ? targetInput.value : "");
             }
           });
           ui.editorCanvas.addEventListener("blur", (event) => {

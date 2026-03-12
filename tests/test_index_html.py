@@ -499,11 +499,9 @@ process.stdout.write(JSON.stringify(result));
             "const nextProjects = state.cv.projects.filter((entry, entryIndex) => entryIndex !== index);",
             'text: "Proyecto " + String(index + 1) + " eliminado.",',
             "moveProjectEntry(index, direction) {",
-            "const nextProjects = [...state.cv.projects];",
-            "const movedEntry = nextProjects[index];",
-            "nextProjects[index] = nextProjects[targetIndex];",
-            "nextProjects[targetIndex] = movedEntry;",
-            'text: "Proyecto " + String(index + 1) + " movido a la posicion " + String(targetIndex + 1) + ".",',
+            'app.moveListEntry("projects", index, targetIndex, "Proyecto", "movido");',
+            "moveProjectEntryToPosition(index, rawTargetPosition) {",
+            'app.moveListEntry("projects", index, Number(rawTargetPosition) - 1, "Proyecto", "movido");',
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
@@ -527,6 +525,26 @@ CVStudio.app.moveProjectEntry(1, "up");
         )
         self.assertEqual(result["names"], ["Segundo", "Primero"])
         self.assertEqual(result["message"], "Proyecto 2 movido a la posicion 1.")
+
+    def test_app_reorders_project_entries_to_manual_position(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+cv.projects = [
+  { name: "Primero", role: "Design", url: "uno.dev", stack: "HTML", summary: "Uno", highlights: ["A"] },
+  { name: "Segundo", role: "Code", url: "dos.dev", stack: "JS", summary: "Dos", highlights: ["B"] },
+  { name: "Tercero", role: "Ship", url: "tres.dev", stack: "CSS", summary: "Tres", highlights: ["C"] },
+];
+CVStudio.state.update({ cv, ui: { activeSection: "projects" } });
+CVStudio.app.moveProjectEntryToPosition(0, "3");
+({
+  names: CVStudio.state.cv.projects.map((entry) => entry.name),
+  message: CVStudio.state.ui.message.text,
+});
+"""
+        )
+        self.assertEqual(result["names"], ["Segundo", "Tercero", "Primero"])
+        self.assertEqual(result["message"], "Proyecto 1 movido a la posicion 3.")
 
     def test_normalize_project_entry_preserves_stack(self):
         result = self.run_js_scenario(
@@ -601,6 +619,9 @@ CVStudio.app.updateProjectField(0, "highlights", "Uno\\n\\nDos\\n Tres ");
             'app.moveProjectEntry(projectIndex, "up");',
             'actionButton.dataset.action === "move-project-entry-down"',
             'app.moveProjectEntry(projectIndex, "down");',
+            'actionButton.dataset.action === "move-project-entry-to-position"',
+            'const targetInput = ui.editorCanvas.querySelector("[data-projectTargetPosition=\\"" + String(projectIndex) + "\\"]");',
+            "app.moveProjectEntryToPosition(projectIndex, targetInput ? targetInput.value : \"\");",
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
@@ -659,16 +680,21 @@ CVStudio.app.updateProjectField(0, "highlights", "Uno\\n\\nDos\\n Tres ");
 
     def test_app_reorders_experience_entries(self):
         expected_snippets = [
+            "moveListEntry(collectionName, index, targetIndex, singularLabel, movementLabel) {",
+            "!state.cv || !Array.isArray(state.cv[collectionName])",
+            "const nextEntries = [...state.cv[collectionName]];",
+            "const movedEntry = nextEntries.splice(index, 1)[0];",
+            "nextEntries.splice(targetIndex, 0, movedEntry);",
+            '[collectionName]: nextEntries,',
+            'text: singularLabel + " " + String(index + 1) + " " + movementLabel + " a la posicion " + String(targetIndex + 1) + ".",',
             "moveExperienceEntry(index, direction) {",
             '!state.cv || !Array.isArray(state.cv.experience)',
             '!Number.isInteger(index) || index < 0 || index >= state.cv.experience.length',
             'const targetIndex = direction === "up"',
             ': direction === "down"',
-            "const nextExperience = [...state.cv.experience];",
-            "const movedEntry = nextExperience[index];",
-            "nextExperience[index] = nextExperience[targetIndex];",
-            "nextExperience[targetIndex] = movedEntry;",
-            'text: "Experiencia " + String(index + 1) + " movida a la posicion " + String(targetIndex + 1) + ".",',
+            'app.moveListEntry("experience", index, targetIndex, "Experiencia", "movida");',
+            "moveExperienceEntryToPosition(index, rawTargetPosition) {",
+            'app.moveListEntry("experience", index, Number(rawTargetPosition) - 1, "Experiencia", "movida");',
             '(index === 0 ? " disabled" : "")',
             '(index === state.cv.experience.length - 1 ? " disabled" : "")',
         ]
@@ -694,6 +720,26 @@ CVStudio.app.moveExperienceEntry(0, "down");
         )
         self.assertEqual(result["roles"], ["Segunda", "Primera"])
         self.assertEqual(result["message"], "Experiencia 1 movida a la posicion 2.")
+
+    def test_app_reorders_experience_entries_to_manual_position(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+cv.experience = [
+  { role: "Primera", company: "A", location: "Madrid", startDate: "2024-01", isCurrent: false, endDate: "2024-06", summary: "Uno", achievements: [] },
+  { role: "Segunda", company: "B", location: "Berlin", startDate: "2024-07", isCurrent: true, endDate: "", summary: "Dos", achievements: [] },
+  { role: "Tercera", company: "C", location: "Paris", startDate: "2025-01", isCurrent: false, endDate: "2025-06", summary: "Tres", achievements: [] },
+];
+CVStudio.state.update({ cv, ui: { activeSection: "experience" } });
+CVStudio.app.moveExperienceEntryToPosition(2, "1");
+({
+  roles: CVStudio.state.cv.experience.map((entry) => entry.role),
+  message: CVStudio.state.ui.message.text,
+});
+"""
+        )
+        self.assertEqual(result["roles"], ["Tercera", "Primera", "Segunda"])
+        self.assertEqual(result["message"], "Experiencia 3 movida a la posicion 1.")
 
     def test_app_ignores_invalid_experience_reorder_direction(self):
         result = self.run_js_scenario(
@@ -735,6 +781,9 @@ CVStudio.app.moveExperienceEntry(0, "up");
             'app.moveExperienceEntry(experienceIndex, "up");',
             'actionButton.dataset.action === "move-experience-entry-down"',
             'app.moveExperienceEntry(experienceIndex, "down");',
+            'actionButton.dataset.action === "move-experience-entry-to-position"',
+            'const targetInput = ui.editorCanvas.querySelector("[data-experienceTargetPosition=\\"" + String(experienceIndex) + "\\"]");',
+            "app.moveExperienceEntryToPosition(experienceIndex, targetInput ? targetInput.value : \"\");",
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
@@ -852,11 +901,9 @@ CVStudio.app.moveExperienceEntry(0, "up");
             "const nextEducation = state.cv.education.filter((entry, entryIndex) => entryIndex !== index);",
             'text: "Formacion " + String(index + 1) + " eliminada.",',
             "moveEducationEntry(index, direction) {",
-            "const nextEducation = [...state.cv.education];",
-            "const movedEntry = nextEducation[index];",
-            "nextEducation[index] = nextEducation[targetIndex];",
-            "nextEducation[targetIndex] = movedEntry;",
-            'text: "Formacion " + String(index + 1) + " movida a la posicion " + String(targetIndex + 1) + ".",',
+            'app.moveListEntry("education", index, targetIndex, "Formacion", "movida");',
+            "moveEducationEntryToPosition(index, rawTargetPosition) {",
+            'app.moveListEntry("education", index, Number(rawTargetPosition) - 1, "Formacion", "movida");',
             '(index === 0 ? " disabled" : "")',
             '(index === state.cv.education.length - 1 ? " disabled" : "")',
         ]
@@ -883,6 +930,26 @@ CVStudio.app.moveEducationEntry(1, "up");
         self.assertEqual(result["titles"], ["Segunda", "Primera"])
         self.assertEqual(result["message"], "Formacion 2 movida a la posicion 1.")
 
+    def test_app_reorders_education_entries_to_manual_position(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+cv.education = [
+  { title: "Primera", center: "A", dates: "2018 - 2020", details: "" },
+  { title: "Segunda", center: "B", dates: "2020 - 2022", details: "" },
+  { title: "Tercera", center: "C", dates: "2022 - 2024", details: "" },
+];
+CVStudio.state.update({ cv, ui: { activeSection: "education" } });
+CVStudio.app.moveEducationEntryToPosition(0, "2");
+({
+  titles: CVStudio.state.cv.education.map((entry) => entry.title),
+  message: CVStudio.state.ui.message.text,
+});
+"""
+        )
+        self.assertEqual(result["titles"], ["Segunda", "Primera", "Tercera"])
+        self.assertEqual(result["message"], "Formacion 1 movida a la posicion 2.")
+
     def test_education_inputs_and_actions_sync_with_global_state(self):
         expected_snippets = [
             'actionButton.dataset.action === "add-education-entry"',
@@ -898,6 +965,9 @@ CVStudio.app.moveEducationEntry(1, "up");
             'app.moveEducationEntry(educationIndex, "up");',
             'actionButton.dataset.action === "move-education-entry-down"',
             'app.moveEducationEntry(educationIndex, "down");',
+            'actionButton.dataset.action === "move-education-entry-to-position"',
+            'const targetInput = ui.editorCanvas.querySelector("[data-educationTargetPosition=\\"" + String(educationIndex) + "\\"]");',
+            "app.moveEducationEntryToPosition(educationIndex, targetInput ? targetInput.value : \"\");",
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
