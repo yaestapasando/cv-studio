@@ -99,3 +99,28 @@ test('CV state structure', (t) => {
         assert.ok(htmlContent.includes('skills: []'), 'Missing skills in state');
     });
 });
+
+test('Reactive state and render mechanism', (t) => {
+    const htmlPath = path.join(__dirname, 'index.html');
+    const htmlContent = fs.readFileSync(htmlPath, 'utf8');
+
+    t.test('should have a createReactiveState function', () => {
+        assert.ok(htmlContent.includes('createReactiveState: function'), 'Missing createReactiveState function');
+    });
+
+    t.test('should use a Proxy for reactivity', () => {
+        assert.ok(htmlContent.includes('new Proxy'), 'Missing Proxy usage');
+    });
+
+    t.test('should have a render function', () => {
+        assert.ok(htmlContent.includes('render: function'), 'Missing render function');
+    });
+
+    t.test('should call render on state change', () => {
+        assert.ok(htmlContent.includes('self.render()'), 'Missing render call on state change');
+    });
+
+    t.test('should update preview innerHTML in render', () => {
+        assert.ok(htmlContent.includes('this.preview.innerHTML ='), 'Missing innerHTML update in render');
+    });
+});

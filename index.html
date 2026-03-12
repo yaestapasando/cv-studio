@@ -163,7 +163,22 @@
                     console.info('CV Studio: Inicializando aplicación...');
                     this.cacheDOM();
                     this.bindEvents();
-                    this.loadInitialData();
+                    this.state = this.createReactiveState({
+                        personalData: {
+                            firstName: '',
+                            lastName: '',
+                            email: '',
+                            phone: '',
+                            website: '',
+                            location: '',
+                            title: ''
+                        },
+                        summary: '',
+                        experience: [], // { id, company, position, startDate, endDate, current, description }
+                        education: [],  // { id, institution, degree, startDate, endDate, description }
+                        skills: []      // strings[]
+                    });
+                    this.render();
                 },
 
                 cacheDOM: function() {
@@ -175,26 +190,42 @@
                     // Futuros manejadores de eventos
                 },
 
-                loadInitialData: function() {
-                    // Futura carga de datos
+                createReactiveState: function(initialState) {
+                    const self = this;
+                    const handler = {
+                        get(target, key) {
+                            const value = target[key];
+                            if (typeof value === 'object' && value !== null) {
+                                return new Proxy(value, handler);
+                            }
+                            return value;
+                        },
+                        set(target, key, value) {
+                            target[key] = value;
+                            self.render();
+                            return true;
+                        }
+                    };
+                    return new Proxy(initialState, handler);
+                },
+
+                render: function() {
+                    console.debug('CV Studio: Renderizando vista previa...');
+                    if (!this.preview) return;
+                    
+                    const { personalData } = this.state;
+                    
+                    // Renderizado básico para validar reactividad
+                    this.preview.innerHTML = `
+                        <div class="cv-header">
+                            <h2>${personalData.firstName || 'Tu Nombre'} ${personalData.lastName || ''}</h2>
+                            <p>${personalData.title || 'Tu Profesión'}</p>
+                        </div>
+                    `;
                 },
 
                 // Feature 2: Gestión del Estado
-                state: {
-                    personalData: {
-                        firstName: '',
-                        lastName: '',
-                        email: '',
-                        phone: '',
-                        website: '',
-                        location: '',
-                        title: ''
-                    },
-                    summary: '',
-                    experience: [], // { id, company, position, startDate, endDate, current, description }
-                    education: [],  // { id, institution, degree, startDate, endDate, description }
-                    skills: []      // strings[]
-                }
+                state: null
             };
 
             // Iniciar aplicación al cargar el DOM
