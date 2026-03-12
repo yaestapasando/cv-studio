@@ -205,19 +205,23 @@
     // JS Section: Namespace
     const CVStudio = (() => {
       // JS Section: Modules
-      // Convencion base de modulos internos: config, state, ui y app.
+      // Module convention: declare modules in config -> state -> ui -> app order.
+      // JS Module: config
       const config = {
         appName: "CV Studio",
       };
 
+      // JS Module: state
       const state = {
         booted: false,
       };
 
+      // JS Module: ui
       const ui = {
         status: document.getElementById("app-status"),
       };
 
+      // JS Module: app
       const app = {
         boot() {
           state.booted = true;

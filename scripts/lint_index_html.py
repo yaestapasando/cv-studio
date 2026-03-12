@@ -23,6 +23,11 @@ def main():
         "// JS Section: Namespace",
         "// JS Section: Modules",
         "// JS Section: Bootstrap",
+        "// Module convention: declare modules in config -> state -> ui -> app order.",
+        "// JS Module: config",
+        "// JS Module: state",
+        "// JS Module: ui",
+        "// JS Module: app",
     ]
 
     if not content.startswith("<!DOCTYPE html>"):
@@ -38,6 +43,17 @@ def main():
     missing_markers = [marker for marker in section_markers if marker not in content]
     if missing_markers:
         errors.append("Missing internal section markers.")
+    module_markers = [
+        "// JS Module: config",
+        "// JS Module: state",
+        "// JS Module: ui",
+        "// JS Module: app",
+    ]
+    module_positions = [content.find(marker) for marker in module_markers]
+    if any(position == -1 for position in module_positions):
+        errors.append("Missing logical module markers.")
+    elif module_positions != sorted(module_positions):
+        errors.append("Logical module markers are out of order.")
     if "http://" in content or "https://" in content:
         lines = [line.strip() for line in content.splitlines() if "http://" in line or "https://" in line]
         if lines:

@@ -67,10 +67,25 @@ class IndexHtmlTest(unittest.TestCase):
             "// JS Section: Namespace",
             "// JS Section: Modules",
             "// JS Section: Bootstrap",
+            "// Module convention: declare modules in config -> state -> ui -> app order.",
+            "// JS Module: config",
+            "// JS Module: state",
+            "// JS Module: ui",
+            "// JS Module: app",
         ]
         for marker in expected_markers:
             with self.subTest(marker=marker):
                 self.assertIn(marker, self.content)
+
+    def test_declares_logical_modules_in_convention_order(self):
+        markers = [
+            "// JS Module: config",
+            "// JS Module: state",
+            "// JS Module: ui",
+            "// JS Module: app",
+        ]
+        positions = [self.content.index(marker) for marker in markers]
+        self.assertEqual(positions, sorted(positions))
 
     def test_has_no_remote_runtime_dependencies(self):
         self.assertEqual(self.parser.remote_refs, [])
