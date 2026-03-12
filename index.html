@@ -440,11 +440,26 @@
           fileProtocol: false,
         },
         cv: null,
+        listeners: [],
         hasOwn(value, key) {
           return Object.prototype.hasOwnProperty.call(value, key);
         },
         isValidSection(sectionId) {
           return config.sections.some((section) => section.id === sectionId);
+        },
+        subscribe(listener) {
+          if (typeof listener !== "function") {
+            return () => {};
+          }
+          state.listeners.push(listener);
+          return () => {
+            state.listeners = state.listeners.filter((entry) => entry !== listener);
+          };
+        },
+        notify() {
+          state.listeners.forEach((listener) => {
+            listener(state);
+          });
         },
         update(patch) {
           const nextState = {
@@ -462,6 +477,7 @@
           state.activeSection = nextState.activeSection;
           state.capabilities = nextState.capabilities;
           state.cv = nextState.cv;
+          state.notify();
         },
         read() {
           if (!state.capabilities.storage) {
@@ -660,6 +676,24 @@
           ui.renderEditor();
           ui.renderPreview();
         },
+        syncDom() {
+          document.body.dataset.activeSection = state.activeSection;
+          document.body.dataset.runtimeMode = state.capabilities.fileProtocol ? "file" : "browser";
+        },
+        handleStateChange() {
+          if (!state.booted || !state.cv) {
+            return;
+          }
+          app.render();
+          app.updateStatus();
+          app.syncDom();
+          state.write();
+        },
+        subscribeToState() {
+          state.subscribe(() => {
+            app.handleStateChange();
+          });
+        },
         bindEvents() {
           ui.toolbar.addEventListener("click", (event) => {
             const button = event.target.closest("[data-section]");
@@ -667,10 +701,6 @@
               return;
             }
             state.update({ activeSection: button.dataset.section });
-            state.write();
-            document.body.dataset.activeSection = state.activeSection;
-            ui.renderToolbar();
-            ui.renderEditor();
           });
         },
         updateStatus() {
@@ -681,6 +711,7 @@
           ui.status.textContent = config.appName + " listo: " + storageLabel + ", " + protocolLabel;
         },
         boot() {
+          app.subscribeToState();
           state.update({ capabilities: app.detectCapabilities() });
           const persistedState = state.read();
           state.update({
@@ -688,13 +719,9 @@
             activeSection: persistedState && persistedState.activeSection ? persistedState.activeSection : "basics",
             booted: true,
           });
-          app.render();
           app.bindEvents();
-          app.updateStatus();
-          state.write();
           document.body.dataset.appReady = "true";
-          document.body.dataset.activeSection = state.activeSection;
-          document.body.dataset.runtimeMode = state.capabilities.fileProtocol ? "file" : "browser";
+          app.syncDom();
         },
       };
 
