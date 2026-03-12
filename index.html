@@ -779,6 +779,39 @@
           '</ul>';
       }
 
+      // ── Event bus ─────────────────────────────────────────────────────────────
+
+      function createEventBus() {
+        var _handlers = {};
+
+        function on(event, fn) {
+          if (typeof fn !== 'function') return function () {};
+          if (!_handlers[event]) _handlers[event] = [];
+          _handlers[event].push(fn);
+          return function () { off(event, fn); };
+        }
+
+        function off(event, fn) {
+          if (!_handlers[event]) return;
+          _handlers[event] = _handlers[event].filter(function (h) { return h !== fn; });
+        }
+
+        function emit(event, data) {
+          if (!_handlers[event]) return;
+          _handlers[event].slice().forEach(function (fn) { fn(data); });
+        }
+
+        function once(event, fn) {
+          if (typeof fn !== 'function') return function () {};
+          function wrapper(data) { off(event, wrapper); fn(data); }
+          return on(event, wrapper);
+        }
+
+        return { on: on, off: off, emit: emit, once: once };
+      }
+
+      var EventBus = createEventBus();
+
       // ── Bootstrap ─────────────────────────────────────────────────────────────
 
       function init() {
@@ -786,7 +819,7 @@
       }
 
       // Expose minimal public API (used by tests and future modules)
-      window.CVStudio = { DEFAULT_CV: DEFAULT_CV, createStore: createStore, CVStore: CVStore, activateTab: activateTab, render: render, init: init };
+      window.CVStudio = { DEFAULT_CV: DEFAULT_CV, createStore: createStore, CVStore: CVStore, createEventBus: createEventBus, EventBus: EventBus, activateTab: activateTab, render: render, init: init };
 
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
