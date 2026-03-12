@@ -172,6 +172,7 @@ process.stdout.write(JSON.stringify(result));
     requiredVisibility: catalog.find((section) => section.id === "basics").visibility,
     optionalCount: catalog.filter((section) => section.visibility === "optional").length,
     sectionButtons: CVStudio.config.sections.map((section) => section.id),
+    defaultVisibility: CVStudio.config.uiDefaults.sectionVisibility,
   };
 })()
 """)
@@ -185,6 +186,18 @@ process.stdout.write(JSON.stringify(result));
         self.assertEqual(
             result["sectionButtons"],
             ["basics", "experience", "skills", "languages", "certifications", "projects", "education", "schema"],
+        )
+        self.assertEqual(
+            result["defaultVisibility"],
+            {
+                "basics": True,
+                "experience": True,
+                "skills": True,
+                "languages": True,
+                "certifications": True,
+                "projects": True,
+                "education": True,
+            },
         )
 
     def test_defines_two_panel_workspace_layout(self):
@@ -1901,6 +1914,10 @@ CVStudio.state.update({ cv: CVStudio.app.normalizeCvDocument(cv), ui: { activeSe
             "const nextUi = {",
             'activeSection: state.ui.activeSection,',
             'template: state.ui.template,',
+            "sectionVisibility: { ...state.ui.sectionVisibility },",
+            'if (state.hasOwn(uiPatch, "sectionVisibility") && uiPatch.sectionVisibility && typeof uiPatch.sectionVisibility === "object") {',
+            "nextUi.sectionVisibility = config.supportedSectionCatalog.reduce((visibilityMap, section) => {",
+            'visibilityMap[section.id] = section.visibility === "required"',
             "subscribe(listener) {",
             'if (typeof listener !== "function") {',
             "state.listeners.push(listener);",
@@ -1965,6 +1982,10 @@ CVStudio.state.update({ cv: CVStudio.app.normalizeCvDocument(cv), ui: { activeSe
             "event.target.closest(\"[data-section]\")",
             "event.target.closest(\"[data-template]\")",
             "event.target.closest(\"[data-modal]\")",
+            'data-action=\\"toggle-section-visibility\\"',
+            'app.toggleSectionVisibility(state.ui.activeSection);',
+            'app.canToggleSectionVisibility(state.ui.activeSection)',
+            'app.isSectionVisible(state.ui.activeSection)',
             "ui.modal.addEventListener(\"click\"",
             "event.target.closest(\"[data-close-modal]\")",
             "document.body.dataset.appReady = \"true\";",
@@ -1989,6 +2010,12 @@ CVStudio.state.update({ cv: CVStudio.app.normalizeCvDocument(cv), ui: { activeSe
             'const certificationPreview = state.cv.certifications.length',
             'const educationEntries = state.cv.education.length',
             'const educationPreview = state.cv.education.length',
+            'const showExperience = app.isSectionVisible("experience");',
+            'const showSkills = app.isSectionVisible("skills");',
+            'const showLanguages = app.isSectionVisible("languages");',
+            'const showCertifications = app.isSectionVisible("certifications");',
+            'const showProjects = app.isSectionVisible("projects");',
+            'const showEducation = app.isSectionVisible("education");',
             'state.cv.experience.map((entry, index) => ""',
             'state.cv.experience.map((entry) => ""',
             'state.cv.projects.map((entry, index) => ""',
@@ -2066,6 +2093,11 @@ CVStudio.state.update({ cv: CVStudio.app.normalizeCvDocument(cv), ui: { activeSe
             '.preview-template {',
             ".app-modal {",
             ".modal-card {",
+            "sectionVisibility: supportedSectionCatalog.reduce((visibilityMap, section) => {",
+            "getSectionConfig(sectionId) {",
+            "canToggleSectionVisibility(sectionId) {",
+            "isSectionVisible(sectionId) {",
+            "toggleSectionVisibility(sectionId) {",
             'kind: modalButton.dataset.modal,',
             "open: true,",
             'kind: null,',
@@ -2076,6 +2108,50 @@ CVStudio.state.update({ cv: CVStudio.app.normalizeCvDocument(cv), ui: { activeSe
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
+
+    def test_section_visibility_toggle_updates_preview_state(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+cv.skills = {
+  mode: "simple",
+  items: ["HTML", "CSS"],
+  categories: [],
+};
+CVStudio.state.update({ cv, ui: { activeSection: "skills" } });
+CVStudio.app.toggleSectionVisibility("skills");
+CVStudio.ui.renderToolbar();
+CVStudio.ui.renderPreview();
+({
+  visible: CVStudio.state.ui.sectionVisibility.skills,
+  toolbar: CVStudio.ui.toolbar.innerHTML,
+  preview: CVStudio.ui.previewContent.innerHTML,
+  message: CVStudio.state.ui.message.text,
+});
+"""
+        )
+        self.assertFalse(result["visible"])
+        self.assertIn("Mostrar seccion", result["toolbar"])
+        self.assertNotIn("<h3>Habilidades</h3>", result["preview"])
+        self.assertEqual(result["message"], "Habilidades oculta en la preview.")
+
+    def test_section_visibility_toggle_is_ignored_for_required_sections(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+CVStudio.state.update({ cv, ui: { activeSection: "basics", sectionVisibility: { basics: false } } });
+CVStudio.app.toggleSectionVisibility("basics");
+CVStudio.ui.renderPreview();
+({
+  visible: CVStudio.state.ui.sectionVisibility.basics,
+  preview: CVStudio.ui.previewContent.innerHTML,
+  canToggle: CVStudio.app.canToggleSectionVisibility("basics"),
+});
+"""
+        )
+        self.assertTrue(result["visible"])
+        self.assertFalse(result["canToggle"])
+        self.assertIn("<h3>Perfil</h3>", result["preview"])
 
     def test_render_preview_uses_compact_markup_when_template_is_compact(self):
         result = self.run_js_scenario(
@@ -2129,6 +2205,43 @@ CVStudio.ui.renderPreview();
         self.assertIn("ada@example.com | +34 600 000 000 | Madrid, Espana", result["html"])
         self.assertIn("Frontend: HTML, CSS", result["html"])
         self.assertIn("Lead Engineer", result["html"])
+
+    def test_render_preview_hides_hidden_sections_in_compact_template(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+cv.skills = {
+  mode: "simple",
+  items: ["HTML", "CSS"],
+  categories: [],
+};
+cv.languages = [
+  { name: "English", level: "C1" },
+];
+CVStudio.state.update({
+  cv,
+  ui: {
+    template: "compact",
+    sectionVisibility: {
+      basics: true,
+      experience: true,
+      skills: false,
+      languages: false,
+      certifications: true,
+      projects: true,
+      education: true,
+    },
+  },
+});
+CVStudio.ui.renderPreview();
+({
+  html: CVStudio.ui.previewContent.innerHTML,
+});
+"""
+        )
+        self.assertNotIn("<h3>Habilidades</h3>", result["html"])
+        self.assertNotIn("<h3>Idiomas</h3>", result["html"])
+        self.assertIn("<h3>Esquema</h3>", result["html"])
 
     def test_surfaces_direct_file_open_verification_in_status(self):
         expected_snippets = [

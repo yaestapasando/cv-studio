@@ -602,6 +602,10 @@
         uiDefaults: {
           activeSection: "basics",
           template: "classic",
+          sectionVisibility: supportedSectionCatalog.reduce((visibilityMap, section) => {
+            visibilityMap[section.id] = true;
+            return visibilityMap;
+          }, {}),
           message: {
             tone: "info",
             text: "La app ha arrancado en local con estado inicial en memoria y sin dependencias externas.",
@@ -874,6 +878,7 @@
         ui: {
           activeSection: config.uiDefaults.activeSection,
           template: config.uiDefaults.template,
+          sectionVisibility: { ...config.uiDefaults.sectionVisibility },
           message: { ...config.uiDefaults.message },
           modal: { ...config.uiDefaults.modal },
         },
@@ -920,6 +925,7 @@
           const nextUi = {
             activeSection: state.ui.activeSection,
             template: state.ui.template,
+            sectionVisibility: { ...state.ui.sectionVisibility },
             message: { ...state.ui.message },
             modal: { ...state.ui.modal },
           };
@@ -928,6 +934,16 @@
           }
           if (state.hasOwn(uiPatch, "template") && state.isValidTemplate(uiPatch.template)) {
             nextUi.template = uiPatch.template;
+          }
+          if (state.hasOwn(uiPatch, "sectionVisibility") && uiPatch.sectionVisibility && typeof uiPatch.sectionVisibility === "object") {
+            nextUi.sectionVisibility = config.supportedSectionCatalog.reduce((visibilityMap, section) => {
+              visibilityMap[section.id] = section.visibility === "required"
+                ? true
+                : state.hasOwn(uiPatch.sectionVisibility, section.id)
+                  ? Boolean(uiPatch.sectionVisibility[section.id])
+                  : nextUi.sectionVisibility[section.id];
+              return visibilityMap;
+            }, {});
           }
           if (state.hasOwn(uiPatch, "message") && uiPatch.message && typeof uiPatch.message === "object") {
             nextUi.message = {
@@ -1225,10 +1241,16 @@
             : state.ui.activeSection === "education"
               ? "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"add-education-entry\" aria-pressed=\"false\">Anadir formacion</button>"
               : "";
+          const visibilityAction = app.canToggleSectionVisibility(state.ui.activeSection)
+            ? "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"toggle-section-visibility\" aria-pressed=\"" + String(app.isSectionVisible(state.ui.activeSection)) + "\">"
+              + (app.isSectionVisible(state.ui.activeSection) ? "Ocultar seccion" : "Mostrar seccion")
+              + "</button>"
+            : "";
           ui.toolbar.innerHTML = sectionButtons
             + "<span class=\"toolbar-divider\" aria-hidden=\"true\"></span>"
             + templateButtons
             + contextualActions
+            + visibilityAction
             + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-modal=\"template-help\" aria-pressed=\"false\">Ayuda plantilla</button>";
         },
         renderEditor() {
@@ -1929,6 +1951,12 @@
           const basics = state.cv.basics;
           const skills = state.cv.skills;
           const requiredSections = config.cvSchema.required.join(", ");
+          const showExperience = app.isSectionVisible("experience");
+          const showSkills = app.isSectionVisible("skills");
+          const showLanguages = app.isSectionVisible("languages");
+          const showCertifications = app.isSectionVisible("certifications");
+          const showProjects = app.isSectionVisible("projects");
+          const showEducation = app.isSectionVisible("education");
           const experiencePreview = state.cv.experience.length
             ? state.cv.experience.map((entry) => ""
               + "<div class=\"preview-card\">"
@@ -2061,32 +2089,44 @@
               + "<p class=\"preview-compact-summary\">" + ui.escapeHtml(basics.summary || "Completa tu perfil para ver aqui el resumen profesional.") + "</p>"
               + "</header>"
               + "<div class=\"preview-compact-grid\">"
-              + "<section class=\"preview-compact-section\">"
-              + "<h3>Experiencia</h3>"
-              + "<div class=\"preview-compact-list\">" + compactExperience + "</div>"
-              + "</section>"
-              + "<section class=\"preview-compact-section\">"
-              + "<h3>Habilidades</h3>"
-              + "<div class=\"preview-compact-list\">"
-              + compactSkills.map((entry) => "<p class=\"preview-compact-meta\">" + ui.escapeHtml(entry) + "</p>").join("")
-              + "</div>"
-              + "</section>"
-              + "<section class=\"preview-compact-section\">"
-              + "<h3>Proyectos</h3>"
-              + "<div class=\"preview-compact-list\">" + compactProjects + "</div>"
-              + "</section>"
-              + "<section class=\"preview-compact-section\">"
-              + "<h3>Formacion</h3>"
-              + "<div class=\"preview-compact-list\">" + compactEducation + "</div>"
-              + "</section>"
-              + "<section class=\"preview-compact-section\">"
-              + "<h3>Idiomas</h3>"
-              + "<div class=\"preview-compact-list\">" + compactLanguages + "</div>"
-              + "</section>"
-              + "<section class=\"preview-compact-section\">"
-              + "<h3>Certificaciones</h3>"
-              + "<div class=\"preview-compact-list\">" + compactCertifications + "</div>"
-              + "</section>"
+              + (showExperience
+                ? "<section class=\"preview-compact-section\">"
+                  + "<h3>Experiencia</h3>"
+                  + "<div class=\"preview-compact-list\">" + compactExperience + "</div>"
+                  + "</section>"
+                : "")
+              + (showSkills
+                ? "<section class=\"preview-compact-section\">"
+                  + "<h3>Habilidades</h3>"
+                  + "<div class=\"preview-compact-list\">"
+                  + compactSkills.map((entry) => "<p class=\"preview-compact-meta\">" + ui.escapeHtml(entry) + "</p>").join("")
+                  + "</div>"
+                  + "</section>"
+                : "")
+              + (showProjects
+                ? "<section class=\"preview-compact-section\">"
+                  + "<h3>Proyectos</h3>"
+                  + "<div class=\"preview-compact-list\">" + compactProjects + "</div>"
+                  + "</section>"
+                : "")
+              + (showEducation
+                ? "<section class=\"preview-compact-section\">"
+                  + "<h3>Formacion</h3>"
+                  + "<div class=\"preview-compact-list\">" + compactEducation + "</div>"
+                  + "</section>"
+                : "")
+              + (showLanguages
+                ? "<section class=\"preview-compact-section\">"
+                  + "<h3>Idiomas</h3>"
+                  + "<div class=\"preview-compact-list\">" + compactLanguages + "</div>"
+                  + "</section>"
+                : "")
+              + (showCertifications
+                ? "<section class=\"preview-compact-section\">"
+                  + "<h3>Certificaciones</h3>"
+                  + "<div class=\"preview-compact-list\">" + compactCertifications + "</div>"
+                  + "</section>"
+                : "")
               + "<section class=\"preview-compact-section\">"
               + "<h3>Esquema</h3>"
               + "<p class=\"preview-compact-meta\">" + ui.escapeHtml(config.cvSchema.title) + "</p>"
@@ -2110,31 +2150,43 @@
             + "<p>" + ui.escapeHtml(basics.summary || "Completa tu perfil para ver aqui el resumen profesional.") + "</p>"
             + "<p class=\"preview-template\">" + ui.escapeHtml(state.ui.template) + "</p>"
             + "</article>"
-            + "<article class=\"preview-card\">"
-            + "<h3>Experiencia</h3>"
-            + experiencePreview
-            + "</article>"
-            + "<article class=\"preview-card\">"
-            + "<h3>Habilidades</h3>"
-            + "<p class=\"preview-meta\">Formato: " + ui.escapeHtml(skills.mode === "categories" ? "Por categorias" : "Lista simple") + "</p>"
-            + skillsPreview
-            + "</article>"
-            + "<article class=\"preview-card\">"
-            + "<h3>Idiomas</h3>"
-            + languagePreview
-            + "</article>"
-            + "<article class=\"preview-card\">"
-            + "<h3>Certificaciones</h3>"
-            + certificationPreview
-            + "</article>"
-            + "<article class=\"preview-card\">"
-            + "<h3>Proyectos</h3>"
-            + projectPreview
-            + "</article>"
-            + "<article class=\"preview-card\">"
-            + "<h3>Formacion</h3>"
-            + educationPreview
-            + "</article>"
+            + (showExperience
+              ? "<article class=\"preview-card\">"
+                + "<h3>Experiencia</h3>"
+                + experiencePreview
+                + "</article>"
+              : "")
+            + (showSkills
+              ? "<article class=\"preview-card\">"
+                + "<h3>Habilidades</h3>"
+                + "<p class=\"preview-meta\">Formato: " + ui.escapeHtml(skills.mode === "categories" ? "Por categorias" : "Lista simple") + "</p>"
+                + skillsPreview
+                + "</article>"
+              : "")
+            + (showLanguages
+              ? "<article class=\"preview-card\">"
+                + "<h3>Idiomas</h3>"
+                + languagePreview
+                + "</article>"
+              : "")
+            + (showCertifications
+              ? "<article class=\"preview-card\">"
+                + "<h3>Certificaciones</h3>"
+                + certificationPreview
+                + "</article>"
+              : "")
+            + (showProjects
+              ? "<article class=\"preview-card\">"
+                + "<h3>Proyectos</h3>"
+                + projectPreview
+                + "</article>"
+              : "")
+            + (showEducation
+              ? "<article class=\"preview-card\">"
+                + "<h3>Formacion</h3>"
+                + educationPreview
+                + "</article>"
+              : "")
             + "<article class=\"preview-card\">"
             + "<h3>Esquema JSON</h3>"
             + "<p>" + ui.escapeHtml(config.cvSchema.title) + "</p>"
@@ -2166,6 +2218,20 @@
 
       // JS Module: app
       const app = {
+        getSectionConfig(sectionId) {
+          return config.supportedSectionCatalog.find((section) => section.id === sectionId) || null;
+        },
+        canToggleSectionVisibility(sectionId) {
+          const section = app.getSectionConfig(sectionId);
+          return Boolean(section) && section.visibility === "optional";
+        },
+        isSectionVisible(sectionId) {
+          const section = app.getSectionConfig(sectionId);
+          if (!section || section.visibility === "required") {
+            return true;
+          }
+          return Boolean(state.ui.sectionVisibility[sectionId]);
+        },
         normalizeExperienceAchievements(achievements) {
           if (Array.isArray(achievements)) {
             return achievements
@@ -3041,6 +3107,25 @@
         moveEducationEntryToPosition(index, rawTargetPosition) {
           app.moveListEntry("education", index, Number(rawTargetPosition) - 1, "Formacion", "movida");
         },
+        toggleSectionVisibility(sectionId) {
+          if (!app.canToggleSectionVisibility(sectionId)) {
+            return;
+          }
+          const currentlyVisible = app.isSectionVisible(sectionId);
+          const section = app.getSectionConfig(sectionId);
+          state.update({
+            ui: {
+              sectionVisibility: {
+                ...state.ui.sectionVisibility,
+                [sectionId]: !currentlyVisible,
+              },
+              message: {
+                tone: "success",
+                text: section.label + " " + (!currentlyVisible ? "visible" : "oculta") + " en la preview.",
+              },
+            },
+          });
+        },
         bindEvents() {
           ui.toolbar.addEventListener("click", (event) => {
             const button = event.target.closest("[data-section]");
@@ -3088,6 +3173,10 @@
             }
             if (actionButton && actionButton.dataset.action === "add-education-entry") {
               app.addEducationEntry();
+              return;
+            }
+            if (actionButton && actionButton.dataset.action === "toggle-section-visibility") {
+              app.toggleSectionVisibility(state.ui.activeSection);
               return;
             }
             const modalButton = event.target.closest("[data-modal]");
