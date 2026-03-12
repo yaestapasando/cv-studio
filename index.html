@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CV Studio</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f3efe6;
+      --surface: rgba(255, 252, 247, 0.92);
+      --surface-strong: #fffdf9;
+      --border: #d8cdbd;
+      --text: #1f1a14;
+      --muted: #6b5f52;
+      --accent: #1e5aa8;
+      --accent-soft: #dce8f8;
+      --shadow: 0 18px 40px rgba(37, 27, 18, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.7), transparent 30%),
+        linear-gradient(135deg, #efe6d8 0%, #f8f3ea 45%, #ebe3d4 100%);
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      padding: 24px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 20px;
+    }
+
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 16px;
+    }
+
+    .app-title {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+    }
+
+    .app-subtitle {
+      margin: 0;
+      max-width: 42rem;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    .app-status {
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.55);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.15fr);
+      gap: 20px;
+    }
+
+    .panel {
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .panel h2 {
+      margin: 0 0 8px;
+      font-size: 1.4rem;
+    }
+
+    .panel p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .editor-placeholder,
+    .preview-placeholder {
+      margin-top: 24px;
+      padding: 20px;
+      border: 1px dashed var(--border);
+      border-radius: 18px;
+      background: var(--surface-strong);
+    }
+
+    .preview-placeholder {
+      min-height: 320px;
+      display: grid;
+      align-content: start;
+      gap: 16px;
+    }
+
+    .preview-card {
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .preview-card:last-child {
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+
+    .preview-card h3 {
+      margin: 0 0 6px;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+    }
+
+    .preview-card p {
+      margin: 0;
+    }
+
+    @media (max-width: 900px) {
+      .app-header,
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .app-header {
+        align-items: start;
+      }
+
+      .app-status {
+        white-space: normal;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell" id="app">
+    <header class="app-header">
+      <div>
+        <p class="app-subtitle">Editor SPA para crear y exportar curriculums sin servidor ni dependencias externas.</p>
+        <h1 class="app-title">CV Studio</h1>
+      </div>
+      <div class="app-status" id="app-status">Base de la aplicacion lista</div>
+    </header>
+
+    <main class="workspace">
+      <section class="panel" id="editor-panel" aria-labelledby="editor-title">
+        <h2 id="editor-title">Editor</h2>
+        <p>Zona reservada para formularios, controles de plantilla y acciones de importacion/exportacion.</p>
+        <div class="editor-placeholder">
+          <p>El siguiente paso anadira los modulos de estado, render y persistencia dentro de este mismo archivo.</p>
+        </div>
+      </section>
+
+      <section class="panel" id="preview-panel" aria-labelledby="preview-title">
+        <h2 id="preview-title">Preview</h2>
+        <p>Previsualizacion inicial del CV con layout de dos paneles listo para evolucionar.</p>
+        <div class="preview-placeholder" aria-label="Vista previa del curriculum">
+          <article class="preview-card">
+            <h3>Perfil</h3>
+            <p>Nombre profesional, titular y resumen se mostraran aqui.</p>
+          </article>
+          <article class="preview-card">
+            <h3>Experiencia</h3>
+            <p>La experiencia laboral renderizada aparecera en esta columna.</p>
+          </article>
+          <article class="preview-card">
+            <h3>Formacion</h3>
+            <p>La informacion academica y certificaciones ocuparan este bloque.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const CVStudio = (() => {
+      // Convencion base de modulos internos: config, state, ui y app.
+      const config = {
+        appName: "CV Studio",
+      };
+
+      const state = {
+        booted: false,
+      };
+
+      const ui = {
+        status: document.getElementById("app-status"),
+      };
+
+      const app = {
+        boot() {
+          state.booted = true;
+          ui.status.textContent = config.appName + " preparado para inicializar la SPA";
+          document.body.dataset.appReady = "true";
+        },
+      };
+
+      return { app, config, state, ui };
+    })();
+
+    CVStudio.app.boot();
+  </script>
+</body>
+</html>
