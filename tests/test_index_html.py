@@ -404,6 +404,7 @@ process.stdout.write(JSON.stringify(result));
             'name: "Nombre del proyecto"',
             'role: "Rol"',
             'url: "Enlace"',
+            'stack: "Stack"',
             'summary: "Descripcion"',
             'highlights: "Hitos"',
             'const projectEntries = state.cv.projects.length',
@@ -427,6 +428,10 @@ process.stdout.write(JSON.stringify(result));
             'type=\\"url\\"',
             'data-project-field=\\"url\\"',
             'placeholder=\\"portfolio.dev/proyecto\\"',
+            'id=\\"project-stack-',
+            'name=\\"stack\\"',
+            'data-project-field=\\"stack\\"',
+            'placeholder=\\"Ej. HTML, CSS, JavaScript\\"',
             'id=\\"project-summary-',
             'name=\\"summary\\"',
             'data-project-field=\\"summary\\"',
@@ -440,6 +445,7 @@ process.stdout.write(JSON.stringify(result));
             'ui.escapeHtml(entry.role || "Rol pendiente")',
             'ui.escapeHtml(entry.summary || "Todavia no hay descripcion para este proyecto.")',
             'ui.escapeHtml(entry.url || "Sin enlace publicado")',
+            'ui.escapeHtml(entry.stack || "Stack pendiente")',
             'ui.renderAchievementList(ui.getProjectHighlights(entry), "Todavia no hay hitos definidos para este proyecto.")',
             '<div class=\\"editor-note\\" data-tone=\\"muted\\">Todavia no hay proyectos guardados en el CV.</div>',
             'data-action=\\"add-project-entry\\"',
@@ -461,6 +467,7 @@ process.stdout.write(JSON.stringify(result));
             '? entry.title',
             'role: entry && typeof entry.role === "string" ? entry.role : "",',
             'url: entry && typeof entry.url === "string" ? entry.url : "",',
+            'stack: entry && typeof entry.stack === "string" ? entry.stack : "",',
             'summary: entry && typeof entry.summary === "string" ? entry.summary : "",',
             "highlights: ui.getProjectHighlights(entry),",
             "const projects = Array.isArray(cvDocument.projects)",
@@ -478,6 +485,7 @@ process.stdout.write(JSON.stringify(result));
             'name: "",',
             'role: "",',
             'url: "",',
+            'stack: "",',
             'summary: "",',
             'highlights: [],',
             "const nextProjects = [...state.cv.projects, nextEntry];",
@@ -503,8 +511,8 @@ process.stdout.write(JSON.stringify(result));
             """
 const cv = CVStudio.app.cloneInitialCV();
 cv.projects = [
-  { name: "Primero", role: "Design", url: "uno.dev", summary: "Uno", highlights: ["A"] },
-  { name: "Segundo", role: "Code", url: "dos.dev", summary: "Dos", highlights: ["B"] },
+  { name: "Primero", role: "Design", url: "uno.dev", stack: "HTML", summary: "Uno", highlights: ["A"] },
+  { name: "Segundo", role: "Code", url: "dos.dev", stack: "JS", summary: "Dos", highlights: ["B"] },
 ];
 CVStudio.state.update({ cv, ui: { activeSection: "projects" } });
 CVStudio.app.moveProjectEntry(1, "up");
@@ -516,6 +524,28 @@ CVStudio.app.moveProjectEntry(1, "up");
         )
         self.assertEqual(result["names"], ["Segundo", "Primero"])
         self.assertEqual(result["message"], "Proyecto 2 movido a la posicion 1.")
+
+    def test_normalize_project_entry_preserves_stack(self):
+        result = self.run_js_scenario(
+            """
+const entry = CVStudio.app.normalizeProjectEntry({
+  title: "Atlas",
+  role: "Lead",
+  url: "atlas.dev",
+  stack: "HTML, CSS, JS",
+  summary: "Sistema",
+  highlights: "Uno\\nDos",
+});
+({
+  name: entry.name,
+  stack: entry.stack,
+  highlights: entry.highlights,
+});
+"""
+        )
+        self.assertEqual(result["name"], "Atlas")
+        self.assertEqual(result["stack"], "HTML, CSS, JS")
+        self.assertEqual(result["highlights"], ["Uno", "Dos"])
 
     def test_projects_inputs_and_actions_sync_with_global_state(self):
         expected_snippets = [
@@ -870,6 +900,7 @@ CVStudio.app.moveEducationEntry(1, "up");
             'ui.escapeHtml(entry.name || "Proyecto pendiente")',
             'ui.escapeHtml(entry.role || "Rol pendiente")',
             'ui.escapeHtml(entry.url || "Enlace pendiente")',
+            'ui.escapeHtml(entry.stack || "Stack pendiente")',
             'ui.escapeHtml(entry.summary || "Descripcion pendiente")',
             'ui.renderAchievementList(ui.getProjectHighlights(entry), "Hitos pendientes")',
             'Anade tu primer proyecto para completar esta vista previa.',
@@ -900,6 +931,7 @@ CVStudio.app.moveEducationEntry(1, "up");
             'items: { $ref: "#/$defs/projectEntry" },',
             "projectEntry: {",
             'required: ["name", "role", "summary"],',
+            'stack: { type: "string" },',
             'meta: { $ref: "#/$defs/meta" },',
             'required: ["version", "updatedAt"],',
             'version: { type: "integer", const: 1 },',
@@ -1246,6 +1278,7 @@ CVStudio.state.update({ cv: CVStudio.app.normalizeCvDocument(cv), ui: { activeSe
   hasProjectsProperty: Object.prototype.hasOwnProperty.call(CVStudio.config.cvSchema.properties, "projects"),
   projectItemsRef: CVStudio.config.cvSchema.properties.projects.items.$ref,
   projectEntryRequired: CVStudio.config.cvSchema.$defs.projectEntry.required,
+  hasProjectStack: Object.prototype.hasOwnProperty.call(CVStudio.config.cvSchema.$defs.projectEntry.properties, "stack"),
 });
 """
         )
@@ -1253,6 +1286,7 @@ CVStudio.state.update({ cv: CVStudio.app.normalizeCvDocument(cv), ui: { activeSe
         self.assertTrue(result["hasProjectsProperty"])
         self.assertEqual(result["projectItemsRef"], "#/$defs/projectEntry")
         self.assertEqual(result["projectEntryRequired"], ["name", "role", "summary"])
+        self.assertTrue(result["hasProjectStack"])
 
     def test_boot_uses_persisted_state_when_available(self):
         expected_snippets = [

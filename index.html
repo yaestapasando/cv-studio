@@ -533,6 +533,7 @@
           name: "Nombre del proyecto",
           role: "Rol",
           url: "Enlace",
+          stack: "Stack",
           summary: "Descripcion",
           highlights: "Hitos",
         },
@@ -624,6 +625,7 @@
                 name: { type: "string", minLength: 1 },
                 role: { type: "string", minLength: 1 },
                 url: { type: "string", format: "uri-reference" },
+                stack: { type: "string" },
                 summary: { type: "string", minLength: 1 },
                 highlights: {
                   type: "array",
@@ -1253,6 +1255,17 @@
                 + " value=\"" + ui.escapeHtml(entry.url || "") + "\">"
                 + "</div>"
                 + "<div class=\"editor-group\">"
+                + "<label for=\"project-stack-" + String(index) + "\"><span>Stack</span></label>"
+                + "<input"
+                + " id=\"project-stack-" + String(index) + "\""
+                + " name=\"stack\""
+                + " data-project-field=\"stack\""
+                + " class=\"editor-field editor-input\""
+                + " type=\"text\""
+                + " placeholder=\"Ej. HTML, CSS, JavaScript\""
+                + " value=\"" + ui.escapeHtml(entry.stack || "") + "\">"
+                + "</div>"
+                + "<div class=\"editor-group\">"
                 + "<label for=\"project-summary-" + String(index) + "\"><span>Descripcion</span></label>"
                 + "<textarea"
                 + " id=\"project-summary-" + String(index) + "\""
@@ -1284,6 +1297,10 @@
                 + "<div class=\"editor-group\">"
                 + "<span>Enlace actual</span>"
                 + "<div class=\"editor-field\">" + ui.escapeHtml(entry.url || "Sin enlace publicado") + "</div>"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<span>Stack actual</span>"
+                + "<div class=\"editor-field\">" + ui.escapeHtml(entry.stack || "Stack pendiente") + "</div>"
                 + "</div>"
                 + "<div class=\"editor-group\">"
                 + "<span>Hitos actuales</span>"
@@ -1482,6 +1499,7 @@
               + "<p>" + ui.escapeHtml(entry.name || "Proyecto pendiente") + "</p>"
               + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.role || "Rol pendiente") + "</p>"
               + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.url || "Enlace pendiente") + "</p>"
+              + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.stack || "Stack pendiente") + "</p>"
               + "<p>" + ui.escapeHtml(entry.summary || "Descripcion pendiente") + "</p>"
               + ui.renderAchievementList(ui.getProjectHighlights(entry), "Hitos pendientes")
               + "</div>")
@@ -1604,6 +1622,7 @@
                 : "",
             role: entry && typeof entry.role === "string" ? entry.role : "",
             url: entry && typeof entry.url === "string" ? entry.url : "",
+            stack: entry && typeof entry.stack === "string" ? entry.stack : "",
             summary: entry && typeof entry.summary === "string" ? entry.summary : "",
             highlights: ui.getProjectHighlights(entry),
           };
@@ -1936,6 +1955,7 @@
             name: "",
             role: "",
             url: "",
+            stack: "",
             summary: "",
             highlights: [],
           };
