@@ -285,6 +285,44 @@ class IndexHtmlTest(unittest.TestCase):
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
 
+    def test_experience_section_removes_entries_from_state(self):
+        expected_snippets = [
+            "removeExperienceEntry(index) {",
+            "const nextExperience = state.cv.experience.filter((entry, entryIndex) => entryIndex !== index);",
+            "experience: nextExperience,",
+            'text: "Experiencia " + String(index + 1) + " eliminada.",',
+            'if (actionButton.dataset.action === "remove-experience-entry") {',
+            "app.removeExperienceEntry(experienceIndex);",
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_education_section_lists_existing_entries(self):
+        expected_snippets = [
+            'const educationEntries = state.cv.education.length',
+            '<div class=\\"editor-note\\" data-tone=\\"muted\\">Listado de formacion existente en el documento.</div>',
+            '<button type=\\"button\\" class=\\"toolbar-pill toolbar-button\\" data-action=\\"remove-education-entry\\"',
+            'data-education-index=\\"" + String(index) + "\\"',
+            '>Eliminar</button>',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_education_section_removes_entries_from_state(self):
+        expected_snippets = [
+            "removeEducationEntry(index) {",
+            "const nextEducation = state.cv.education.filter((entry, entryIndex) => entryIndex !== index);",
+            "education: nextEducation,",
+            'text: "Formacion " + String(index + 1) + " eliminada.",',
+            'if (actionButton.dataset.action === "remove-education-entry") {',
+            "app.removeEducationEntry(educationIndex);",
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
     def test_experience_section_exposes_add_action_in_toolbar(self):
         expected_snippets = [
             'const contextualActions = state.ui.activeSection === "experience"',
