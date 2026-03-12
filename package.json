@@ -1,0 +1,19 @@
+{
+  "name": "cv-studio",
+  "version": "0.1.0",
+  "description": "CV Builder SPA — single HTML file, no external runtime dependencies",
+  "private": true,
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint:html": "node tests/lint-html.js"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "testMatch": ["**/tests/**/*.test.js"]
+  }
+}
