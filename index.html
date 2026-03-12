@@ -228,8 +228,10 @@
 
         .form-group input:focus,
         .form-group textarea:focus {
-            outline: none;
+            outline: 2px solid transparent;
+            outline-offset: 2px;
             border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgb(37 99 235 / 20%);
         }
 
         .btn {
@@ -244,6 +246,11 @@
             font-size: 0.875rem;
             transition: all 0.2s;
             border: none;
+        }
+
+        .btn:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
         }
 
         .btn-primary {
@@ -757,33 +764,33 @@
                         itemDiv.innerHTML = `
                             <div class="experience-item-header">
                                 <div class="experience-item-controls">
-                                    <button class="btn btn-sm" data-action="move-up" data-id="${exp.id}" title="Subir" ${index === 0 ? 'disabled' : ''}>↑</button>
-                                    <button class="btn btn-sm" data-action="move-down" data-id="${exp.id}" title="Bajar" ${index === this.state.experience.length - 1 ? 'disabled' : ''}>↓</button>
-                                    <button class="btn btn-danger btn-sm" data-action="remove" data-id="${exp.id}">Eliminar</button>
+                                    <button class="btn btn-sm" data-action="move-up" data-id="${exp.id}" title="Subir" aria-label="Subir experiencia" ${index === 0 ? 'disabled' : ''}>↑</button>
+                                    <button class="btn btn-sm" data-action="move-down" data-id="${exp.id}" title="Bajar" aria-label="Bajar experiencia" ${index === this.state.experience.length - 1 ? 'disabled' : ''}>↓</button>
+                                    <button class="btn btn-danger btn-sm" data-action="remove" data-id="${exp.id}" aria-label="Eliminar experiencia">Eliminar</button>
                                 </div>
                             </div>
                             <div class="grid-2">
                                 <div class="form-group">
-                                    <label>Empresa</label>
-                                    <input type="text" data-path="experience.${index}.company" value="${exp.company}" placeholder="Ej. Google">
+                                    <label for="exp-company-${exp.id}">Empresa</label>
+                                    <input type="text" id="exp-company-${exp.id}" data-path="experience.${index}.company" value="${exp.company}" placeholder="Ej. Google">
                                 </div>
                                 <div class="form-group">
-                                    <label>Puesto</label>
-                                    <input type="text" data-path="experience.${index}.position" value="${exp.position}" placeholder="Ej. Senior Developer">
+                                    <label for="exp-position-${exp.id}">Puesto</label>
+                                    <input type="text" id="exp-position-${exp.id}" data-path="experience.${index}.position" value="${exp.position}" placeholder="Ej. Senior Developer">
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>Ubicación</label>
-                                <input type="text" data-path="experience.${index}.location" value="${exp.location || ''}" placeholder="Ej. Madrid, España">
+                                <label for="exp-location-${exp.id}">Ubicación</label>
+                                <input type="text" id="exp-location-${exp.id}" data-path="experience.${index}.location" value="${exp.location || ''}" placeholder="Ej. Madrid, España">
                             </div>
                             <div class="grid-2">
                                 <div class="form-group">
-                                    <label>Fecha Inicio</label>
-                                    <input type="text" data-path="experience.${index}.startDate" value="${exp.startDate}" placeholder="Ej. Ene 2020">
+                                    <label for="exp-start-${exp.id}">Fecha Inicio</label>
+                                    <input type="text" id="exp-start-${exp.id}" data-path="experience.${index}.startDate" value="${exp.startDate}" placeholder="Ej. Ene 2020">
                                 </div>
                                 <div class="form-group">
-                                    <label>Fecha Fin</label>
-                                    <input type="text" data-path="experience.${index}.endDate" value="${exp.endDate}" placeholder="Ej. Actual" ${exp.current ? 'disabled' : ''}>
+                                    <label for="exp-end-${exp.id}">Fecha Fin</label>
+                                    <input type="text" id="exp-end-${exp.id}" data-path="experience.${index}.endDate" value="${exp.endDate}" placeholder="Ej. Actual" ${exp.current ? 'disabled' : ''}>
                                 </div>
                             </div>
                             <div class="form-group checkbox-group mt-neg-sm mb-1">
@@ -791,8 +798,8 @@
                                 <label for="curr-${exp.id}" class="mb-0">Trabajo actual</label>
                             </div>
                             <div class="form-group">
-                                <label>Descripción</label>
-                                <textarea data-path="experience.${index}.description" placeholder="Describe tus responsabilidades y logros...">${exp.description}</textarea>
+                                <label for="exp-desc-${exp.id}">Descripción</label>
+                                <textarea id="exp-desc-${exp.id}" data-path="experience.${index}.description" placeholder="Describe tus responsabilidades y logros...">${exp.description}</textarea>
                             </div>
                         `;
                         self.experienceListContainer.appendChild(itemDiv);
@@ -850,33 +857,33 @@
                         itemDiv.innerHTML = `
                             <div class="experience-item-header">
                                 <div class="experience-item-controls">
-                                    <button class="btn btn-sm" data-action="move-up" data-id="${edu.id}" title="Subir" ${index === 0 ? 'disabled' : ''}>↑</button>
-                                    <button class="btn btn-sm" data-action="move-down" data-id="${edu.id}" title="Bajar" ${index === this.state.education.length - 1 ? 'disabled' : ''}>↓</button>
-                                    <button class="btn btn-danger btn-sm" data-action="remove" data-id="${edu.id}">Eliminar</button>
+                                    <button class="btn btn-sm" data-action="move-up" data-id="${edu.id}" title="Subir" aria-label="Subir educación" ${index === 0 ? 'disabled' : ''}>↑</button>
+                                    <button class="btn btn-sm" data-action="move-down" data-id="${edu.id}" title="Bajar" aria-label="Bajar educación" ${index === this.state.education.length - 1 ? 'disabled' : ''}>↓</button>
+                                    <button class="btn btn-danger btn-sm" data-action="remove" data-id="${edu.id}" aria-label="Eliminar educación">Eliminar</button>
                                 </div>
                             </div>
                             <div class="grid-2">
                                 <div class="form-group">
-                                    <label>Institución</label>
-                                    <input type="text" data-path="education.${index}.institution" value="${edu.institution}" placeholder="Ej. Universidad Complutense">
+                                    <label for="edu-institution-${edu.id}">Institución</label>
+                                    <input type="text" id="edu-institution-${edu.id}" data-path="education.${index}.institution" value="${edu.institution}" placeholder="Ej. Universidad Complutense">
                                 </div>
                                 <div class="form-group">
-                                    <label>Titulación</label>
-                                    <input type="text" data-path="education.${index}.degree" value="${edu.degree}" placeholder="Ej. Grado en Ingeniería Informática">
+                                    <label for="edu-degree-${edu.id}">Titulación</label>
+                                    <input type="text" id="edu-degree-${edu.id}" data-path="education.${index}.degree" value="${edu.degree}" placeholder="Ej. Grado en Ingeniería Informática">
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>Ubicación</label>
-                                <input type="text" data-path="education.${index}.location" value="${edu.location || ''}" placeholder="Ej. Madrid, España">
+                                <label for="edu-location-${edu.id}">Ubicación</label>
+                                <input type="text" id="edu-location-${edu.id}" data-path="education.${index}.location" value="${edu.location || ''}" placeholder="Ej. Madrid, España">
                             </div>
                             <div class="grid-2">
                                 <div class="form-group">
-                                    <label>Fecha Inicio</label>
-                                    <input type="text" data-path="education.${index}.startDate" value="${edu.startDate}" placeholder="Ej. 2015">
+                                    <label for="edu-start-${edu.id}">Fecha Inicio</label>
+                                    <input type="text" id="edu-start-${edu.id}" data-path="education.${index}.startDate" value="${edu.startDate}" placeholder="Ej. 2015">
                                 </div>
                                 <div class="form-group">
-                                    <label>Fecha Fin</label>
-                                    <input type="text" data-path="education.${index}.endDate" value="${edu.endDate}" placeholder="Ej. 2019" ${edu.current ? 'disabled' : ''}>
+                                    <label for="edu-end-${edu.id}">Fecha Fin</label>
+                                    <input type="text" id="edu-end-${edu.id}" data-path="education.${index}.endDate" value="${edu.endDate}" placeholder="Ej. 2019" ${edu.current ? 'disabled' : ''}>
                                 </div>
                             </div>
                             <div class="form-group checkbox-group mt-neg-sm mb-1">
@@ -884,8 +891,8 @@
                                 <label for="curr-edu-${edu.id}" class="mb-0">Cursando actualmente</label>
                             </div>
                             <div class="form-group">
-                                <label>Descripción (Opcional)</label>
-                                <textarea data-path="education.${index}.description" placeholder="Describe logros académicos, proyectos destacados...">${edu.description}</textarea>
+                                <label for="edu-desc-${edu.id}">Descripción (Opcional)</label>
+                                <textarea id="edu-desc-${edu.id}" data-path="education.${index}.description" placeholder="Describe logros académicos, proyectos destacados...">${edu.description}</textarea>
                             </div>
                         `;
                         self.educationListContainer.appendChild(itemDiv);
