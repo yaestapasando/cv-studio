@@ -9,6 +9,21 @@ INDEX_HTML = ROOT / "index.html"
 def main():
     content = INDEX_HTML.read_text(encoding="utf-8")
     errors = []
+    section_markers = [
+        "<!-- HTML Section: App Shell -->",
+        "<!-- HTML Section: Header -->",
+        "<!-- HTML Section: Workspace -->",
+        "<!-- HTML Section: Editor Panel -->",
+        "<!-- HTML Section: Preview Panel -->",
+        "/* CSS Section: Theme */",
+        "/* CSS Section: Base */",
+        "/* CSS Section: Layout */",
+        "/* CSS Section: Components */",
+        "/* CSS Section: Responsive */",
+        "// JS Section: Namespace",
+        "// JS Section: Modules",
+        "// JS Section: Bootstrap",
+    ]
 
     if not content.startswith("<!DOCTYPE html>"):
         errors.append("Missing HTML5 doctype.")
@@ -20,6 +35,9 @@ def main():
         errors.append("Missing embedded CSS block.")
     if "<script>" not in content or "</script>" not in content:
         errors.append("Missing embedded JS block.")
+    missing_markers = [marker for marker in section_markers if marker not in content]
+    if missing_markers:
+        errors.append("Missing internal section markers.")
     if "http://" in content or "https://" in content:
         lines = [line.strip() for line in content.splitlines() if "http://" in line or "https://" in line]
         if lines:

@@ -52,6 +52,26 @@ class IndexHtmlTest(unittest.TestCase):
         self.assertIn("const CVStudio = (() => {", self.content)
         self.assertIn("CVStudio.app.boot();", self.content)
 
+    def test_defines_internal_html_css_js_sections(self):
+        expected_markers = [
+            "<!-- HTML Section: App Shell -->",
+            "<!-- HTML Section: Header -->",
+            "<!-- HTML Section: Workspace -->",
+            "<!-- HTML Section: Editor Panel -->",
+            "<!-- HTML Section: Preview Panel -->",
+            "/* CSS Section: Theme */",
+            "/* CSS Section: Base */",
+            "/* CSS Section: Layout */",
+            "/* CSS Section: Components */",
+            "/* CSS Section: Responsive */",
+            "// JS Section: Namespace",
+            "// JS Section: Modules",
+            "// JS Section: Bootstrap",
+        ]
+        for marker in expected_markers:
+            with self.subTest(marker=marker):
+                self.assertIn(marker, self.content)
+
     def test_has_no_remote_runtime_dependencies(self):
         self.assertEqual(self.parser.remote_refs, [])
 
