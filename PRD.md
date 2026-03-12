@@ -39,7 +39,7 @@ Interfaz de usuario para introducir y modificar los datos del currículum.
   - [x] Botones para eliminar o reordenar cada ítem.
 - [x] Crear sección dinámica de **Educación** (titulación, institución, fechas).
 - [x] Crear sección de **Habilidades** (input de texto simple o sistema de etiquetas/tags).
-- [ ] Conectar todos los eventos `oninput`/`onchange` de los formularios al gestor del estado.
+- [x] Conectar todos los eventos `oninput`/`onchange` de los formularios al gestor del estado.
 
 ### Feature 4: Motor de Renderizado (Vista Previa en Tiempo Real)
 La representación visual del currículum en formato documento.

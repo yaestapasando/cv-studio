@@ -517,8 +517,8 @@
                 bindEvents: function() {
                     const self = this;
                     
-                    // Escuchar cambios en los inputs del editor
-                    this.editor.addEventListener('input', (e) => {
+                    // Escuchar cambios en los inputs del editor (input para tiempo real, change para asegurar captura)
+                    const handleInput = (e) => {
                         const path = e.target.getAttribute('data-path');
                         if (path) {
                             const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
@@ -532,7 +532,10 @@
                                 self.renderEducationEditor();
                             }
                         }
-                    });
+                    };
+
+                    this.editor.addEventListener('input', handleInput);
+                    this.editor.addEventListener('change', handleInput);
 
                     // Botón añadir experiencia
                     if (this.addExperienceBtn) {
