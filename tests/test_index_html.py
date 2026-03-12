@@ -173,6 +173,7 @@ process.stdout.write(JSON.stringify(result));
     optionalCount: catalog.filter((section) => section.visibility === "optional").length,
     sectionButtons: CVStudio.config.sections.map((section) => section.id),
     defaultVisibility: CVStudio.config.uiDefaults.sectionVisibility,
+    defaultSectionOrder: CVStudio.config.uiDefaults.sectionOrder,
   };
 })()
 """)
@@ -198,6 +199,10 @@ process.stdout.write(JSON.stringify(result));
                 "projects": True,
                 "education": True,
             },
+        )
+        self.assertEqual(
+            result["defaultSectionOrder"],
+            ["experience", "skills", "languages", "certifications", "projects", "education"],
         )
 
     def test_defines_two_panel_workspace_layout(self):
@@ -1915,9 +1920,12 @@ CVStudio.state.update({ cv: CVStudio.app.normalizeCvDocument(cv), ui: { activeSe
             'activeSection: state.ui.activeSection,',
             'template: state.ui.template,',
             "sectionVisibility: { ...state.ui.sectionVisibility },",
+            "sectionOrder: [...state.ui.sectionOrder],",
             'if (state.hasOwn(uiPatch, "sectionVisibility") && uiPatch.sectionVisibility && typeof uiPatch.sectionVisibility === "object") {',
             "nextUi.sectionVisibility = config.supportedSectionCatalog.reduce((visibilityMap, section) => {",
             'visibilityMap[section.id] = section.visibility === "required"',
+            'if (state.hasOwn(uiPatch, "sectionOrder")) {',
+            "nextUi.sectionOrder = app.normalizeSectionOrder(uiPatch.sectionOrder);",
             "subscribe(listener) {",
             'if (typeof listener !== "function") {',
             "state.listeners.push(listener);",
@@ -1984,8 +1992,14 @@ CVStudio.state.update({ cv: CVStudio.app.normalizeCvDocument(cv), ui: { activeSe
             "event.target.closest(\"[data-modal]\")",
             'data-action=\\"toggle-section-visibility\\"',
             'app.toggleSectionVisibility(state.ui.activeSection);',
+            'app.moveSection(state.ui.activeSection, "up");',
+            'app.moveSection(state.ui.activeSection, "down");',
+            'app.moveSectionToPosition(state.ui.activeSection, targetInput ? targetInput.value : "");',
             'app.canToggleSectionVisibility(state.ui.activeSection)',
             'app.isSectionVisible(state.ui.activeSection)',
+            'const orderedSectionIds = app.normalizeSectionOrder(state.ui.sectionOrder);',
+            'orderedSectionIds.map((sectionId) => compactSections[sectionId] || "").join("")',
+            'orderedSectionIds.map((sectionId) => classicSections[sectionId] || "").join("")',
             "ui.modal.addEventListener(\"click\"",
             "event.target.closest(\"[data-close-modal]\")",
             "document.body.dataset.appReady = \"true\";",
@@ -2094,9 +2108,16 @@ CVStudio.state.update({ cv: CVStudio.app.normalizeCvDocument(cv), ui: { activeSe
             ".app-modal {",
             ".modal-card {",
             "sectionVisibility: supportedSectionCatalog.reduce((visibilityMap, section) => {",
+            "sectionOrder: supportedSectionCatalog",
             "getSectionConfig(sectionId) {",
+            "normalizeSectionOrder(sectionOrder) {",
+            "getToolbarSections() {",
+            "isSectionReorderable(sectionId) {",
+            "getSectionPosition(sectionId) {",
             "canToggleSectionVisibility(sectionId) {",
             "isSectionVisible(sectionId) {",
+            "moveSection(sectionId, direction) {",
+            "moveSectionToPosition(sectionId, rawTargetPosition) {",
             "toggleSectionVisibility(sectionId) {",
             'kind: modalButton.dataset.modal,',
             "open: true,",
@@ -2134,6 +2155,68 @@ CVStudio.ui.renderPreview();
         self.assertIn("Mostrar seccion", result["toolbar"])
         self.assertNotIn("<h3>Habilidades</h3>", result["preview"])
         self.assertEqual(result["message"], "Habilidades oculta en la preview.")
+
+    def test_section_order_is_sanitized_and_toolbar_follows_it(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+CVStudio.state.update({
+  cv,
+  ui: {
+    activeSection: "projects",
+    sectionOrder: ["projects", "projects", "education", "unknown"],
+  },
+});
+CVStudio.ui.renderToolbar();
+({
+  sectionOrder: CVStudio.state.ui.sectionOrder,
+  toolbar: CVStudio.ui.toolbar.innerHTML,
+});
+"""
+        )
+        self.assertEqual(
+            result["sectionOrder"],
+            ["projects", "education", "experience", "skills", "languages", "certifications"],
+        )
+        projects_position = result["toolbar"].find('data-section="projects"')
+        education_position = result["toolbar"].find('data-section="education"')
+        experience_position = result["toolbar"].find('data-section="experience"')
+        self.assertGreater(projects_position, -1)
+        self.assertLess(projects_position, education_position)
+        self.assertLess(education_position, experience_position)
+
+    def test_move_section_reorders_preview_and_updates_message(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+cv.experience = [
+  { role: "Lead Engineer", company: "Acme", location: "Madrid", startDate: "2024-01", isCurrent: true, endDate: "", summary: "Platform", achievements: [], notes: [] },
+];
+cv.projects = [
+  { name: "CV Studio", role: "Creator", url: "", stack: "HTML", summary: "Editor", highlights: [] },
+];
+cv.education = [
+  { title: "Computer Science", center: "UPM", dates: "2015 - 2019", details: "", notes: [] },
+];
+CVStudio.state.update({ cv, ui: { activeSection: "projects" } });
+CVStudio.app.moveSectionToPosition("projects", "1");
+CVStudio.ui.renderPreview();
+({
+  sectionOrder: CVStudio.state.ui.sectionOrder,
+  preview: CVStudio.ui.previewContent.innerHTML,
+  message: CVStudio.state.ui.message.text,
+});
+"""
+        )
+        self.assertEqual(
+            result["sectionOrder"][:3],
+            ["projects", "experience", "skills"],
+        )
+        projects_position = result["preview"].find("<h3>Proyectos</h3>")
+        experience_position = result["preview"].find("<h3>Experiencia</h3>")
+        self.assertGreater(projects_position, -1)
+        self.assertLess(projects_position, experience_position)
+        self.assertEqual(result["message"], "Proyectos movida a la posicion 1.")
 
     def test_section_visibility_toggle_is_ignored_for_required_sections(self):
         result = self.run_js_scenario(
@@ -2205,6 +2288,34 @@ CVStudio.ui.renderPreview();
         self.assertIn("ada@example.com | +34 600 000 000 | Madrid, Espana", result["html"])
         self.assertIn("Frontend: HTML, CSS", result["html"])
         self.assertIn("Lead Engineer", result["html"])
+
+    def test_render_preview_uses_section_order_in_compact_template(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+cv.experience = [
+  { role: "Lead Engineer", company: "Acme", location: "Madrid", startDate: "2024-01", isCurrent: true, endDate: "", summary: "Platform", achievements: [], notes: [] },
+];
+cv.projects = [
+  { name: "CV Studio", role: "Creator", url: "", stack: "HTML", summary: "Editor", highlights: [] },
+];
+CVStudio.state.update({
+  cv,
+  ui: {
+    template: "compact",
+    sectionOrder: ["projects", "experience", "skills", "languages", "certifications", "education"],
+  },
+});
+CVStudio.ui.renderPreview();
+({
+  html: CVStudio.ui.previewContent.innerHTML,
+});
+"""
+        )
+        projects_position = result["html"].find("<h3>Proyectos</h3>")
+        experience_position = result["html"].find("<h3>Experiencia</h3>")
+        self.assertGreater(projects_position, -1)
+        self.assertLess(projects_position, experience_position)
 
     def test_render_preview_hides_hidden_sections_in_compact_template(self):
         result = self.run_js_scenario(

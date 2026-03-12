@@ -606,6 +606,9 @@
             visibilityMap[section.id] = true;
             return visibilityMap;
           }, {}),
+          sectionOrder: supportedSectionCatalog
+            .filter((section) => section.id !== "basics")
+            .map((section) => section.id),
           message: {
             tone: "info",
             text: "La app ha arrancado en local con estado inicial en memoria y sin dependencias externas.",
@@ -879,6 +882,7 @@
           activeSection: config.uiDefaults.activeSection,
           template: config.uiDefaults.template,
           sectionVisibility: { ...config.uiDefaults.sectionVisibility },
+          sectionOrder: [...config.uiDefaults.sectionOrder],
           message: { ...config.uiDefaults.message },
           modal: { ...config.uiDefaults.modal },
         },
@@ -926,6 +930,7 @@
             activeSection: state.ui.activeSection,
             template: state.ui.template,
             sectionVisibility: { ...state.ui.sectionVisibility },
+            sectionOrder: [...state.ui.sectionOrder],
             message: { ...state.ui.message },
             modal: { ...state.ui.modal },
           };
@@ -944,6 +949,9 @@
                   : nextUi.sectionVisibility[section.id];
               return visibilityMap;
             }, {});
+          }
+          if (state.hasOwn(uiPatch, "sectionOrder")) {
+            nextUi.sectionOrder = app.normalizeSectionOrder(uiPatch.sectionOrder);
           }
           if (state.hasOwn(uiPatch, "message") && uiPatch.message && typeof uiPatch.message === "object") {
             nextUi.message = {
@@ -1206,7 +1214,7 @@
             + "</div>";
         },
         renderToolbar() {
-          const sectionButtons = config.sections
+          const sectionButtons = app.getToolbarSections()
             .map((section) => {
               const active = section.id === state.ui.activeSection;
               return "<button"
@@ -1246,11 +1254,27 @@
               + (app.isSectionVisible(state.ui.activeSection) ? "Ocultar seccion" : "Mostrar seccion")
               + "</button>"
             : "";
+          const sectionReorderActions = app.isSectionReorderable(state.ui.activeSection)
+            ? "<div class=\"entry-card-manual-order\">"
+              + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"move-active-section-up\" aria-pressed=\"false\">Subir seccion</button>"
+              + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"move-active-section-down\" aria-pressed=\"false\">Bajar seccion</button>"
+              + "<label class=\"editor-help\" for=\"active-section-target-position\">Mover a</label>"
+              + "<input"
+              + " id=\"active-section-target-position\""
+              + " class=\"entry-card-position-input\""
+              + " type=\"number\""
+              + " min=\"1\""
+              + " max=\"" + String(state.ui.sectionOrder.length) + "\""
+              + " value=\"" + String(app.getSectionPosition(state.ui.activeSection) + 1) + "\">"
+              + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"move-active-section-to-position\" aria-pressed=\"false\">Mover</button>"
+              + "</div>"
+            : "";
           ui.toolbar.innerHTML = sectionButtons
             + "<span class=\"toolbar-divider\" aria-hidden=\"true\"></span>"
             + templateButtons
             + contextualActions
             + visibilityAction
+            + sectionReorderActions
             + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-modal=\"template-help\" aria-pressed=\"false\">Ayuda plantilla</button>";
         },
         renderEditor() {
@@ -1951,6 +1975,7 @@
           const basics = state.cv.basics;
           const skills = state.cv.skills;
           const requiredSections = config.cvSchema.required.join(", ");
+          const orderedSectionIds = app.normalizeSectionOrder(state.ui.sectionOrder);
           const showExperience = app.isSectionVisible("experience");
           const showSkills = app.isSectionVisible("skills");
           const showLanguages = app.isSectionVisible("languages");
@@ -2079,6 +2104,46 @@
                 + "<p class=\"preview-compact-meta\">" + ui.escapeHtml(entry.title || "Certificacion pendiente") + " | " + ui.escapeHtml(entry.issuer || "Emisor pendiente") + "</p>")
                 .join("")
               : "<p class=\"preview-compact-meta\">Anade certificaciones.</p>";
+            const compactSections = {
+              experience: showExperience
+                ? "<section class=\"preview-compact-section\">"
+                  + "<h3>Experiencia</h3>"
+                  + "<div class=\"preview-compact-list\">" + compactExperience + "</div>"
+                  + "</section>"
+                : "",
+              skills: showSkills
+                ? "<section class=\"preview-compact-section\">"
+                  + "<h3>Habilidades</h3>"
+                  + "<div class=\"preview-compact-list\">"
+                  + compactSkills.map((entry) => "<p class=\"preview-compact-meta\">" + ui.escapeHtml(entry) + "</p>").join("")
+                  + "</div>"
+                  + "</section>"
+                : "",
+              projects: showProjects
+                ? "<section class=\"preview-compact-section\">"
+                  + "<h3>Proyectos</h3>"
+                  + "<div class=\"preview-compact-list\">" + compactProjects + "</div>"
+                  + "</section>"
+                : "",
+              education: showEducation
+                ? "<section class=\"preview-compact-section\">"
+                  + "<h3>Formacion</h3>"
+                  + "<div class=\"preview-compact-list\">" + compactEducation + "</div>"
+                  + "</section>"
+                : "",
+              languages: showLanguages
+                ? "<section class=\"preview-compact-section\">"
+                  + "<h3>Idiomas</h3>"
+                  + "<div class=\"preview-compact-list\">" + compactLanguages + "</div>"
+                  + "</section>"
+                : "",
+              certifications: showCertifications
+                ? "<section class=\"preview-compact-section\">"
+                  + "<h3>Certificaciones</h3>"
+                  + "<div class=\"preview-compact-list\">" + compactCertifications + "</div>"
+                  + "</section>"
+                : "",
+            };
             ui.previewContent.innerHTML = ""
               + "<article class=\"preview-compact\">"
               + "<header class=\"preview-compact-header\">"
@@ -2089,44 +2154,7 @@
               + "<p class=\"preview-compact-summary\">" + ui.escapeHtml(basics.summary || "Completa tu perfil para ver aqui el resumen profesional.") + "</p>"
               + "</header>"
               + "<div class=\"preview-compact-grid\">"
-              + (showExperience
-                ? "<section class=\"preview-compact-section\">"
-                  + "<h3>Experiencia</h3>"
-                  + "<div class=\"preview-compact-list\">" + compactExperience + "</div>"
-                  + "</section>"
-                : "")
-              + (showSkills
-                ? "<section class=\"preview-compact-section\">"
-                  + "<h3>Habilidades</h3>"
-                  + "<div class=\"preview-compact-list\">"
-                  + compactSkills.map((entry) => "<p class=\"preview-compact-meta\">" + ui.escapeHtml(entry) + "</p>").join("")
-                  + "</div>"
-                  + "</section>"
-                : "")
-              + (showProjects
-                ? "<section class=\"preview-compact-section\">"
-                  + "<h3>Proyectos</h3>"
-                  + "<div class=\"preview-compact-list\">" + compactProjects + "</div>"
-                  + "</section>"
-                : "")
-              + (showEducation
-                ? "<section class=\"preview-compact-section\">"
-                  + "<h3>Formacion</h3>"
-                  + "<div class=\"preview-compact-list\">" + compactEducation + "</div>"
-                  + "</section>"
-                : "")
-              + (showLanguages
-                ? "<section class=\"preview-compact-section\">"
-                  + "<h3>Idiomas</h3>"
-                  + "<div class=\"preview-compact-list\">" + compactLanguages + "</div>"
-                  + "</section>"
-                : "")
-              + (showCertifications
-                ? "<section class=\"preview-compact-section\">"
-                  + "<h3>Certificaciones</h3>"
-                  + "<div class=\"preview-compact-list\">" + compactCertifications + "</div>"
-                  + "</section>"
-                : "")
+              + orderedSectionIds.map((sectionId) => compactSections[sectionId] || "").join("")
               + "<section class=\"preview-compact-section\">"
               + "<h3>Esquema</h3>"
               + "<p class=\"preview-compact-meta\">" + ui.escapeHtml(config.cvSchema.title) + "</p>"
@@ -2136,6 +2164,45 @@
               + "</article>";
             return;
           }
+          const classicSections = {
+            experience: showExperience
+              ? "<article class=\"preview-card\">"
+                + "<h3>Experiencia</h3>"
+                + experiencePreview
+                + "</article>"
+              : "",
+            skills: showSkills
+              ? "<article class=\"preview-card\">"
+                + "<h3>Habilidades</h3>"
+                + "<p class=\"preview-meta\">Formato: " + ui.escapeHtml(skills.mode === "categories" ? "Por categorias" : "Lista simple") + "</p>"
+                + skillsPreview
+                + "</article>"
+              : "",
+            languages: showLanguages
+              ? "<article class=\"preview-card\">"
+                + "<h3>Idiomas</h3>"
+                + languagePreview
+                + "</article>"
+              : "",
+            certifications: showCertifications
+              ? "<article class=\"preview-card\">"
+                + "<h3>Certificaciones</h3>"
+                + certificationPreview
+                + "</article>"
+              : "",
+            projects: showProjects
+              ? "<article class=\"preview-card\">"
+                + "<h3>Proyectos</h3>"
+                + projectPreview
+                + "</article>"
+              : "",
+            education: showEducation
+              ? "<article class=\"preview-card\">"
+                + "<h3>Formacion</h3>"
+                + educationPreview
+                + "</article>"
+              : "",
+          };
           ui.previewContent.innerHTML = ""
             + "<article class=\"preview-card\">"
             + "<h3>Perfil</h3>"
@@ -2150,43 +2217,7 @@
             + "<p>" + ui.escapeHtml(basics.summary || "Completa tu perfil para ver aqui el resumen profesional.") + "</p>"
             + "<p class=\"preview-template\">" + ui.escapeHtml(state.ui.template) + "</p>"
             + "</article>"
-            + (showExperience
-              ? "<article class=\"preview-card\">"
-                + "<h3>Experiencia</h3>"
-                + experiencePreview
-                + "</article>"
-              : "")
-            + (showSkills
-              ? "<article class=\"preview-card\">"
-                + "<h3>Habilidades</h3>"
-                + "<p class=\"preview-meta\">Formato: " + ui.escapeHtml(skills.mode === "categories" ? "Por categorias" : "Lista simple") + "</p>"
-                + skillsPreview
-                + "</article>"
-              : "")
-            + (showLanguages
-              ? "<article class=\"preview-card\">"
-                + "<h3>Idiomas</h3>"
-                + languagePreview
-                + "</article>"
-              : "")
-            + (showCertifications
-              ? "<article class=\"preview-card\">"
-                + "<h3>Certificaciones</h3>"
-                + certificationPreview
-                + "</article>"
-              : "")
-            + (showProjects
-              ? "<article class=\"preview-card\">"
-                + "<h3>Proyectos</h3>"
-                + projectPreview
-                + "</article>"
-              : "")
-            + (showEducation
-              ? "<article class=\"preview-card\">"
-                + "<h3>Formacion</h3>"
-                + educationPreview
-                + "</article>"
-              : "")
+            + orderedSectionIds.map((sectionId) => classicSections[sectionId] || "").join("")
             + "<article class=\"preview-card\">"
             + "<h3>Esquema JSON</h3>"
             + "<p>" + ui.escapeHtml(config.cvSchema.title) + "</p>"
@@ -2220,6 +2251,45 @@
       const app = {
         getSectionConfig(sectionId) {
           return config.supportedSectionCatalog.find((section) => section.id === sectionId) || null;
+        },
+        getReorderableSections() {
+          return config.supportedSectionCatalog.filter((section) => section.id !== "basics");
+        },
+        normalizeSectionOrder(sectionOrder) {
+          const fallbackOrder = config.uiDefaults.sectionOrder;
+          if (!Array.isArray(sectionOrder)) {
+            return [...fallbackOrder];
+          }
+          const reorderableIds = app.getReorderableSections().map((section) => section.id);
+          const normalizedOrder = [];
+          sectionOrder.forEach((sectionId) => {
+            if (reorderableIds.includes(sectionId) && !normalizedOrder.includes(sectionId)) {
+              normalizedOrder.push(sectionId);
+            }
+          });
+          reorderableIds.forEach((sectionId) => {
+            if (!normalizedOrder.includes(sectionId)) {
+              normalizedOrder.push(sectionId);
+            }
+          });
+          return normalizedOrder;
+        },
+        getToolbarSections() {
+          const orderedSections = app.normalizeSectionOrder(state.ui.sectionOrder)
+            .map((sectionId) => app.getSectionConfig(sectionId))
+            .filter(Boolean)
+            .map(({ id, label }) => ({ id, label }));
+          return [
+            { id: "basics", label: "Datos personales" },
+            ...orderedSections,
+            { id: "schema", label: "Esquema JSON" },
+          ];
+        },
+        isSectionReorderable(sectionId) {
+          return app.normalizeSectionOrder(state.ui.sectionOrder).includes(sectionId);
+        },
+        getSectionPosition(sectionId) {
+          return app.normalizeSectionOrder(state.ui.sectionOrder).indexOf(sectionId);
         },
         canToggleSectionVisibility(sectionId) {
           const section = app.getSectionConfig(sectionId);
@@ -3107,6 +3177,45 @@
         moveEducationEntryToPosition(index, rawTargetPosition) {
           app.moveListEntry("education", index, Number(rawTargetPosition) - 1, "Formacion", "movida");
         },
+        moveSection(sectionId, direction) {
+          if (!app.isSectionReorderable(sectionId)) {
+            return;
+          }
+          const currentIndex = app.getSectionPosition(sectionId);
+          const targetIndex = direction === "up"
+            ? currentIndex - 1
+            : direction === "down"
+              ? currentIndex + 1
+              : -1;
+          app.moveSectionToPosition(sectionId, targetIndex + 1);
+        },
+        moveSectionToPosition(sectionId, rawTargetPosition) {
+          if (!app.isSectionReorderable(sectionId)) {
+            return;
+          }
+          const currentOrder = app.normalizeSectionOrder(state.ui.sectionOrder);
+          const currentIndex = currentOrder.indexOf(sectionId);
+          const targetIndex = Number(rawTargetPosition) - 1;
+          if (!Number.isInteger(currentIndex) || currentIndex < 0) {
+            return;
+          }
+          if (!Number.isInteger(targetIndex) || targetIndex < 0 || targetIndex >= currentOrder.length || targetIndex === currentIndex) {
+            return;
+          }
+          const nextOrder = [...currentOrder];
+          nextOrder.splice(currentIndex, 1);
+          nextOrder.splice(targetIndex, 0, sectionId);
+          const section = app.getSectionConfig(sectionId);
+          state.update({
+            ui: {
+              sectionOrder: nextOrder,
+              message: {
+                tone: "success",
+                text: (section ? section.label : "Seccion") + " movida a la posicion " + String(targetIndex + 1) + ".",
+              },
+            },
+          });
+        },
         toggleSectionVisibility(sectionId) {
           if (!app.canToggleSectionVisibility(sectionId)) {
             return;
@@ -3177,6 +3286,19 @@
             }
             if (actionButton && actionButton.dataset.action === "toggle-section-visibility") {
               app.toggleSectionVisibility(state.ui.activeSection);
+              return;
+            }
+            if (actionButton && actionButton.dataset.action === "move-active-section-up") {
+              app.moveSection(state.ui.activeSection, "up");
+              return;
+            }
+            if (actionButton && actionButton.dataset.action === "move-active-section-down") {
+              app.moveSection(state.ui.activeSection, "down");
+              return;
+            }
+            if (actionButton && actionButton.dataset.action === "move-active-section-to-position") {
+              const targetInput = ui.toolbar.querySelector("#active-section-target-position");
+              app.moveSectionToPosition(state.ui.activeSection, targetInput ? targetInput.value : "");
               return;
             }
             const modalButton = event.target.closest("[data-modal]");
