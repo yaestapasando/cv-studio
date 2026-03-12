@@ -249,6 +249,9 @@ class IndexHtmlTest(unittest.TestCase):
             "basicsFieldLabels: {",
             'fullName: "Nombre completo"',
             'summary: "Resumen profesional"',
+            "basicsValidationMessages: {",
+            'email: "Introduce un email valido, por ejemplo nombre@dominio.com.",',
+            'url: "Introduce una URL valida, por ejemplo tuweb.com o tuweb.com/ruta.",',
             "cv: null,",
             "ui: {",
             "message: { ...config.uiDefaults.message },",
@@ -268,6 +271,29 @@ class IndexHtmlTest(unittest.TestCase):
             'web: { type: "string", format: "uri-reference" },',
             'linkedin: { type: "string", format: "uri-reference" },',
             'github: { type: "string", format: "uri-reference" },',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_bootstrap_validates_email_and_url_formats(self):
+        expected_snippets = [
+            "getNormalizedUrlCandidate(value) {",
+            'return /^[a-z][a-z\\d+\\-.]*:\\/\\//i.test(trimmedValue)',
+            ': "https:" + "//" + trimmedValue;',
+            "validateBasicFormat(fieldName, fieldValue) {",
+            'if (fieldName === "email") {',
+            'const emailPattern = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;',
+            'return emailPattern.test(normalizedValue) ? "" : config.basicsValidationMessages.email;',
+            'if (["web", "linkedin", "github"].includes(fieldName)) {',
+            "const url = new URL(app.getNormalizedUrlCandidate(normalizedValue));",
+            'url.hostname.includes(".") || url.hostname === "localhost"',
+            'return hasValidHost ? "" : config.basicsValidationMessages.url;',
+            "syncBasicFieldValidation(input, options = {}) {",
+            "input.setCustomValidity(validationMessage);",
+            "input.reportValidity();",
+            "app.syncBasicFieldValidation(input);",
+            "app.syncBasicFieldValidation(input, { report: true });",
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):

@@ -447,6 +447,10 @@
           github: "GitHub",
           summary: "Resumen profesional",
         },
+        basicsValidationMessages: {
+          email: "Introduce un email valido, por ejemplo nombre@dominio.com.",
+          url: "Introduce una URL valida, por ejemplo tuweb.com o tuweb.com/ruta.",
+        },
         cvSchema: {
           $id: "cv-studio/schema/cv",
           $comment: "Compatible con JSON Schema Draft 2020-12.",
@@ -1013,6 +1017,49 @@
           ui.renderPreview();
           ui.renderModal();
         },
+        getNormalizedUrlCandidate(value) {
+          if (typeof value !== "string") {
+            return "";
+          }
+          const trimmedValue = value.trim();
+          if (!trimmedValue) {
+            return "";
+          }
+          return /^[a-z][a-z\d+\-.]*:\/\//i.test(trimmedValue)
+            ? trimmedValue
+            : "https:" + "//" + trimmedValue;
+        },
+        validateBasicFormat(fieldName, fieldValue) {
+          const normalizedValue = typeof fieldValue === "string" ? fieldValue.trim() : "";
+          if (!normalizedValue) {
+            return "";
+          }
+          if (fieldName === "email") {
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailPattern.test(normalizedValue) ? "" : config.basicsValidationMessages.email;
+          }
+          if (["web", "linkedin", "github"].includes(fieldName)) {
+            try {
+              const url = new URL(app.getNormalizedUrlCandidate(normalizedValue));
+              const hasValidHost = Boolean(url.hostname) && (url.hostname.includes(".") || url.hostname === "localhost");
+              return hasValidHost ? "" : config.basicsValidationMessages.url;
+            } catch (error) {
+              return config.basicsValidationMessages.url;
+            }
+          }
+          return "";
+        },
+        syncBasicFieldValidation(input, options = {}) {
+          if (!input || !state.hasOwn(config.basicsFieldLabels, input.name)) {
+            return true;
+          }
+          const validationMessage = app.validateBasicFormat(input.name, input.value);
+          input.setCustomValidity(validationMessage);
+          if (validationMessage && options.report) {
+            input.reportValidity();
+          }
+          return validationMessage === "";
+        },
         syncDom() {
           document.body.dataset.activeSection = state.ui.activeSection;
           document.body.dataset.activeTemplate = state.ui.template;
@@ -1108,8 +1155,16 @@
             if (!input || state.ui.activeSection !== "basics" || !state.hasOwn(config.basicsFieldLabels, fieldName)) {
               return;
             }
+            app.syncBasicFieldValidation(input);
             app.updateBasicsField(fieldName, input.value);
           });
+          ui.editorCanvas.addEventListener("blur", (event) => {
+            const input = event.target.closest("[name]");
+            if (!input || state.ui.activeSection !== "basics") {
+              return;
+            }
+            app.syncBasicFieldValidation(input, { report: true });
+          }, true);
           ui.modal.addEventListener("click", (event) => {
             const closeButton = event.target.closest("[data-close-modal]");
             if (!closeButton) {
