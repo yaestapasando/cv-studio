@@ -1,0 +1,3 @@
+Genera un fichero PRD.md con un desglose de tareas por feature de forma que se puedan marcar cuando estén completadas para esta demanda: 
+
+Aplicación web SPA que permite crear, editar y exportar currículums vitae de calidad profesional directamente en el navegador, sin instalación, sin servidor y sin dependencias externas en tiempo de ejecución. Todo el estado, la lógica y los estilos viven en un único archivo HTML.
