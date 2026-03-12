@@ -44,8 +44,8 @@ Interfaz de usuario para introducir y modificar los datos del currículum.
 ### Feature 4: Motor de Renderizado (Vista Previa en Tiempo Real)
 La representación visual del currículum en formato documento.
 
-- [ ] Maquetar el contenedor de la "hoja" (proporciones DIN A4, fondo blanco, sombra para simular papel).
-- [ ] Diseñar un template profesional y limpio usando CSS puro dentro de la hoja.
+- [x] Maquetar el contenedor de la "hoja" (proporciones DIN A4, fondo blanco, sombra para simular papel).
+- [x] Diseñar un template profesional y limpio usando CSS puro dentro de la hoja.
 - [ ] Implementar la función de JS que inyecta el JSON del estado en el HTML de la vista previa.
 - [ ] Manejar estados vacíos en la vista previa (ej: si no hay experiencia, ocultar la sección "Experiencia").
 
