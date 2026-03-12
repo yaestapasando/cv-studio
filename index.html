@@ -581,6 +581,204 @@
         });
       }
 
+      // ── Template rendering engine ─────────────────────────────────────────────
+
+      function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function render(cvData, opts) {
+        var data   = cvData || {};
+        var meta   = Object.assign({}, data.meta, opts);
+        var tmpl   = meta.template    || 'classic';
+        var accent = meta.accentColor || '#2563eb';
+        var fonts  = meta.fontPair    || 'sans-serif';
+        var fsMap  = { small: '13px', normal: '15px', large: '17px' };
+        var fs     = fsMap[meta.fontSize] || fsMap.normal;
+        var style  = 'style="--accent:' + escapeHtml(accent) + ';--font-pair:' + escapeHtml(fonts) + ';--font-size-base:' + fs + '"';
+
+        if (tmpl === 'modern') return _renderModern(data, style);
+        return _renderLinear(data, tmpl, style);
+      }
+
+      function _renderLinear(data, tmpl, style) {
+        return '<div class="cv-doc cv-' + tmpl + '" ' + style + '>' +
+          _buildHeader(data.personal || {}) +
+          _buildAllSections(data) +
+          '</div>';
+      }
+
+      function _renderModern(data, style) {
+        var p = data.personal || {};
+        var sidebar =
+          '<aside class="cv-sidebar">' +
+          (p.photo ? '<img class="cv-photo" src="' + escapeHtml(p.photo) + '" alt="Foto de perfil">' : '') +
+          '<div class="cv-sidebar-name">' +
+          (p.fullName  ? '<h1 class="cv-name">'      + escapeHtml(p.fullName)  + '</h1>' : '') +
+          (p.jobTitle  ? '<p class="cv-job-title">'  + escapeHtml(p.jobTitle)  + '</p>'  : '') +
+          '</div>' +
+          _buildContactList(p) +
+          (data.skills       && data.skills.length       ? _buildSection('Habilidades', _buildSkills(data.skills))           : '') +
+          (data.languages    && data.languages.length    ? _buildSection('Idiomas',     _buildLanguages(data.languages))     : '') +
+          (data.education    && data.education.length    ? _buildSection('Educación',   _buildEducation(data.education))     : '') +
+          '</aside>';
+
+        var main =
+          '<div class="cv-main">' +
+          (data.summary                                  ? _buildSection('Resumen profesional', _buildSummary(data.summary))           : '') +
+          (data.experience    && data.experience.length  ? _buildSection('Experiencia laboral', _buildExperience(data.experience))    : '') +
+          (data.projects      && data.projects.length    ? _buildSection('Proyectos',           _buildProjects(data.projects))        : '') +
+          (data.certifications && data.certifications.length ? _buildSection('Certificaciones', _buildCertifications(data.certifications)) : '') +
+          _buildOptionalSections(data.optional) +
+          '</div>';
+
+        return '<div class="cv-doc cv-modern" ' + style + '>' + sidebar + main + '</div>';
+      }
+
+      function _buildHeader(p) {
+        return '<header class="cv-header">' +
+          (p.photo ? '<img class="cv-photo" src="' + escapeHtml(p.photo) + '" alt="Foto de perfil">' : '') +
+          '<div class="cv-header-text">' +
+          (p.fullName ? '<h1 class="cv-name">'     + escapeHtml(p.fullName) + '</h1>' : '') +
+          (p.jobTitle ? '<p class="cv-job-title">' + escapeHtml(p.jobTitle) + '</p>'  : '') +
+          _buildContactList(p) +
+          '</div>' +
+          '</header>';
+      }
+
+      function _buildContactList(p) {
+        var items = [];
+        if (p.email)    items.push(escapeHtml(p.email));
+        if (p.phone)    items.push(escapeHtml(p.phone));
+        if (p.location) items.push(escapeHtml(p.location));
+        if (p.linkedIn) items.push('<a href="' + escapeHtml(p.linkedIn) + '">' + escapeHtml(p.linkedIn) + '</a>');
+        if (p.website)  items.push('<a href="' + escapeHtml(p.website)  + '">' + escapeHtml(p.website)  + '</a>');
+        if (!items.length) return '';
+        return '<ul class="cv-contacts">' + items.map(function (i) { return '<li>' + i + '</li>'; }).join('') + '</ul>';
+      }
+
+      function _buildAllSections(data) {
+        return (data.summary                                       ? _buildSection('Resumen profesional', _buildSummary(data.summary))               : '') +
+               (data.experience    && data.experience.length       ? _buildSection('Experiencia laboral', _buildExperience(data.experience))         : '') +
+               (data.education     && data.education.length        ? _buildSection('Educación',           _buildEducation(data.education))           : '') +
+               (data.skills        && data.skills.length           ? _buildSection('Habilidades',         _buildSkills(data.skills))                 : '') +
+               (data.languages     && data.languages.length        ? _buildSection('Idiomas',             _buildLanguages(data.languages))           : '') +
+               (data.projects      && data.projects.length         ? _buildSection('Proyectos',           _buildProjects(data.projects))             : '') +
+               (data.certifications && data.certifications.length  ? _buildSection('Certificaciones',     _buildCertifications(data.certifications)) : '') +
+               _buildOptionalSections(data.optional);
+      }
+
+      function _buildOptionalSections(optional) {
+        if (!optional) return '';
+        return (optional.volunteering && optional.volunteering.enabled && optional.volunteering.items.length ? _buildSection('Voluntariado', _buildListItems(optional.volunteering.items)) : '') +
+               (optional.publications && optional.publications.enabled && optional.publications.items.length ? _buildSection('Publicaciones', _buildListItems(optional.publications.items)) : '') +
+               (optional.awards       && optional.awards.enabled       && optional.awards.items.length       ? _buildSection('Premios',       _buildListItems(optional.awards.items))       : '') +
+               (optional.references   && optional.references.enabled   && optional.references.text           ? _buildSection('Referencias',   '<p>' + escapeHtml(optional.references.text) + '</p>') : '');
+      }
+
+      function _buildSection(title, content) {
+        return '<section class="cv-section"><h2 class="cv-section-title">' + escapeHtml(title) + '</h2>' +
+               '<div class="cv-section-body">' + content + '</div></section>';
+      }
+
+      function _buildSummary(text) {
+        return '<p class="cv-summary">' + escapeHtml(text) + '</p>';
+      }
+
+      function _buildExperience(items) {
+        return items.map(function (item) {
+          var dates = item.startDate
+            ? escapeHtml(item.startDate) + ' – ' + (item.current ? 'Actualidad' : escapeHtml(item.endDate || ''))
+            : '';
+          return '<div class="cv-entry">' +
+            '<div class="cv-entry-header">' +
+            '<strong class="cv-entry-title">' + escapeHtml(item.role    || '') + '</strong>' +
+            '<span class="cv-entry-org">'     + escapeHtml(item.company || '') + '</span>' +
+            (dates ? '<span class="cv-entry-dates">' + dates + '</span>' : '') +
+            '</div>' +
+            (item.description ? '<p class="cv-entry-desc">' + escapeHtml(item.description) + '</p>' : '') +
+            '</div>';
+        }).join('');
+      }
+
+      function _buildEducation(items) {
+        return items.map(function (item) {
+          var title = escapeHtml(item.degree || '') + (item.field ? ', ' + escapeHtml(item.field) : '');
+          var dates = item.startDate
+            ? escapeHtml(item.startDate) + ' – ' + (item.current ? 'Actualidad' : escapeHtml(item.endDate || ''))
+            : '';
+          return '<div class="cv-entry">' +
+            '<div class="cv-entry-header">' +
+            '<strong class="cv-entry-title">' + title + '</strong>' +
+            '<span class="cv-entry-org">' + escapeHtml(item.institution || '') + '</span>' +
+            (dates ? '<span class="cv-entry-dates">' + dates + '</span>' : '') +
+            '</div>' +
+            '</div>';
+        }).join('');
+      }
+
+      function _buildSkills(items) {
+        return '<ul class="cv-skills-list">' +
+          items.map(function (item) {
+            return '<li class="cv-skill-item">' +
+              '<span class="cv-skill-name">'  + escapeHtml(item.name  || '') + '</span>' +
+              (item.level ? '<span class="cv-skill-level">' + escapeHtml(item.level) + '</span>' : '') +
+              '</li>';
+          }).join('') +
+          '</ul>';
+      }
+
+      function _buildLanguages(items) {
+        return '<ul class="cv-lang-list">' +
+          items.map(function (item) {
+            return '<li class="cv-lang-item">' +
+              '<span class="cv-lang-name">'  + escapeHtml(item.name  || '') + '</span>' +
+              (item.level ? '<span class="cv-lang-level">' + escapeHtml(item.level) + '</span>' : '') +
+              '</li>';
+          }).join('') +
+          '</ul>';
+      }
+
+      function _buildProjects(items) {
+        return items.map(function (item) {
+          return '<div class="cv-entry">' +
+            '<div class="cv-entry-header">' +
+            '<strong class="cv-entry-title">' + escapeHtml(item.name || '') + '</strong>' +
+            (item.url ? '<a class="cv-entry-url" href="' + escapeHtml(item.url) + '">' + escapeHtml(item.url) + '</a>' : '') +
+            '</div>' +
+            (item.description  ? '<p class="cv-entry-desc">' + escapeHtml(item.description)  + '</p>' : '') +
+            (item.technologies ? '<p class="cv-entry-tech">' + escapeHtml(item.technologies) + '</p>' : '') +
+            '</div>';
+        }).join('');
+      }
+
+      function _buildCertifications(items) {
+        return items.map(function (item) {
+          return '<div class="cv-entry">' +
+            '<div class="cv-entry-header">' +
+            '<strong class="cv-entry-title">' + escapeHtml(item.name   || '') + '</strong>' +
+            (item.issuer ? '<span class="cv-entry-org">'   + escapeHtml(item.issuer) + '</span>' : '') +
+            (item.date   ? '<span class="cv-entry-dates">' + escapeHtml(item.date)   + '</span>' : '') +
+            '</div>' +
+            (item.url ? '<a class="cv-entry-url" href="' + escapeHtml(item.url) + '">' + escapeHtml(item.url) + '</a>' : '') +
+            '</div>';
+        }).join('');
+      }
+
+      function _buildListItems(items) {
+        return '<ul class="cv-list">' +
+          items.map(function (item) {
+            var text = typeof item === 'string' ? item : (item.text || item.name || '');
+            return '<li>' + escapeHtml(text) + '</li>';
+          }).join('') +
+          '</ul>';
+      }
+
       // ── Bootstrap ─────────────────────────────────────────────────────────────
 
       function init() {
@@ -588,7 +786,7 @@
       }
 
       // Expose minimal public API (used by tests and future modules)
-      window.CVStudio = { DEFAULT_CV: DEFAULT_CV, createStore: createStore, CVStore: CVStore, activateTab: activateTab, init: init };
+      window.CVStudio = { DEFAULT_CV: DEFAULT_CV, createStore: createStore, CVStore: CVStore, activateTab: activateTab, render: render, init: init };
 
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
