@@ -116,25 +116,47 @@
 
         /* Estilos para impresión */
         @media print {
-            .editor-panel {
-                display: none;
-            }
-
-            .preview-panel {
-                padding: 0;
-                background: none;
-                display: block;
-            }
-
-            #cv-paper {
-                box-shadow: none;
+            @page {
+                size: a4;
                 margin: 0;
-                width: 100%;
             }
 
             body, #app {
                 height: auto;
                 overflow: visible;
+                background: white;
+            }
+
+            .editor-panel {
+                display: none !important;
+            }
+
+            .preview-panel {
+                padding: 0;
+                margin: 0;
+                background: none;
+                display: block;
+                overflow: visible;
+            }
+
+            #cv-paper {
+                box-shadow: none;
+                margin: 0 auto;
+                width: 100%;
+                max-width: none;
+                padding: 15mm;
+            }
+
+            .cv-grid {
+                gap: 1.5rem;
+            }
+            
+            .cv-header {
+                border-bottom-width: 3px;
+            }
+
+            .cv-item {
+                break-inside: avoid;
             }
         }
 
@@ -425,16 +447,6 @@
             color: var(--text-main);
             font-weight: 600;
             border: 1px solid #e2e8f0;
-        }
-
-        @media print {
-            .cv-grid {
-                gap: 1.5rem;
-            }
-            
-            .cv-header {
-                border-bottom-width: 3px;
-            }
         }
     </style>
 </head>
