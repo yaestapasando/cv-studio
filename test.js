@@ -201,3 +201,19 @@ test('Auto-save functionality', (t) => {
         assert.ok(htmlContent.includes('syncEditorWithState: function'), 'Missing syncEditorWithState function');
     });
 });
+
+test('Code cleanliness', (t) => {
+    const htmlPath = path.join(__dirname, 'index.html');
+    const htmlContent = fs.readFileSync(htmlPath, 'utf8');
+
+    t.test('should not contain console logs/info/debug/error', () => {
+        const consoleMatches = htmlContent.match(/console\.(log|info|debug|error)/g);
+        assert.strictEqual(consoleMatches, null, `Found console calls: ${consoleMatches}`);
+    });
+
+    t.test('should not contain unnecessary comments', () => {
+        assert.ok(!htmlContent.includes('/* Variables y Estilos Base */'), 'Found unnecessary CSS comments');
+        assert.ok(!htmlContent.includes('// Botón exportar datos'), 'Found unnecessary JS comments');
+        assert.ok(!htmlContent.includes('<!-- Dinámico -->'), 'Found unnecessary HTML comments');
+    });
+});
