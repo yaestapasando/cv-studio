@@ -488,6 +488,13 @@
           email: "Introduce un email valido, por ejemplo nombre@dominio.com.",
           url: "Introduce una URL valida, por ejemplo tuweb.com o tuweb.com/ruta.",
         },
+        experienceFieldLabels: {
+          role: "Puesto",
+          company: "Empresa",
+          location: "Ubicacion",
+          startDate: "Fecha de inicio",
+          endDate: "Fecha de fin",
+        },
         cvSchema: {
           $id: "cv-studio/schema/cv",
           $comment: "Compatible con JSON Schema Draft 2020-12.",
@@ -529,11 +536,13 @@
             experienceEntry: {
               type: "object",
               additionalProperties: false,
-              required: ["role", "company", "period", "summary"],
+              required: ["role", "company", "location", "startDate", "endDate", "summary"],
               properties: {
                 role: { type: "string", minLength: 1 },
                 company: { type: "string", minLength: 1 },
-                period: { type: "string", minLength: 1 },
+                location: { type: "string", minLength: 1 },
+                startDate: { type: "string", minLength: 1 },
+                endDate: { type: "string", minLength: 1 },
                 summary: { type: "string", minLength: 1 },
               },
             },
@@ -638,6 +647,7 @@
           if (!state.isCompatibleCv(normalizedSnapshot.cv)) {
             return null;
           }
+          normalizedSnapshot.cv = app.normalizeCvDocument(normalizedSnapshot.cv);
           return normalizedSnapshot;
         },
         sanitizeUi(uiPatch) {
@@ -742,6 +752,24 @@
         formatJson(value) {
           return ui.escapeHtml(JSON.stringify(value, null, 2));
         },
+        formatExperiencePeriod(entry) {
+          const startDate = entry && typeof entry.startDate === "string" ? entry.startDate.trim() : "";
+          const endDate = entry && typeof entry.endDate === "string" ? entry.endDate.trim() : "";
+          const legacyPeriod = entry && typeof entry.period === "string" ? entry.period.trim() : "";
+          if (startDate && endDate) {
+            return startDate + " - " + endDate;
+          }
+          if (startDate) {
+            return startDate + " - Actualidad";
+          }
+          if (endDate) {
+            return endDate;
+          }
+          if (legacyPeriod) {
+            return legacyPeriod;
+          }
+          return "Pendiente";
+        },
         renderToolbar() {
           const sectionButtons = config.sections
             .map((section) => {
@@ -795,9 +823,64 @@
                 + "</div>"
                 + "<span class=\"entry-card-index\">Experiencia " + String(index + 1) + "</span>"
                 + "</div>"
+                + "<form class=\"editor-form experience-form\" data-experience-index=\"" + String(index) + "\">"
                 + "<div class=\"editor-group\">"
-                + "<span>Periodo</span>"
-                + "<div class=\"editor-field\">" + ui.escapeHtml(entry.period || "Pendiente") + "</div>"
+                + "<label for=\"experience-role-" + String(index) + "\"><span>Puesto</span></label>"
+                + "<input"
+                + " id=\"experience-role-" + String(index) + "\""
+                + " name=\"role\""
+                + " data-experience-field=\"role\""
+                + " class=\"editor-field editor-input\""
+                + " type=\"text\""
+                + " placeholder=\"Ej. Product Designer\""
+                + " value=\"" + ui.escapeHtml(entry.role || "") + "\">"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<label for=\"experience-company-" + String(index) + "\"><span>Empresa</span></label>"
+                + "<input"
+                + " id=\"experience-company-" + String(index) + "\""
+                + " name=\"company\""
+                + " data-experience-field=\"company\""
+                + " class=\"editor-field editor-input\""
+                + " type=\"text\""
+                + " placeholder=\"Ej. Acme Studio\""
+                + " value=\"" + ui.escapeHtml(entry.company || "") + "\">"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<label for=\"experience-location-" + String(index) + "\"><span>Ubicacion</span></label>"
+                + "<input"
+                + " id=\"experience-location-" + String(index) + "\""
+                + " name=\"location\""
+                + " data-experience-field=\"location\""
+                + " class=\"editor-field editor-input\""
+                + " type=\"text\""
+                + " placeholder=\"Ciudad, pais\""
+                + " value=\"" + ui.escapeHtml(entry.location || "") + "\">"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<label for=\"experience-start-date-" + String(index) + "\"><span>Fecha de inicio</span></label>"
+                + "<input"
+                + " id=\"experience-start-date-" + String(index) + "\""
+                + " name=\"startDate\""
+                + " data-experience-field=\"startDate\""
+                + " class=\"editor-field editor-input\""
+                + " type=\"month\""
+                + " value=\"" + ui.escapeHtml(entry.startDate || "") + "\">"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<label for=\"experience-end-date-" + String(index) + "\"><span>Fecha de fin</span></label>"
+                + "<input"
+                + " id=\"experience-end-date-" + String(index) + "\""
+                + " name=\"endDate\""
+                + " data-experience-field=\"endDate\""
+                + " class=\"editor-field editor-input\""
+                + " type=\"month\""
+                + " value=\"" + ui.escapeHtml(entry.endDate || "") + "\">"
+                + "</div>"
+                + "</form>"
+                + "<div class=\"editor-group\">"
+                + "<span>Fechas</span>"
+                + "<div class=\"editor-field\">" + ui.escapeHtml(ui.formatExperiencePeriod(entry)) + "</div>"
                 + "</div>"
                 + "<div class=\"editor-group\">"
                 + "<span>Resumen del bloque</span>"
@@ -981,7 +1064,8 @@
             ? state.cv.experience.map((entry) => ""
               + "<div class=\"preview-card\">"
               + "<p>" + ui.escapeHtml(entry.role || "Puesto pendiente") + (entry.company ? " - " + ui.escapeHtml(entry.company) : "") + "</p>"
-              + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.period || "Pendiente") + "</p>"
+              + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.location || "Ubicacion pendiente") + "</p>"
+              + "<p class=\"preview-meta\">" + ui.escapeHtml(ui.formatExperiencePeriod(entry)) + "</p>"
               + "<p>" + ui.escapeHtml(entry.summary || "Resumen pendiente") + "</p>"
               + "</div>")
               .join("")
@@ -1041,9 +1125,40 @@
       // JS Module: app
       const app = {
         cloneInitialCV() {
-          const initialCV = JSON.parse(JSON.stringify(config.initialCV));
+          const initialCV = app.normalizeCvDocument(JSON.parse(JSON.stringify(config.initialCV)));
           initialCV.meta.version = config.dataModelVersion;
           return initialCV;
+        },
+        normalizeCvDocument(cvDocument) {
+          if (!cvDocument || typeof cvDocument !== "object") {
+            return JSON.parse(JSON.stringify(config.initialCV));
+          }
+          const experience = Array.isArray(cvDocument.experience)
+            ? cvDocument.experience.map((entry) => {
+              return {
+                role: entry && typeof entry.role === "string" ? entry.role : "",
+                company: entry && typeof entry.company === "string" ? entry.company : "",
+                location: entry && typeof entry.location === "string" ? entry.location : "",
+                startDate: entry && typeof entry.startDate === "string" ? entry.startDate : "",
+                endDate: entry && typeof entry.endDate === "string" ? entry.endDate : "",
+                summary: entry && typeof entry.summary === "string" ? entry.summary : "",
+              };
+            })
+            : [];
+          return {
+            ...config.initialCV,
+            ...cvDocument,
+            basics: {
+              ...config.initialCV.basics,
+              ...(cvDocument.basics && typeof cvDocument.basics === "object" ? cvDocument.basics : {}),
+            },
+            experience,
+            education: Array.isArray(cvDocument.education) ? cvDocument.education : [],
+            meta: {
+              ...config.initialCV.meta,
+              ...(cvDocument.meta && typeof cvDocument.meta === "object" ? cvDocument.meta : {}),
+            },
+          };
         },
         detectCapabilities() {
           let storage = false;
@@ -1153,6 +1268,37 @@
             },
           });
         },
+        updateExperienceField(index, fieldName, fieldValue) {
+          if (!state.cv || !Array.isArray(state.cv.experience) || !state.hasOwn(config.experienceFieldLabels, fieldName)) {
+            return;
+          }
+          const currentEntry = state.cv.experience[index];
+          if (!currentEntry) {
+            return;
+          }
+          const nextExperience = state.cv.experience.map((entry, entryIndex) => entryIndex === index
+            ? {
+              ...entry,
+              [fieldName]: fieldValue,
+            }
+            : entry);
+          state.update({
+            cv: {
+              ...state.cv,
+              experience: nextExperience,
+              meta: {
+                ...state.cv.meta,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+            ui: {
+              message: {
+                tone: "success",
+                text: config.experienceFieldLabels[fieldName] + " actualizado en experiencia " + String(index + 1) + ".",
+              },
+            },
+          });
+        },
         addExperienceEntry() {
           if (!state.cv || !Array.isArray(state.cv.experience)) {
             return;
@@ -1160,7 +1306,9 @@
           const nextEntry = {
             role: "",
             company: "",
-            period: "",
+            location: "",
+            startDate: "",
+            endDate: "",
             summary: "",
           };
           const nextExperience = [...state.cv.experience, nextEntry];
@@ -1234,11 +1382,23 @@
           ui.editorCanvas.addEventListener("input", (event) => {
             const input = event.target.closest("[name]");
             const fieldName = input ? input.name : "";
-            if (!input || state.ui.activeSection !== "basics" || !state.hasOwn(config.basicsFieldLabels, fieldName)) {
+            if (!input) {
               return;
             }
-            app.syncBasicFieldValidation(input);
-            app.updateBasicsField(fieldName, input.value);
+            if (state.ui.activeSection === "basics" && state.hasOwn(config.basicsFieldLabels, fieldName)) {
+              app.syncBasicFieldValidation(input);
+              app.updateBasicsField(fieldName, input.value);
+              return;
+            }
+            if (state.ui.activeSection !== "experience" || !state.hasOwn(config.experienceFieldLabels, fieldName)) {
+              return;
+            }
+            const experienceForm = input.closest("[data-experience-index]");
+            const experienceIndex = experienceForm ? Number(experienceForm.dataset.experienceIndex) : -1;
+            if (!Number.isInteger(experienceIndex) || experienceIndex < 0) {
+              return;
+            }
+            app.updateExperienceField(experienceIndex, fieldName, input.value);
           });
           ui.editorCanvas.addEventListener("blur", (event) => {
             const input = event.target.closest("[name]");
