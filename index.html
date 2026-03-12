@@ -450,6 +450,10 @@
                 <label for="field-fullName">Nombre completo</label>
                 <input type="text" id="field-fullName" name="fullName" autocomplete="name" maxlength="120" />
               </div>
+              <div class="field-group">
+                <label for="field-jobTitle">Título profesional / Puesto objetivo</label>
+                <input type="text" id="field-jobTitle" name="jobTitle" autocomplete="organization-title" maxlength="120" />
+              </div>
             </form>
           </section>
           <section id="section-summary"        role="tabpanel" aria-labelledby="tab-summary"        hidden>
@@ -855,25 +859,34 @@
       // ── Personal form bindings ────────────────────────────────────────────────
 
       function initPersonalFields() {
-        var input = document.getElementById('field-fullName');
-        if (!input) return;
+        var inputFullName = document.getElementById('field-fullName');
+        var inputJobTitle = document.getElementById('field-jobTitle');
 
-        // Store → field (initial + reactive)
+        // Store → fields (initial + reactive)
         function syncFromStore(state) {
-          var val = (state.personal && state.personal.fullName) || '';
-          if (input.value !== val) input.value = val;
+          var p = state.personal || {};
+          if (inputFullName && inputFullName.value !== (p.fullName || '')) inputFullName.value = p.fullName || '';
+          if (inputJobTitle && inputJobTitle.value !== (p.jobTitle || '')) inputJobTitle.value = p.jobTitle || '';
         }
         syncFromStore(CVStore.getState());
         CVStore.subscribe(syncFromStore);
 
-        // Field → store
-        input.addEventListener('input', function () {
-          CVStore.setState(function (s) {
-            return Object.assign({}, s, {
-              personal: Object.assign({}, s.personal, { fullName: input.value })
+        // Fields → store
+        if (inputFullName) {
+          inputFullName.addEventListener('input', function () {
+            CVStore.setState(function (s) {
+              return Object.assign({}, s, { personal: Object.assign({}, s.personal, { fullName: inputFullName.value }) });
             });
           });
-        });
+        }
+
+        if (inputJobTitle) {
+          inputJobTitle.addEventListener('input', function () {
+            CVStore.setState(function (s) {
+              return Object.assign({}, s, { personal: Object.assign({}, s.personal, { jobTitle: inputJobTitle.value }) });
+            });
+          });
+        }
       }
 
       // ── Bootstrap ─────────────────────────────────────────────────────────────
