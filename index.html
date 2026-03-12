@@ -289,6 +289,11 @@
       gap: 8px;
     }
 
+    .entry-card-action-group {
+      display: flex;
+      gap: 8px;
+    }
+
     .entry-card-title {
       margin: 0;
       font-size: 1rem;
@@ -832,6 +837,10 @@
                 + "</div>"
                 + "<div class=\"entry-card-actions\">"
                 + "<span class=\"entry-card-index\">Experiencia " + String(index + 1) + "</span>"
+                + "<div class=\"entry-card-action-group\">"
+                + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"move-experience-entry-up\" data-experience-index=\"" + String(index) + "\" aria-pressed=\"false\">Subir</button>"
+                + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"move-experience-entry-down\" data-experience-index=\"" + String(index) + "\" aria-pressed=\"false\">Bajar</button>"
+                + "</div>"
                 + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"remove-experience-entry\" data-experience-index=\"" + String(index) + "\" aria-pressed=\"false\">Eliminar</button>"
                 + "</div>"
                 + "</div>"
@@ -1397,6 +1406,42 @@
             },
           });
         },
+        moveExperienceEntry(index, direction) {
+          if (!state.cv || !Array.isArray(state.cv.experience)) {
+            return;
+          }
+          if (!Number.isInteger(index) || index < 0 || index >= state.cv.experience.length) {
+            return;
+          }
+          const targetIndex = direction === "up"
+            ? index - 1
+            : direction === "down"
+              ? index + 1
+              : -1;
+          if (targetIndex < 0 || targetIndex >= state.cv.experience.length) {
+            return;
+          }
+          const nextExperience = [...state.cv.experience];
+          const movedEntry = nextExperience[index];
+          nextExperience[index] = nextExperience[targetIndex];
+          nextExperience[targetIndex] = movedEntry;
+          state.update({
+            cv: {
+              ...state.cv,
+              experience: nextExperience,
+              meta: {
+                ...state.cv.meta,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+            ui: {
+              message: {
+                tone: "success",
+                text: "Experiencia " + String(index + 1) + " movida a la posicion " + String(targetIndex + 1) + ".",
+              },
+            },
+          });
+        },
         bindEvents() {
           ui.toolbar.addEventListener("click", (event) => {
             const button = event.target.closest("[data-section]");
@@ -1470,11 +1515,21 @@
           });
           ui.editorCanvas.addEventListener("click", (event) => {
             const actionButton = event.target.closest("[data-action]");
-            if (!actionButton || actionButton.dataset.action !== "remove-experience-entry") {
+            if (!actionButton) {
               return;
             }
             const experienceIndex = Number(actionButton.dataset.experienceIndex);
-            app.removeExperienceEntry(experienceIndex);
+            if (actionButton.dataset.action === "remove-experience-entry") {
+              app.removeExperienceEntry(experienceIndex);
+              return;
+            }
+            if (actionButton.dataset.action === "move-experience-entry-up") {
+              app.moveExperienceEntry(experienceIndex, "up");
+              return;
+            }
+            if (actionButton.dataset.action === "move-experience-entry-down") {
+              app.moveExperienceEntry(experienceIndex, "down");
+            }
           });
           ui.editorCanvas.addEventListener("blur", (event) => {
             const input = event.target.closest("[name]");

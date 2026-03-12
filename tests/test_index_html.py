@@ -224,7 +224,12 @@ class IndexHtmlTest(unittest.TestCase):
             '<article class=\\"entry-card\\">',
             '<div class=\\"entry-card-header\\">',
             '<div class=\\"entry-card-actions\\">',
+            '<div class=\\"entry-card-action-group\\">',
             '<h3 class=\\"entry-card-title\\">',
+            'data-action=\\"move-experience-entry-up\\"',
+            '>Subir</button>',
+            'data-action=\\"move-experience-entry-down\\"',
+            '>Bajar</button>',
             'data-action=\\"remove-experience-entry\\"',
             'data-experience-index=\\"" + String(index) + "\\"',
             '>Eliminar</button>',
@@ -315,6 +320,23 @@ class IndexHtmlTest(unittest.TestCase):
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
 
+    def test_app_reorders_experience_entries(self):
+        expected_snippets = [
+            "moveExperienceEntry(index, direction) {",
+            '!state.cv || !Array.isArray(state.cv.experience)',
+            '!Number.isInteger(index) || index < 0 || index >= state.cv.experience.length',
+            'const targetIndex = direction === "up"',
+            ': direction === "down"',
+            "const nextExperience = [...state.cv.experience];",
+            "const movedEntry = nextExperience[index];",
+            "nextExperience[index] = nextExperience[targetIndex];",
+            "nextExperience[targetIndex] = movedEntry;",
+            'text: "Experiencia " + String(index + 1) + " movida a la posicion " + String(targetIndex + 1) + ".",',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
     def test_toolbar_click_handler_triggers_add_experience_action(self):
         expected_snippets = [
             'const actionButton = event.target.closest("[data-action]");',
@@ -328,9 +350,14 @@ class IndexHtmlTest(unittest.TestCase):
     def test_editor_click_handler_triggers_remove_experience_action(self):
         expected_snippets = [
             'ui.editorCanvas.addEventListener("click", (event) => {',
-            'actionButton.dataset.action !== "remove-experience-entry"',
+            'if (!actionButton) {',
+            'actionButton.dataset.action === "remove-experience-entry"',
             "const experienceIndex = Number(actionButton.dataset.experienceIndex);",
             "app.removeExperienceEntry(experienceIndex);",
+            'actionButton.dataset.action === "move-experience-entry-up"',
+            'app.moveExperienceEntry(experienceIndex, "up");',
+            'actionButton.dataset.action === "move-experience-entry-down"',
+            'app.moveExperienceEntry(experienceIndex, "down");',
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
