@@ -489,6 +489,11 @@
                 <input type="url" id="field-linkedIn" name="linkedIn" autocomplete="url" maxlength="200" placeholder="https://www.linkedin.com/in/usuario" />
                 <span id="field-linkedIn-error" class="field-error" aria-live="polite" hidden></span>
               </div>
+              <div class="field-group">
+                <label for="field-website">Portfolio / Web personal</label>
+                <input type="url" id="field-website" name="website" autocomplete="url" maxlength="200" placeholder="https://mipagina.com" />
+                <span id="field-website-error" class="field-error" aria-live="polite" hidden></span>
+              </div>
             </form>
           </section>
           <section id="section-summary"        role="tabpanel" aria-labelledby="tab-summary"        hidden>
@@ -912,6 +917,13 @@
         return /^https?:\/\/(www\.)?linkedin\.com\/.+/.test(value);
       }
 
+      // ── Website URL validation ────────────────────────────────────────────────
+
+      function isValidWebsite(value) {
+        if (!value) return true; // empty is allowed; field is optional
+        return /^https?:\/\/.+\..+/.test(value);
+      }
+
       // ── Personal form bindings ────────────────────────────────────────────────
 
       function initPersonalFields() {
@@ -924,6 +936,8 @@
         var inputLocation  = document.getElementById('field-location');
         var inputLinkedIn  = document.getElementById('field-linkedIn');
         var linkedInError  = document.getElementById('field-linkedIn-error');
+        var inputWebsite   = document.getElementById('field-website');
+        var websiteError   = document.getElementById('field-website-error');
 
         // Store → fields (initial + reactive)
         function syncFromStore(state) {
@@ -934,6 +948,7 @@
           if (inputPhone     && inputPhone.value     !== (p.phone     || '')) inputPhone.value     = p.phone     || '';
           if (inputLocation  && inputLocation.value  !== (p.location  || '')) inputLocation.value  = p.location  || '';
           if (inputLinkedIn  && inputLinkedIn.value  !== (p.linkedIn  || '')) inputLinkedIn.value  = p.linkedIn  || '';
+          if (inputWebsite   && inputWebsite.value   !== (p.website   || '')) inputWebsite.value   = p.website   || '';
         }
         syncFromStore(CVStore.getState());
         CVStore.subscribe(syncFromStore);
@@ -1010,6 +1025,22 @@
             });
           });
         }
+
+        if (inputWebsite) {
+          inputWebsite.addEventListener('input', function () {
+            var valid = isValidWebsite(inputWebsite.value);
+            if (valid) {
+              inputWebsite.classList.remove('field-invalid');
+              if (websiteError) { websiteError.hidden = true; websiteError.textContent = ''; }
+            } else {
+              inputWebsite.classList.add('field-invalid');
+              if (websiteError) { websiteError.hidden = false; websiteError.textContent = 'URL no válida'; }
+            }
+            CVStore.setState(function (s) {
+              return Object.assign({}, s, { personal: Object.assign({}, s.personal, { website: inputWebsite.value }) });
+            });
+          });
+        }
       }
 
       // ── Bootstrap ─────────────────────────────────────────────────────────────
@@ -1020,7 +1051,7 @@
       }
 
       // Expose minimal public API (used by tests and future modules)
-      window.CVStudio = { DEFAULT_CV: DEFAULT_CV, createStore: createStore, CVStore: CVStore, createEventBus: createEventBus, EventBus: EventBus, activateTab: activateTab, render: render, isValidEmail: isValidEmail, isValidPhone: isValidPhone, isValidLinkedIn: isValidLinkedIn, initPersonalFields: initPersonalFields, init: init };
+      window.CVStudio = { DEFAULT_CV: DEFAULT_CV, createStore: createStore, CVStore: CVStore, createEventBus: createEventBus, EventBus: EventBus, activateTab: activateTab, render: render, isValidEmail: isValidEmail, isValidPhone: isValidPhone, isValidLinkedIn: isValidLinkedIn, isValidWebsite: isValidWebsite, initPersonalFields: initPersonalFields, init: init };
 
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
