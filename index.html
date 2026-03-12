@@ -422,6 +422,15 @@
                     <!-- Dinámico -->
                 </div>
             </div>
+            <div class="form-section">
+                <div class="flex-between mb-1">
+                    <h2 class="mb-0">Educación / Formación</h2>
+                    <button type="button" id="add-education" class="btn btn-primary btn-sm">+ Añadir</button>
+                </div>
+                <div id="education-list">
+                    <!-- Dinámico -->
+                </div>
+            </div>
         </aside>
         <main class="preview-panel">
             <div id="cv-paper">
@@ -478,6 +487,8 @@
                     this.editor = document.querySelector('.editor-panel');
                     this.experienceListContainer = document.getElementById('experience-list');
                     this.addExperienceBtn = document.getElementById('add-experience');
+                    this.educationListContainer = document.getElementById('education-list');
+                    this.addEducationBtn = document.getElementById('add-education');
                 },
 
                 bindEvents: function() {
@@ -494,6 +505,9 @@
                             if (path.includes('experience') && path.endsWith('.current')) {
                                 self.renderExperienceEditor();
                             }
+                            if (path.includes('education') && path.endsWith('.current')) {
+                                self.renderEducationEditor();
+                            }
                         }
                     });
 
@@ -504,7 +518,14 @@
                         });
                     }
 
-                    // Botones en el editor (remover, reordenar)
+                    // Botón añadir educación
+                    if (this.addEducationBtn) {
+                        this.addEducationBtn.addEventListener('click', () => {
+                            self.addEducation();
+                        });
+                    }
+
+                    // Botones en el editor (remover, reordenar) - Experiencia
                     if (this.experienceListContainer) {
                         this.experienceListContainer.addEventListener('click', (e) => {
                             const btn = e.target.closest('button');
@@ -522,6 +543,25 @@
                             }
                         });
                     }
+
+                    // Botones en el editor (remover, reordenar) - Educación
+                    if (this.educationListContainer) {
+                        this.educationListContainer.addEventListener('click', (e) => {
+                            const btn = e.target.closest('button');
+                            if (!btn) return;
+
+                            const action = btn.getAttribute('data-action');
+                            const id = btn.getAttribute('data-id');
+
+                            if (action === 'remove') {
+                                self.removeEducation(id);
+                            } else if (action === 'move-up') {
+                                self.moveEducation(id, -1);
+                            } else if (action === 'move-down') {
+                                self.moveEducation(id, 1);
+                            }
+                        });
+                    }
                 },
 
                 /**
@@ -533,7 +573,7 @@
                         const path = input.getAttribute('data-path');
                         // No sincronizamos automáticamente campos de listas dinámicas aquí, 
                         // ya que se renderizan bajo demanda
-                        if (path.startsWith('experience')) return;
+                        if (path.startsWith('experience') || path.startsWith('education')) return;
                         
                         const value = this.getValueByPath(path);
                         if (value !== undefined) {
@@ -546,6 +586,7 @@
                     });
                     
                     this.renderExperienceEditor();
+                    this.renderEducationEditor();
                 },
 
                 /**
@@ -663,6 +704,100 @@
                     });
                 },
 
+                addEducation: function() {
+                    const newEdu = {
+                        id: Date.now().toString(),
+                        institution: '',
+                        degree: '',
+                        field: '',
+                        location: '',
+                        startDate: '',
+                        endDate: '',
+                        current: false,
+                        description: ''
+                    };
+                    this.state.education.push(newEdu);
+                    this.renderEducationEditor();
+                },
+
+                removeEducation: function(id) {
+                    const index = this.state.education.findIndex(edu => edu.id === id);
+                    if (index !== -1) {
+                        this.state.education.splice(index, 1);
+                        this.renderEducationEditor();
+                    }
+                },
+
+                moveEducation: function(id, direction) {
+                    const index = this.state.education.findIndex(edu => edu.id === id);
+                    if (index === -1) return;
+
+                    const newIndex = index + direction;
+                    if (newIndex < 0 || newIndex >= this.state.education.length) return;
+
+                    const items = [...this.state.education];
+                    const [movedItem] = items.splice(index, 1);
+                    items.splice(newIndex, 0, movedItem);
+                    
+                    // Reemplazamos el array completo para disparar la reactividad adecuadamente
+                    this.state.education = items;
+                    this.renderEducationEditor();
+                },
+
+                renderEducationEditor: function() {
+                    if (!this.educationListContainer) return;
+
+                    const self = this;
+                    this.educationListContainer.innerHTML = '';
+
+                    this.state.education.forEach((edu, index) => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'experience-item'; // Reuse styles
+                        itemDiv.innerHTML = `
+                            <div class="experience-item-header">
+                                <div class="experience-item-controls">
+                                    <button class="btn btn-sm" data-action="move-up" data-id="${edu.id}" title="Subir" ${index === 0 ? 'disabled' : ''}>↑</button>
+                                    <button class="btn btn-sm" data-action="move-down" data-id="${edu.id}" title="Bajar" ${index === this.state.education.length - 1 ? 'disabled' : ''}>↓</button>
+                                    <button class="btn btn-danger btn-sm" data-action="remove" data-id="${edu.id}">Eliminar</button>
+                                </div>
+                            </div>
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label>Institución</label>
+                                    <input type="text" data-path="education.${index}.institution" value="${edu.institution}" placeholder="Ej. Universidad Complutense">
+                                </div>
+                                <div class="form-group">
+                                    <label>Titulación</label>
+                                    <input type="text" data-path="education.${index}.degree" value="${edu.degree}" placeholder="Ej. Grado en Ingeniería Informática">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Ubicación</label>
+                                <input type="text" data-path="education.${index}.location" value="${edu.location || ''}" placeholder="Ej. Madrid, España">
+                            </div>
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label>Fecha Inicio</label>
+                                    <input type="text" data-path="education.${index}.startDate" value="${edu.startDate}" placeholder="Ej. 2015">
+                                </div>
+                                <div class="form-group">
+                                    <label>Fecha Fin</label>
+                                    <input type="text" data-path="education.${index}.endDate" value="${edu.endDate}" placeholder="Ej. 2019" ${edu.current ? 'disabled' : ''}>
+                                </div>
+                            </div>
+                            <div class="form-group checkbox-group mt-neg-sm mb-1">
+                                <input type="checkbox" data-path="education.${index}.current" id="curr-edu-${edu.id}" ${edu.current ? 'checked' : ''}>
+                                <label for="curr-edu-${edu.id}" class="mb-0">Cursando actualmente</label>
+                            </div>
+                            <div class="form-group">
+                                <label>Descripción (Opcional)</label>
+                                <textarea data-path="education.${index}.description" placeholder="Describe logros académicos, proyectos destacados...">${edu.description}</textarea>
+                            </div>
+                        `;
+                        self.educationListContainer.appendChild(itemDiv);
+                    });
+                },
+
                 createReactiveState: function(initialState) {
                     const self = this;
                     const proxiedObjects = new WeakMap();
@@ -709,7 +844,7 @@
                     console.debug('CV Studio: Renderizando vista previa...');
                     if (!this.preview) return;
                     
-                    const { personalData, summary, experience } = this.state;
+                    const { personalData, summary, experience, education } = this.state;
                     
                     let experienceHtml = '';
                     if (experience && experience.length > 0) {
@@ -735,6 +870,30 @@
                         `;
                     }
 
+                    let educationHtml = '';
+                    if (education && education.length > 0) {
+                        educationHtml = `
+                            <div class="cv-section">
+                                <h2 class="cv-section-title">Educación / Formación</h2>
+                                ${education.map(edu => `
+                                    <div class="cv-item">
+                                        <div class="cv-item-header">
+                                            <div>
+                                                <span class="cv-item-title">${edu.degree || 'Titulación'}</span>
+                                                ${edu.institution ? ` | <span class="cv-item-subtitle">${edu.institution}</span>` : ''}
+                                                ${edu.location ? ` | <span class="cv-item-location">${edu.location}</span>` : ''}
+                                            </div>
+                                            <div class="cv-item-date">
+                                                ${edu.startDate || ''} ${edu.startDate || (edu.endDate || edu.current) ? '-' : ''} ${edu.current ? 'Actual' : (edu.endDate || '')}
+                                            </div>
+                                        </div>
+                                        ${edu.description ? `<p class="cv-item-description">${edu.description}</p>` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    }
+
                     // Renderizado básico para validar reactividad
                     this.preview.innerHTML = `
                         <div class="cv-header">
@@ -754,6 +913,7 @@
                             <p class="cv-summary">${summary || 'Breve descripción de tu perfil profesional, objetivos y logros principales...'}</p>
                         </div>
                         ${experienceHtml}
+                        ${educationHtml}
                     `;
                 },
 

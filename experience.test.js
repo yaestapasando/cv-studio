@@ -52,7 +52,7 @@ test('Experience logic in script', (t) => {
     });
     
     t.test('should include experience in render preview', () => {
-        assert.ok(htmlContent.includes('const { personalData, summary, experience } = this.state;'), 'render should extract experience from state');
+        assert.ok(htmlContent.includes('const { personalData, summary, experience'), 'render should extract experience from state');
         assert.ok(htmlContent.includes('experience.map'), 'render should map through experience array');
         assert.ok(htmlContent.includes('exp.location'), 'render should include exp.location in preview');
     });
