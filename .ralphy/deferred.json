@@ -1,0 +1,9 @@
+{
+  "tasks": {
+    "markdown:PRD.md:50": {
+      "count": 1,
+      "last": "2026-03-12T12:38:15.957Z",
+      "title": "Campo: foto de perfil (upload local → base64, sin servidor)"
+    }
+  }
+}
