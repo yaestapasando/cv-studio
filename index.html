@@ -476,6 +476,7 @@
         sections: [
           { id: "basics", label: "Datos personales" },
           { id: "experience", label: "Experiencia" },
+          { id: "projects", label: "Proyectos" },
           { id: "education", label: "Formacion" },
           { id: "schema", label: "Esquema JSON" },
         ],
@@ -527,6 +528,13 @@
           dates: "Fechas",
           details: "Detalles",
           notes: "Menciones",
+        },
+        projectFieldLabels: {
+          name: "Nombre del proyecto",
+          role: "Rol",
+          url: "Enlace",
+          summary: "Descripcion",
+          highlights: "Hitos",
         },
         cvSchema: {
           $id: "cv-studio/schema/cv",
@@ -799,6 +807,21 @@
         formatJson(value) {
           return ui.escapeHtml(JSON.stringify(value, null, 2));
         },
+        getProjectHighlights(entry) {
+          if (entry && Array.isArray(entry.highlights)) {
+            return entry.highlights
+              .filter((highlight) => typeof highlight === "string")
+              .map((highlight) => highlight.trim())
+              .filter(Boolean);
+          }
+          if (entry && typeof entry.highlights === "string") {
+            return entry.highlights
+              .split("\n")
+              .map((highlight) => highlight.trim())
+              .filter(Boolean);
+          }
+          return [];
+        },
         formatExperiencePeriod(entry) {
           const startDate = entry && typeof entry.startDate === "string" ? entry.startDate.trim() : "";
           const isCurrent = Boolean(entry && entry.isCurrent);
@@ -886,6 +909,8 @@
             .join("");
           const contextualActions = state.ui.activeSection === "experience"
             ? "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"add-experience-entry\" aria-pressed=\"false\">Anadir experiencia</button>"
+            : state.ui.activeSection === "projects"
+              ? "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"add-project-entry\" aria-pressed=\"false\">Anadir proyecto</button>"
             : state.ui.activeSection === "education"
               ? "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"add-education-entry\" aria-pressed=\"false\">Anadir formacion</button>"
               : "";
@@ -1150,6 +1175,104 @@
                 .join("")
               + "</div>"
             : "<div class=\"editor-note\" data-tone=\"muted\">Todavia no hay formacion guardada en el CV.</div>";
+          const projectEntries = state.cv.projects.length
+            ? "<div class=\"entry-list\">"
+              + state.cv.projects.map((entry, index) => ""
+                + "<article class=\"entry-card\">"
+                + "<div class=\"entry-card-header\">"
+                + "<div>"
+                + "<h3 class=\"entry-card-title\">" + ui.escapeHtml(entry.name || "Proyecto pendiente") + "</h3>"
+                + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.role || "Rol pendiente") + "</p>"
+                + "</div>"
+                + "<div class=\"entry-card-actions\">"
+                + "<span class=\"entry-card-index\">Proyecto " + String(index + 1) + "</span>"
+                + "<div class=\"entry-card-action-group\">"
+                + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"move-project-entry-up\" data-project-index=\"" + String(index) + "\" aria-pressed=\"false\""
+                + (index === 0 ? " disabled" : "")
+                + ">Subir</button>"
+                + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"move-project-entry-down\" data-project-index=\"" + String(index) + "\" aria-pressed=\"false\""
+                + (index === state.cv.projects.length - 1 ? " disabled" : "")
+                + ">Bajar</button>"
+                + "</div>"
+                + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"remove-project-entry\" data-project-index=\"" + String(index) + "\" aria-pressed=\"false\">Eliminar</button>"
+                + "</div>"
+                + "</div>"
+                + "<form class=\"editor-form project-form\" data-project-index=\"" + String(index) + "\">"
+                + "<div class=\"editor-group\">"
+                + "<label for=\"project-name-" + String(index) + "\"><span>Nombre del proyecto</span></label>"
+                + "<input"
+                + " id=\"project-name-" + String(index) + "\""
+                + " name=\"name\""
+                + " data-project-field=\"name\""
+                + " class=\"editor-field editor-input\""
+                + " type=\"text\""
+                + " placeholder=\"Ej. Design System Atlas\""
+                + " value=\"" + ui.escapeHtml(entry.name || "") + "\">"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<label for=\"project-role-" + String(index) + "\"><span>Rol</span></label>"
+                + "<input"
+                + " id=\"project-role-" + String(index) + "\""
+                + " name=\"role\""
+                + " data-project-field=\"role\""
+                + " class=\"editor-field editor-input\""
+                + " type=\"text\""
+                + " placeholder=\"Ej. Lead Product Designer\""
+                + " value=\"" + ui.escapeHtml(entry.role || "") + "\">"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<label for=\"project-url-" + String(index) + "\"><span>Enlace</span></label>"
+                + "<input"
+                + " id=\"project-url-" + String(index) + "\""
+                + " name=\"url\""
+                + " data-project-field=\"url\""
+                + " class=\"editor-field editor-input\""
+                + " type=\"url\""
+                + " inputmode=\"url\""
+                + " placeholder=\"portfolio.dev/proyecto\""
+                + " value=\"" + ui.escapeHtml(entry.url || "") + "\">"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<label for=\"project-summary-" + String(index) + "\"><span>Descripcion</span></label>"
+                + "<textarea"
+                + " id=\"project-summary-" + String(index) + "\""
+                + " name=\"summary\""
+                + " data-project-field=\"summary\""
+                + " class=\"editor-field editor-input\""
+                + " rows=\"4\""
+                + " placeholder=\"Resume el problema, el alcance y el resultado del proyecto\">"
+                + ui.escapeHtml(entry.summary || "")
+                + "</textarea>"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<label for=\"project-highlights-" + String(index) + "\"><span>Hitos</span></label>"
+                + "<textarea"
+                + " id=\"project-highlights-" + String(index) + "\""
+                + " name=\"highlights\""
+                + " data-project-field=\"highlights\""
+                + " class=\"editor-field editor-input\""
+                + " rows=\"5\""
+                + " placeholder=\"Escribe un hito por linea para destacar impacto, stack o resultados\">"
+                + ui.escapeHtml(ui.getProjectHighlights(entry).join("\n"))
+                + "</textarea>"
+                + "</div>"
+                + "</form>"
+                + "<div class=\"editor-group\">"
+                + "<span>Resumen actual</span>"
+                + "<div class=\"editor-field\">" + ui.escapeHtml(entry.summary || "Todavia no hay descripcion para este proyecto.") + "</div>"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<span>Enlace actual</span>"
+                + "<div class=\"editor-field\">" + ui.escapeHtml(entry.url || "Sin enlace publicado") + "</div>"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<span>Hitos actuales</span>"
+                + "<div class=\"editor-field\">" + ui.renderAchievementList(ui.getProjectHighlights(entry), "Todavia no hay hitos definidos para este proyecto.") + "</div>"
+                + "</div>"
+                + "</article>")
+                .join("")
+              + "</div>"
+            : "<div class=\"editor-note\" data-tone=\"muted\">Todavia no hay proyectos guardados en el CV.</div>";
           const sections = {
             basics: ""
               + "<form class=\"editor-form\" id=\"basics-form\">"
@@ -1282,6 +1405,10 @@
             experience: ""
               + "<div class=\"editor-note\" data-tone=\"muted\">Listado de experiencias existentes en el documento.</div>"
               + experienceEntries,
+            projects: ""
+              + "<div class=\"editor-note\" data-tone=\"muted\">Listado de proyectos existentes en el documento.</div>"
+              + projectEntries
+              + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"add-project-entry\" aria-pressed=\"false\">Anadir otro proyecto</button>",
             education: ""
               + "<div class=\"editor-note\" data-tone=\"muted\">Listado de formacion existente en el documento.</div>"
               + educationEntries
@@ -1329,6 +1456,17 @@
               + "</div>")
               .join("")
             : "<p>Anade tu primera formacion para completar esta vista previa.</p>";
+          const projectPreview = state.cv.projects.length
+            ? state.cv.projects.map((entry) => ""
+              + "<div class=\"preview-card\">"
+              + "<p>" + ui.escapeHtml(entry.name || "Proyecto pendiente") + "</p>"
+              + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.role || "Rol pendiente") + "</p>"
+              + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.url || "Enlace pendiente") + "</p>"
+              + "<p>" + ui.escapeHtml(entry.summary || "Descripcion pendiente") + "</p>"
+              + ui.renderAchievementList(ui.getProjectHighlights(entry), "Hitos pendientes")
+              + "</div>")
+              .join("")
+            : "<p>Anade tu primer proyecto para completar esta vista previa.</p>";
           ui.previewContent.innerHTML = ""
             + "<article class=\"preview-card\">"
             + "<h3>Perfil</h3>"
@@ -1346,6 +1484,10 @@
             + "<article class=\"preview-card\">"
             + "<h3>Experiencia</h3>"
             + experiencePreview
+            + "</article>"
+            + "<article class=\"preview-card\">"
+            + "<h3>Proyectos</h3>"
+            + projectPreview
             + "</article>"
             + "<article class=\"preview-card\">"
             + "<h3>Formacion</h3>"
@@ -1433,6 +1575,19 @@
             notes: app.normalizeEntryNotes(entry ? entry.notes : []),
           };
         },
+        normalizeProjectEntry(entry) {
+          return {
+            name: entry && typeof entry.name === "string"
+              ? entry.name
+              : entry && typeof entry.title === "string"
+                ? entry.title
+                : "",
+            role: entry && typeof entry.role === "string" ? entry.role : "",
+            url: entry && typeof entry.url === "string" ? entry.url : "",
+            summary: entry && typeof entry.summary === "string" ? entry.summary : "",
+            highlights: ui.getProjectHighlights(entry),
+          };
+        },
         cloneInitialCV() {
           const initialCV = app.normalizeCvDocument(JSON.parse(JSON.stringify(config.initialCV)));
           initialCV.meta.version = config.dataModelVersion;
@@ -1460,6 +1615,9 @@
           const education = Array.isArray(cvDocument.education)
             ? cvDocument.education.map((entry) => app.normalizeEducationEntry(entry))
             : [];
+          const projects = Array.isArray(cvDocument.projects)
+            ? cvDocument.projects.map((entry) => app.normalizeProjectEntry(entry))
+            : [];
           return {
             ...config.initialCV,
             ...cvDocument,
@@ -1468,6 +1626,7 @@
               ...(cvDocument.basics && typeof cvDocument.basics === "object" ? cvDocument.basics : {}),
             },
             experience,
+            projects,
             education,
             meta: {
               ...config.initialCV.meta,
@@ -1653,6 +1812,40 @@
             },
           });
         },
+        updateProjectField(index, fieldName, fieldValue) {
+          if (!state.cv || !Array.isArray(state.cv.projects) || !state.hasOwn(config.projectFieldLabels, fieldName)) {
+            return;
+          }
+          const currentEntry = state.cv.projects[index];
+          if (!currentEntry) {
+            return;
+          }
+          const normalizedFieldValue = fieldName === "highlights"
+            ? app.normalizeEntryNotes(fieldValue)
+            : fieldValue;
+          const nextProjects = state.cv.projects.map((entry, entryIndex) => entryIndex === index
+            ? {
+              ...entry,
+              [fieldName]: normalizedFieldValue,
+            }
+            : entry);
+          state.update({
+            cv: {
+              ...state.cv,
+              projects: nextProjects,
+              meta: {
+                ...state.cv.meta,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+            ui: {
+              message: {
+                tone: "success",
+                text: config.projectFieldLabels[fieldName] + " actualizado en proyecto " + String(index + 1) + ".",
+              },
+            },
+          });
+        },
         addExperienceEntry() {
           if (!state.cv || !Array.isArray(state.cv.experience)) {
             return;
@@ -1715,6 +1908,35 @@
             },
           });
         },
+        addProjectEntry() {
+          if (!state.cv || !Array.isArray(state.cv.projects)) {
+            return;
+          }
+          const nextEntry = {
+            name: "",
+            role: "",
+            url: "",
+            summary: "",
+            highlights: [],
+          };
+          const nextProjects = [...state.cv.projects, nextEntry];
+          state.update({
+            cv: {
+              ...state.cv,
+              projects: nextProjects,
+              meta: {
+                ...state.cv.meta,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+            ui: {
+              message: {
+                tone: "success",
+                text: "Proyecto " + String(nextProjects.length) + " anadido.",
+              },
+            },
+          });
+        },
         removeExperienceEntry(index) {
           if (!state.cv || !Array.isArray(state.cv.experience)) {
             return;
@@ -1736,6 +1958,31 @@
               message: {
                 tone: "success",
                 text: "Experiencia " + String(index + 1) + " eliminada.",
+              },
+            },
+          });
+        },
+        removeProjectEntry(index) {
+          if (!state.cv || !Array.isArray(state.cv.projects)) {
+            return;
+          }
+          if (!Number.isInteger(index) || index < 0 || index >= state.cv.projects.length) {
+            return;
+          }
+          const nextProjects = state.cv.projects.filter((entry, entryIndex) => entryIndex !== index);
+          state.update({
+            cv: {
+              ...state.cv,
+              projects: nextProjects,
+              meta: {
+                ...state.cv.meta,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+            ui: {
+              message: {
+                tone: "success",
+                text: "Proyecto " + String(index + 1) + " eliminado.",
               },
             },
           });
@@ -1797,6 +2044,42 @@
               message: {
                 tone: "success",
                 text: "Experiencia " + String(index + 1) + " movida a la posicion " + String(targetIndex + 1) + ".",
+              },
+            },
+          });
+        },
+        moveProjectEntry(index, direction) {
+          if (!state.cv || !Array.isArray(state.cv.projects)) {
+            return;
+          }
+          if (!Number.isInteger(index) || index < 0 || index >= state.cv.projects.length) {
+            return;
+          }
+          const targetIndex = direction === "up"
+            ? index - 1
+            : direction === "down"
+              ? index + 1
+              : -1;
+          if (targetIndex < 0 || targetIndex >= state.cv.projects.length) {
+            return;
+          }
+          const nextProjects = [...state.cv.projects];
+          const movedEntry = nextProjects[index];
+          nextProjects[index] = nextProjects[targetIndex];
+          nextProjects[targetIndex] = movedEntry;
+          state.update({
+            cv: {
+              ...state.cv,
+              projects: nextProjects,
+              meta: {
+                ...state.cv.meta,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+            ui: {
+              message: {
+                tone: "success",
+                text: "Proyecto " + String(index + 1) + " movido a la posicion " + String(targetIndex + 1) + ".",
               },
             },
           });
@@ -1870,6 +2153,10 @@
               app.addExperienceEntry();
               return;
             }
+            if (actionButton && actionButton.dataset.action === "add-project-entry") {
+              app.addProjectEntry();
+              return;
+            }
             if (actionButton && actionButton.dataset.action === "add-education-entry") {
               app.addEducationEntry();
               return;
@@ -1903,6 +2190,15 @@
               return;
             }
             if (state.ui.activeSection !== "experience" || !state.hasOwn(config.experienceFieldLabels, fieldName)) {
+              if (state.ui.activeSection === "projects" && state.hasOwn(config.projectFieldLabels, fieldName)) {
+                const projectForm = input.closest("[data-project-index]");
+                const projectIndex = projectForm ? Number(projectForm.dataset.projectIndex) : -1;
+                if (!Number.isInteger(projectIndex) || projectIndex < 0) {
+                  return;
+                }
+                app.updateProjectField(projectIndex, fieldName, input.value);
+                return;
+              }
               if (state.ui.activeSection !== "education" || !state.hasOwn(config.educationFieldLabels, fieldName)) {
                 return;
               }
@@ -1938,6 +2234,19 @@
             }
             if (actionButton.dataset.action === "move-experience-entry-down") {
               app.moveExperienceEntry(experienceIndex, "down");
+              return;
+            }
+            const projectIndex = Number(actionButton.dataset.projectIndex);
+            if (actionButton.dataset.action === "remove-project-entry") {
+              app.removeProjectEntry(projectIndex);
+              return;
+            }
+            if (actionButton.dataset.action === "move-project-entry-up") {
+              app.moveProjectEntry(projectIndex, "up");
+              return;
+            }
+            if (actionButton.dataset.action === "move-project-entry-down") {
+              app.moveProjectEntry(projectIndex, "down");
               return;
             }
             const educationIndex = Number(actionButton.dataset.educationIndex);

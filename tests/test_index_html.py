@@ -398,11 +398,153 @@ process.stdout.write(JSON.stringify(result));
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
 
+    def test_projects_section_lists_existing_entries(self):
+        expected_snippets = [
+            "projectFieldLabels: {",
+            'name: "Nombre del proyecto"',
+            'role: "Rol"',
+            'url: "Enlace"',
+            'summary: "Descripcion"',
+            'highlights: "Hitos"',
+            'const projectEntries = state.cv.projects.length',
+            '<div class=\\"editor-note\\" data-tone=\\"muted\\">Listado de proyectos existentes en el documento.</div>',
+            '<article class=\\"entry-card\\">',
+            '<span class=\\"entry-card-index\\">Proyecto ',
+            'data-action=\\"move-project-entry-up\\"',
+            'data-action=\\"move-project-entry-down\\"',
+            'data-action=\\"remove-project-entry\\"',
+            'data-project-index=\\"" + String(index) + "\\"',
+            '<form class=\\"editor-form project-form\\" data-project-index=\\"',
+            'id=\\"project-name-',
+            'name=\\"name\\"',
+            'data-project-field=\\"name\\"',
+            'placeholder=\\"Ej. Design System Atlas\\"',
+            'id=\\"project-role-',
+            'name=\\"role\\"',
+            'data-project-field=\\"role\\"',
+            'id=\\"project-url-',
+            'name=\\"url\\"',
+            'type=\\"url\\"',
+            'data-project-field=\\"url\\"',
+            'placeholder=\\"portfolio.dev/proyecto\\"',
+            'id=\\"project-summary-',
+            'name=\\"summary\\"',
+            'data-project-field=\\"summary\\"',
+            'placeholder=\\"Resume el problema, el alcance y el resultado del proyecto\\"',
+            'id=\\"project-highlights-',
+            'name=\\"highlights\\"',
+            'data-project-field=\\"highlights\\"',
+            'placeholder=\\"Escribe un hito por linea para destacar impacto, stack o resultados\\"',
+            'ui.escapeHtml(ui.getProjectHighlights(entry).join("\\n"))',
+            'ui.escapeHtml(entry.name || "Proyecto pendiente")',
+            'ui.escapeHtml(entry.role || "Rol pendiente")',
+            'ui.escapeHtml(entry.summary || "Todavia no hay descripcion para este proyecto.")',
+            'ui.escapeHtml(entry.url || "Sin enlace publicado")',
+            'ui.renderAchievementList(ui.getProjectHighlights(entry), "Todavia no hay hitos definidos para este proyecto.")',
+            '<div class=\\"editor-note\\" data-tone=\\"muted\\">Todavia no hay proyectos guardados en el CV.</div>',
+            'data-action=\\"add-project-entry\\"',
+            '>Anadir otro proyecto</button>',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_app_manages_project_entries(self):
+        expected_snippets = [
+            "getProjectHighlights(entry) {",
+            "if (entry && Array.isArray(entry.highlights)) {",
+            'if (entry && typeof entry.highlights === "string") {',
+            "normalizeProjectEntry(entry) {",
+            'name: entry && typeof entry.name === "string"',
+            '? entry.name',
+            ': entry && typeof entry.title === "string"',
+            '? entry.title',
+            'role: entry && typeof entry.role === "string" ? entry.role : "",',
+            'url: entry && typeof entry.url === "string" ? entry.url : "",',
+            'summary: entry && typeof entry.summary === "string" ? entry.summary : "",',
+            "highlights: ui.getProjectHighlights(entry),",
+            "const projects = Array.isArray(cvDocument.projects)",
+            "? cvDocument.projects.map((entry) => app.normalizeProjectEntry(entry))",
+            "updateProjectField(index, fieldName, fieldValue) {",
+            '!state.cv || !Array.isArray(state.cv.projects) || !state.hasOwn(config.projectFieldLabels, fieldName)',
+            "const currentEntry = state.cv.projects[index];",
+            'const normalizedFieldValue = fieldName === "highlights"',
+            "? app.normalizeEntryNotes(fieldValue)",
+            ': fieldValue;',
+            "const nextProjects = state.cv.projects.map((entry, entryIndex) => entryIndex === index",
+            "projects: nextProjects,",
+            'text: config.projectFieldLabels[fieldName] + " actualizado en proyecto " + String(index + 1) + ".",',
+            "addProjectEntry() {",
+            'name: "",',
+            'role: "",',
+            'url: "",',
+            'summary: "",',
+            'highlights: [],',
+            "const nextProjects = [...state.cv.projects, nextEntry];",
+            'text: "Proyecto " + String(nextProjects.length) + " anadido.",',
+            "removeProjectEntry(index) {",
+            "!state.cv || !Array.isArray(state.cv.projects)",
+            "!Number.isInteger(index) || index < 0 || index >= state.cv.projects.length",
+            "const nextProjects = state.cv.projects.filter((entry, entryIndex) => entryIndex !== index);",
+            'text: "Proyecto " + String(index + 1) + " eliminado.",',
+            "moveProjectEntry(index, direction) {",
+            "const nextProjects = [...state.cv.projects];",
+            "const movedEntry = nextProjects[index];",
+            "nextProjects[index] = nextProjects[targetIndex];",
+            "nextProjects[targetIndex] = movedEntry;",
+            'text: "Proyecto " + String(index + 1) + " movido a la posicion " + String(targetIndex + 1) + ".",',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_app_reorders_project_entries_functionally(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+cv.projects = [
+  { name: "Primero", role: "Design", url: "uno.dev", summary: "Uno", highlights: ["A"] },
+  { name: "Segundo", role: "Code", url: "dos.dev", summary: "Dos", highlights: ["B"] },
+];
+CVStudio.state.update({ cv, ui: { activeSection: "projects" } });
+CVStudio.app.moveProjectEntry(1, "up");
+({
+  names: CVStudio.state.cv.projects.map((entry) => entry.name),
+  message: CVStudio.state.ui.message.text,
+});
+"""
+        )
+        self.assertEqual(result["names"], ["Segundo", "Primero"])
+        self.assertEqual(result["message"], "Proyecto 2 movido a la posicion 1.")
+
+    def test_projects_inputs_and_actions_sync_with_global_state(self):
+        expected_snippets = [
+            'actionButton.dataset.action === "add-project-entry"',
+            "app.addProjectEntry();",
+            'state.ui.activeSection === "projects" && state.hasOwn(config.projectFieldLabels, fieldName)',
+            'const projectForm = input.closest("[data-project-index]");',
+            "const projectIndex = projectForm ? Number(projectForm.dataset.projectIndex) : -1;",
+            "app.updateProjectField(projectIndex, fieldName, input.value);",
+            'const projectIndex = Number(actionButton.dataset.projectIndex);',
+            'actionButton.dataset.action === "remove-project-entry"',
+            "app.removeProjectEntry(projectIndex);",
+            'actionButton.dataset.action === "move-project-entry-up"',
+            'app.moveProjectEntry(projectIndex, "up");',
+            'actionButton.dataset.action === "move-project-entry-down"',
+            'app.moveProjectEntry(projectIndex, "down");',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
     def test_experience_section_exposes_add_action_in_toolbar(self):
         expected_snippets = [
             'const contextualActions = state.ui.activeSection === "experience"',
             'data-action=\\"add-experience-entry\\"',
             '>Anadir experiencia</button>',
+            'state.ui.activeSection === "projects"',
+            'data-action=\\"add-project-entry\\"',
+            '>Anadir proyecto</button>',
             'state.ui.activeSection === "education"',
             'data-action=\\"add-education-entry\\"',
             '>Anadir formacion</button>',
@@ -715,6 +857,23 @@ CVStudio.app.moveEducationEntry(1, "up");
             'ui.renderAchievementList(ui.getEntryNotes(entry), "Menciones pendientes")',
             'Anade tu primera formacion para completar esta vista previa.',
             "+ educationPreview",
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_preview_section_renders_all_project_entries(self):
+        expected_snippets = [
+            'const projectPreview = state.cv.projects.length',
+            'state.cv.projects.map((entry) => ""',
+            '<h3>Proyectos</h3>',
+            'ui.escapeHtml(entry.name || "Proyecto pendiente")',
+            'ui.escapeHtml(entry.role || "Rol pendiente")',
+            'ui.escapeHtml(entry.url || "Enlace pendiente")',
+            'ui.escapeHtml(entry.summary || "Descripcion pendiente")',
+            'ui.renderAchievementList(ui.getProjectHighlights(entry), "Hitos pendientes")',
+            'Anade tu primer proyecto para completar esta vista previa.',
+            "+ projectPreview",
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
@@ -1042,10 +1201,14 @@ CVStudio.state.update({ cv: CVStudio.app.normalizeCvDocument(cv), ui: { activeSe
             'basics.location || "Ubicacion pendiente"',
             'const experienceEntries = state.cv.experience.length',
             'const experiencePreview = state.cv.experience.length',
+            'const projectEntries = state.cv.projects.length',
+            'const projectPreview = state.cv.projects.length',
             'const educationEntries = state.cv.education.length',
             'const educationPreview = state.cv.education.length',
             'state.cv.experience.map((entry, index) => ""',
             'state.cv.experience.map((entry) => ""',
+            'state.cv.projects.map((entry, index) => ""',
+            'state.cv.projects.map((entry) => ""',
             'state.cv.education.map((entry, index) => ""',
             'state.cv.education.map((entry) => ""',
             'entry.role || "Puesto pendiente"',
@@ -1054,6 +1217,8 @@ CVStudio.state.update({ cv: CVStudio.app.normalizeCvDocument(cv), ui: { activeSe
             'entry.summary || "Resumen pendiente"',
             'Todavia no hay experiencias guardadas en el CV.',
             'Anade tu primera experiencia para completar esta vista previa.',
+            'Todavia no hay proyectos guardados en el CV.',
+            'Anade tu primer proyecto para completar esta vista previa.',
             'Todavia no hay formacion guardada en el CV.',
             'Anade tu primera formacion para completar esta vista previa.',
             'state.ui.template',
