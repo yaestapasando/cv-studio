@@ -460,6 +460,9 @@ process.stdout.write(JSON.stringify(result));
             "getProjectHighlights(entry) {",
             "if (entry && Array.isArray(entry.highlights)) {",
             'if (entry && typeof entry.highlights === "string") {',
+            'if (entry && typeof entry.highlight === "string") {',
+            "normalizeProjectHighlights(highlights) {",
+            "return ui.getProjectHighlights({ highlights });",
             "normalizeProjectEntry(entry) {",
             'name: entry && typeof entry.name === "string"',
             '? entry.name',
@@ -476,7 +479,7 @@ process.stdout.write(JSON.stringify(result));
             '!state.cv || !Array.isArray(state.cv.projects) || !state.hasOwn(config.projectFieldLabels, fieldName)',
             "const currentEntry = state.cv.projects[index];",
             'const normalizedFieldValue = fieldName === "highlights"',
-            "? app.normalizeEntryNotes(fieldValue)",
+            "? app.normalizeProjectHighlights(fieldValue)",
             ': fieldValue;',
             "const nextProjects = state.cv.projects.map((entry, entryIndex) => entryIndex === index",
             "projects: nextProjects,",
@@ -546,6 +549,42 @@ const entry = CVStudio.app.normalizeProjectEntry({
         self.assertEqual(result["name"], "Atlas")
         self.assertEqual(result["stack"], "HTML, CSS, JS")
         self.assertEqual(result["highlights"], ["Uno", "Dos"])
+
+    def test_normalize_project_entry_supports_legacy_single_highlight(self):
+        result = self.run_js_scenario(
+            """
+const entry = CVStudio.app.normalizeProjectEntry({
+  title: "Atlas",
+  role: "Lead",
+  summary: "Sistema",
+  highlight: "Uno\\nDos",
+});
+({
+  name: entry.name,
+  highlights: entry.highlights,
+});
+"""
+        )
+        self.assertEqual(result["name"], "Atlas")
+        self.assertEqual(result["highlights"], ["Uno", "Dos"])
+
+    def test_update_project_field_normalizes_multiple_highlights(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+cv.projects = [
+  { name: "Atlas", role: "Lead", url: "", stack: "HTML", summary: "Sistema", highlights: [] },
+];
+CVStudio.state.update({ cv, ui: { activeSection: "projects" } });
+CVStudio.app.updateProjectField(0, "highlights", "Uno\\n\\nDos\\n Tres ");
+({
+  highlights: CVStudio.state.cv.projects[0].highlights,
+  message: CVStudio.state.ui.message.text,
+});
+"""
+        )
+        self.assertEqual(result["highlights"], ["Uno", "Dos", "Tres"])
+        self.assertEqual(result["message"], "Hitos actualizado en proyecto 1.")
 
     def test_projects_inputs_and_actions_sync_with_global_state(self):
         expected_snippets = [

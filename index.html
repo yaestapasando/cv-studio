@@ -842,6 +842,12 @@
               .map((highlight) => highlight.trim())
               .filter(Boolean);
           }
+          if (entry && typeof entry.highlight === "string") {
+            return entry.highlight
+              .split("\n")
+              .map((highlight) => highlight.trim())
+              .filter(Boolean);
+          }
           return [];
         },
         formatExperiencePeriod(entry) {
@@ -1592,6 +1598,9 @@
           }
           return [];
         },
+        normalizeProjectHighlights(highlights) {
+          return ui.getProjectHighlights({ highlights });
+        },
         normalizeEducationEntry(entry) {
           return {
             title: entry && typeof entry.title === "string"
@@ -1860,7 +1869,7 @@
             return;
           }
           const normalizedFieldValue = fieldName === "highlights"
-            ? app.normalizeEntryNotes(fieldValue)
+            ? app.normalizeProjectHighlights(fieldValue)
             : fieldValue;
           const nextProjects = state.cv.projects.map((entry, entryIndex) => entryIndex === index
             ? {
