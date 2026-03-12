@@ -20,6 +20,6 @@ test('Summary Section', (t) => {
     t.test('should render the summary in the preview with a title', () => {
         assert.ok(htmlContent.includes('class="cv-summary"'), 'Missing cv-summary class in preview');
         assert.ok(htmlContent.includes('<h2 class="cv-section-title">Perfil Profesional</h2>'), 'Missing section title in preview');
-        assert.ok(htmlContent.includes('${summary ||'), 'Missing summary interpolation in render function');
+        assert.ok(htmlContent.includes('${summary}'), 'Missing summary interpolation in render function');
     });
 });

@@ -46,8 +46,8 @@ La representación visual del currículum en formato documento.
 
 - [x] Maquetar el contenedor de la "hoja" (proporciones DIN A4, fondo blanco, sombra para simular papel).
 - [x] Diseñar un template profesional y limpio usando CSS puro dentro de la hoja.
-- [ ] Implementar la función de JS que inyecta el JSON del estado en el HTML de la vista previa.
-- [ ] Manejar estados vacíos en la vista previa (ej: si no hay experiencia, ocultar la sección "Experiencia").
+- [x] Implementar la función de JS que inyecta el JSON del estado en el HTML de la vista previa.
+- [x] Manejar estados vacíos en la vista previa (ej: si no hay experiencia, ocultar la sección "Experiencia").
 
 ### Feature 5: Importación y Exportación de Datos (Backup)
 Permitir al usuario guardar su progreso en un archivo físico para llevarlo a otro ordenador.

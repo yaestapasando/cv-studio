@@ -938,6 +938,16 @@
                     
                     const { personalData, summary, experience, education, skills } = this.state;
                     
+                    let summaryHtml = '';
+                    if (summary && summary.trim().length > 0) {
+                        summaryHtml = `
+                            <div class="cv-section">
+                                <h2 class="cv-section-title">Perfil Profesional</h2>
+                                <p class="cv-summary">${summary}</p>
+                            </div>
+                        `;
+                    }
+
                     let experienceHtml = '';
                     if (experience && experience.length > 0) {
                         experienceHtml = `
@@ -998,6 +1008,23 @@
                         { icon: '🌐', value: personalData.website }
                     ].filter(item => item.value);
 
+                    let contactHtml = '';
+                    if (contactItems.length > 0) {
+                        contactHtml = `
+                            <div class="cv-section">
+                                <h2 class="cv-section-title">Contacto</h2>
+                                <ul class="cv-contact-list">
+                                    ${contactItems.map(item => `
+                                        <li>
+                                            <span class="cv-contact-icon">${item.icon}</span>
+                                            <span class="cv-contact-value">${item.value}</span>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        `;
+                    }
+
                     this.preview.innerHTML = `
                         <header class="cv-header">
                             <h1>${personalData.firstName || 'Tu'} <strong>${personalData.lastName || 'Nombre'}</strong></h1>
@@ -1006,30 +1033,24 @@
                         
                         <div class="cv-grid">
                             <div class="cv-main-col">
-                                <div class="cv-section">
-                                    <h2 class="cv-section-title">Perfil Profesional</h2>
-                                    <p class="cv-summary">${summary || 'Breve descripción de tu perfil profesional, objetivos y logros principales...'}</p>
-                                </div>
+                                ${summaryHtml}
                                 ${experienceHtml}
                                 ${educationHtml}
                             </div>
                             
                             <aside class="cv-sidebar">
-                                <div class="cv-section">
-                                    <h2 class="cv-section-title">Contacto</h2>
-                                    <ul class="cv-contact-list">
-                                        ${contactItems.map(item => `
-                                            <li>
-                                                <span class="cv-contact-icon">${item.icon}</span>
-                                                <span class="cv-contact-value">${item.value}</span>
-                                            </li>
-                                        `).join('')}
-                                    </ul>
-                                </div>
+                                ${contactHtml}
                                 ${skillsHtml}
                             </aside>
                         </div>
                     `;
+
+                    // JSON data for portability and import/export
+                    const dataScript = document.createElement('script');
+                    dataScript.id = 'cv-data';
+                    dataScript.type = 'application/json';
+                    dataScript.textContent = JSON.stringify(this.state);
+                    this.preview.appendChild(dataScript);
                 },
 
                 // Persistencia
