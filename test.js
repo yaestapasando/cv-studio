@@ -45,6 +45,11 @@ test('index.html structure', (t) => {
         assert.ok(htmlContent.includes('id="cv-paper"'), 'Missing cv-paper id');
     });
 
+    t.test('should have a professional summary textarea', () => {
+        assert.ok(htmlContent.includes('data-path="summary"'), 'Missing summary data-path');
+        assert.ok(htmlContent.includes('<textarea'), 'Missing textarea for summary');
+    });
+
     t.test('should have personal data input fields', () => {
         const requiredFields = [
             'data-path="personalData.firstName"',
