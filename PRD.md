@@ -174,13 +174,13 @@ Aplicación cliente pura basada en:
 **Objetivo:** levantar la estructura técnica mínima del producto dentro de un único HTML.
 
 ### Tareas
-- [ ] Crear el archivo único `index.html` con estructura base.
-- [ ] Definir secciones internas para HTML, CSS y JS embebidos.
-- [ ] Establecer convención de módulos lógicos dentro del script.
-- [ ] Configurar layout principal de dos paneles: editor y preview.
-- [ ] Implementar arranque inicial de la app sin dependencias externas.
-- [ ] Verificar funcionamiento abriendo el HTML directamente en navegador.
-- [ ] Documentar la estructura interna del archivo para mantenimiento.
+- [x] Crear el archivo único `index.html` con estructura base.
+- [x] Definir secciones internas para HTML, CSS y JS embebidos.
+- [x] Establecer convención de módulos lógicos dentro del script.
+- [x] Configurar layout principal de dos paneles: editor y preview.
+- [x] Implementar arranque inicial de la app sin dependencias externas.
+- [x] Verificar funcionamiento abriendo el HTML directamente en navegador.
+- [x] Documentar la estructura interna del archivo para mantenimiento.
 
 ### Criterios de aceptación
 - La app se ejecuta abriendo un único HTML en el navegador.
@@ -193,13 +193,13 @@ Aplicación cliente pura basada en:
 **Objetivo:** definir una fuente única de verdad para el CV y el estado de la UI.
 
 ### Tareas
-- [ ] Diseñar el esquema JSON del currículum.
-- [ ] Implementar estado inicial por defecto.
-- [ ] Crear utilidades de lectura/escritura del estado.
-- [ ] Implementar actualización inmutable o controlada del estado.
-- [ ] Añadir mecanismo de suscripción o render tras cambios.
-- [ ] Gestionar estado UI adicional: sección activa, plantilla, mensajes, modales.
-- [ ] Incluir control de versión del modelo de datos.
+- [x] Diseñar el esquema JSON del currículum.
+- [x] Implementar estado inicial por defecto.
+- [x] Crear utilidades de lectura/escritura del estado.
+- [x] Implementar actualización inmutable o controlada del estado.
+- [x] Añadir mecanismo de suscripción o render tras cambios.
+- [x] Gestionar estado UI adicional: sección activa, plantilla, mensajes, modales.
+- [x] Incluir control de versión del modelo de datos.
 
 ### Criterios de aceptación
 - Todas las vistas leen de un único estado central.
@@ -212,14 +212,14 @@ Aplicación cliente pura basada en:
 **Objetivo:** permitir editar los datos básicos del CV.
 
 ### Tareas
-- [ ] Crear formulario para nombre completo.
-- [ ] Crear formulario para titular profesional.
-- [ ] Crear formulario para resumen/perfil.
-- [ ] Crear campos de email, teléfono y ubicación.
-- [ ] Crear campos de enlaces externos: web, LinkedIn, GitHub.
-- [ ] Vincular inputs al estado global.
-- [ ] Añadir placeholders y ayudas de uso.
-- [ ] Añadir validación básica de formato para email y URLs.
+- [x] Crear formulario para nombre completo.
+- [x] Crear formulario para titular profesional.
+- [x] Crear formulario para resumen/perfil.
+- [x] Crear campos de email, teléfono y ubicación.
+- [x] Crear campos de enlaces externos: web, LinkedIn, GitHub.
+- [x] Vincular inputs al estado global.
+- [x] Añadir placeholders y ayudas de uso.
+- [x] Añadir validación básica de formato para email y URLs.
 
 ### Criterios de aceptación
 - Los datos básicos pueden editarse sin recargar.
@@ -232,14 +232,14 @@ Aplicación cliente pura basada en:
 **Objetivo:** administrar entradas de experiencia laboral.
 
 ### Tareas
-- [ ] Crear UI para listar experiencias existentes.
-- [ ] Implementar acción “añadir experiencia”.
-- [ ] Implementar edición de puesto, empresa, ubicación y fechas.
-- [ ] Implementar edición de descripción y logros.
-- [ ] Permitir eliminar una experiencia.
-- [ ] Permitir reordenar experiencias.
-- [ ] Permitir marcar experiencia actual.
-- [ ] Soportar múltiples bullets por experiencia.
+- [x] Crear UI para listar experiencias existentes.
+- [x] Implementar acción “añadir experiencia”.
+- [x] Implementar edición de puesto, empresa, ubicación y fechas.
+- [x] Implementar edición de descripción y logros.
+- [x] Permitir eliminar una experiencia.
+- [x] Permitir reordenar experiencias.
+- [x] Permitir marcar experiencia actual.
+- [x] Soportar múltiples bullets por experiencia.
 
 ### Criterios de aceptación
 - El usuario puede crear varias experiencias.
@@ -252,12 +252,12 @@ Aplicación cliente pura basada en:
 **Objetivo:** administrar formación académica.
 
 ### Tareas
-- [ ] Crear UI para listado de educación.
-- [ ] Implementar alta de nueva entrada educativa.
-- [ ] Implementar edición de título, centro, fechas y detalles.
-- [ ] Permitir eliminar entradas.
-- [ ] Permitir reordenar entradas.
-- [ ] Soportar notas opcionales, logros o menciones.
+- [x] Crear UI para listado de educación.
+- [x] Implementar alta de nueva entrada educativa.
+- [x] Implementar edición de título, centro, fechas y detalles.
+- [x] Permitir eliminar entradas.
+- [x] Permitir reordenar entradas.
+- [x] Soportar notas opcionales, logros o menciones.
 
 ### Criterios de aceptación
 - El usuario puede mantener varias entradas de educación.
@@ -269,11 +269,11 @@ Aplicación cliente pura basada en:
 **Objetivo:** mostrar proyectos relevantes en el CV.
 
 ### Tareas
-- [ ] Crear UI para listado de proyectos.
-- [ ] Implementar alta, edición y borrado de proyectos.
-- [ ] Añadir campos de nombre, rol, enlace, stack y descripción.
-- [ ] Permitir múltiples highlights por proyecto.
-- [ ] Permitir reordenación manual.
+- [x] Crear UI para listado de proyectos.
+- [x] Implementar alta, edición y borrado de proyectos.
+- [x] Añadir campos de nombre, rol, enlace, stack y descripción.
+- [x] Permitir múltiples highlights por proyecto.
+- [x] Permitir reordenación manual.
 
 ### Criterios de aceptación
 - Los proyectos pueden añadirse y editarse fácilmente.
@@ -285,11 +285,11 @@ Aplicación cliente pura basada en:
 **Objetivo:** cubrir secciones complementarias del CV.
 
 ### Tareas
-- [ ] Crear editor de habilidades por lista simple o categorías.
-- [ ] Crear editor de idiomas con nivel.
-- [ ] Crear editor de certificaciones con emisor y fecha.
-- [ ] Permitir añadir, editar, eliminar y reordenar elementos.
-- [ ] Definir representación visual compacta para preview.
+- [x] Crear editor de habilidades por lista simple o categorías.
+- [x] Crear editor de idiomas con nivel.
+- [x] Crear editor de certificaciones con emisor y fecha.
+- [x] Permitir añadir, editar, eliminar y reordenar elementos.
+- [x] Definir representación visual compacta para preview.
 
 ### Criterios de aceptación
 - Estas secciones pueden activarse y poblarse sin fricción.
@@ -301,11 +301,11 @@ Aplicación cliente pura basada en:
 **Objetivo:** permitir activar, ocultar y ordenar secciones del CV.
 
 ### Tareas
-- [ ] Definir catálogo de secciones soportadas.
-- [ ] Implementar toggles de mostrar/ocultar por sección.
-- [ ] Implementar reordenación de secciones completas.
-- [ ] Mantener consistencia entre editor, estado y preview.
-- [ ] Ocultar automáticamente secciones vacías si procede.
+- [x] Definir catálogo de secciones soportadas.
+- [x] Implementar toggles de mostrar/ocultar por sección.
+- [x] Implementar reordenación de secciones completas.
+- [x] Mantener consistencia entre editor, estado y preview.
+- [x] Ocultar automáticamente secciones vacías si procede.
 
 ### Criterios de aceptación
 - El usuario controla qué secciones aparecen.
@@ -317,7 +317,7 @@ Aplicación cliente pura basada en:
 **Objetivo:** ofrecer una representación profesional inmediata del CV.
 
 ### Tareas
-- [ ] Diseñar componente de preview independiente del editor.
+- [x] Diseñar componente de preview independiente del editor.
 - [ ] Implementar render de cabecera del CV.
 - [ ] Implementar render de cada tipo de sección.
 - [ ] Sincronizar preview tras cada cambio del estado.
