@@ -494,6 +494,8 @@
           location: "Ubicacion",
           startDate: "Fecha de inicio",
           endDate: "Fecha de fin",
+          summary: "Descripcion",
+          achievements: "Logros",
         },
         cvSchema: {
           $id: "cv-studio/schema/cv",
@@ -544,6 +546,7 @@
                 startDate: { type: "string", minLength: 1 },
                 endDate: { type: "string", minLength: 1 },
                 summary: { type: "string", minLength: 1 },
+                achievements: { type: "string" },
               },
             },
             educationEntry: {
@@ -877,14 +880,42 @@
                 + " type=\"month\""
                 + " value=\"" + ui.escapeHtml(entry.endDate || "") + "\">"
                 + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<label for=\"experience-summary-" + String(index) + "\"><span>Descripcion</span></label>"
+                + "<textarea"
+                + " id=\"experience-summary-" + String(index) + "\""
+                + " name=\"summary\""
+                + " data-experience-field=\"summary\""
+                + " class=\"editor-field editor-input\""
+                + " rows=\"5\""
+                + " placeholder=\"Describe responsabilidades, alcance y contexto del rol\">"
+                + ui.escapeHtml(entry.summary || "")
+                + "</textarea>"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<label for=\"experience-achievements-" + String(index) + "\"><span>Logros</span></label>"
+                + "<textarea"
+                + " id=\"experience-achievements-" + String(index) + "\""
+                + " name=\"achievements\""
+                + " data-experience-field=\"achievements\""
+                + " class=\"editor-field editor-input\""
+                + " rows=\"4\""
+                + " placeholder=\"Resume resultados, metricas o hitos clave\">"
+                + ui.escapeHtml(entry.achievements || "")
+                + "</textarea>"
+                + "</div>"
                 + "</form>"
                 + "<div class=\"editor-group\">"
                 + "<span>Fechas</span>"
                 + "<div class=\"editor-field\">" + ui.escapeHtml(ui.formatExperiencePeriod(entry)) + "</div>"
                 + "</div>"
                 + "<div class=\"editor-group\">"
-                + "<span>Resumen del bloque</span>"
+                + "<span>Descripcion actual</span>"
                 + "<div class=\"editor-field\">" + ui.escapeHtml(entry.summary || "Todavia no hay contenido en esta experiencia.") + "</div>"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<span>Logros actuales</span>"
+                + "<div class=\"editor-field\">" + ui.escapeHtml(entry.achievements || "Todavia no hay logros definidos para esta experiencia.") + "</div>"
                 + "</div>"
                 + "</article>")
                 .join("")
@@ -1067,6 +1098,7 @@
               + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.location || "Ubicacion pendiente") + "</p>"
               + "<p class=\"preview-meta\">" + ui.escapeHtml(ui.formatExperiencePeriod(entry)) + "</p>"
               + "<p>" + ui.escapeHtml(entry.summary || "Resumen pendiente") + "</p>"
+              + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.achievements || "Logros pendientes") + "</p>"
               + "</div>")
               .join("")
             : "<p>Anade tu primera experiencia para completar esta vista previa.</p>";
@@ -1142,6 +1174,7 @@
                 startDate: entry && typeof entry.startDate === "string" ? entry.startDate : "",
                 endDate: entry && typeof entry.endDate === "string" ? entry.endDate : "",
                 summary: entry && typeof entry.summary === "string" ? entry.summary : "",
+                achievements: entry && typeof entry.achievements === "string" ? entry.achievements : "",
               };
             })
             : [];
@@ -1310,6 +1343,7 @@
             startDate: "",
             endDate: "",
             summary: "",
+            achievements: "",
           };
           const nextExperience = [...state.cv.experience, nextEntry];
           state.update({

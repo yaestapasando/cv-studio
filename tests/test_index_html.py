@@ -243,12 +243,25 @@ class IndexHtmlTest(unittest.TestCase):
             'id=\\"experience-end-date-',
             'name=\\"endDate\\"',
             'data-experience-field=\\"endDate\\"',
+            'id=\\"experience-summary-',
+            'name=\\"summary\\"',
+            'data-experience-field=\\"summary\\"',
+            'rows=\\"5\\"',
+            'placeholder=\\"Describe responsabilidades, alcance y contexto del rol\\"',
+            'ui.escapeHtml(entry.summary || "")',
+            'id=\\"experience-achievements-',
+            'name=\\"achievements\\"',
+            'data-experience-field=\\"achievements\\"',
+            'rows=\\"4\\"',
+            'placeholder=\\"Resume resultados, metricas o hitos clave\\"',
+            'ui.escapeHtml(entry.achievements || "")',
             'ui.escapeHtml(entry.location || "")',
             'ui.escapeHtml(ui.formatExperiencePeriod(entry))',
             '<span class=\\"entry-card-index\\">Experiencia ',
             'ui.escapeHtml(entry.role || "Puesto pendiente")',
             'ui.escapeHtml(entry.company || "Empresa pendiente")',
             'ui.escapeHtml(entry.summary || "Todavia no hay contenido en esta experiencia.")',
+            'ui.escapeHtml(entry.achievements || "Todavia no hay logros definidos para esta experiencia.")',
             '<div class=\\"editor-note\\" data-tone=\\"muted\\">Todavia no hay experiencias guardadas en el CV.</div>',
         ]
         for snippet in expected_snippets:
@@ -276,6 +289,7 @@ class IndexHtmlTest(unittest.TestCase):
             'startDate: "",',
             'endDate: "",',
             'summary: "",',
+            'achievements: "",',
             "const nextExperience = [...state.cv.experience, nextEntry];",
             "experience: nextExperience,",
             'text: "Experiencia " + String(nextExperience.length) + " anadida.",',
@@ -303,6 +317,7 @@ class IndexHtmlTest(unittest.TestCase):
             'ui.escapeHtml(entry.location || "Ubicacion pendiente")',
             'ui.escapeHtml(ui.formatExperiencePeriod(entry))',
             'ui.escapeHtml(entry.summary || "Resumen pendiente")',
+            'ui.escapeHtml(entry.achievements || "Logros pendientes")',
             '<p>Anade tu primera experiencia para completar esta vista previa.</p>',
             '+ experiencePreview',
         ]
@@ -354,6 +369,8 @@ class IndexHtmlTest(unittest.TestCase):
             "experienceFieldLabels: {",
             'startDate: "Fecha de inicio"',
             'endDate: "Fecha de fin"',
+            'summary: "Descripcion"',
+            'achievements: "Logros"',
             "cv: null,",
             "ui: {",
             "message: { ...config.uiDefaults.message },",
@@ -378,6 +395,7 @@ class IndexHtmlTest(unittest.TestCase):
             'location: { type: "string", minLength: 1 },',
             'startDate: { type: "string", minLength: 1 },',
             'endDate: { type: "string", minLength: 1 },',
+            'achievements: { type: "string" },',
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
@@ -437,6 +455,7 @@ class IndexHtmlTest(unittest.TestCase):
             'const experienceForm = input.closest("[data-experience-index]");',
             "const experienceIndex = experienceForm ? Number(experienceForm.dataset.experienceIndex) : -1;",
             "app.updateExperienceField(experienceIndex, fieldName, input.value);",
+            'achievements: entry && typeof entry.achievements === "string" ? entry.achievements : "",',
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
