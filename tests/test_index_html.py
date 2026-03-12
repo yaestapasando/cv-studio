@@ -134,6 +134,18 @@ class IndexHtmlTest(unittest.TestCase):
 
     def test_state_utilities_read_and_write_local_snapshot(self):
         expected_snippets = [
+            "hasOwn(value, key) {",
+            "Object.prototype.hasOwnProperty.call(value, key);",
+            "isValidSection(sectionId) {",
+            "config.sections.some((section) => section.id === sectionId);",
+            "update(patch) {",
+            "const nextState = {",
+            'booted: state.hasOwn(patch, "booted") ? patch.booted : state.booted,',
+            'capabilities: state.hasOwn(patch, "capabilities")',
+            'cv: state.hasOwn(patch, "cv") ? patch.cv : state.cv,',
+            'if (state.hasOwn(patch, "activeSection") && state.isValidSection(patch.activeSection)) {',
+            "state.booted = nextState.booted;",
+            "state.capabilities = nextState.capabilities;",
             "if (!state.capabilities.storage) {",
             "const rawState = window.localStorage.getItem(config.storageKey);",
             "const parsedState = JSON.parse(rawState);",
@@ -181,10 +193,13 @@ class IndexHtmlTest(unittest.TestCase):
     def test_boot_uses_persisted_state_when_available(self):
         expected_snippets = [
             "const persistedState = state.read();",
-            "state.cv = persistedState && persistedState.cv ? persistedState.cv : app.cloneInitialCV();",
-            'state.activeSection = persistedState && persistedState.activeSection ? persistedState.activeSection : "basics";',
+            "state.update({ capabilities: app.detectCapabilities() });",
+            "state.update({",
+            "cv: persistedState && persistedState.cv ? persistedState.cv : app.cloneInitialCV(),",
+            'activeSection: persistedState && persistedState.activeSection ? persistedState.activeSection : "basics",',
+            "booted: true,",
             "state.write();",
-            "state.activeSection = button.dataset.section;",
+            "state.update({ activeSection: button.dataset.section });",
             "state.write();",
         ]
         for snippet in expected_snippets:

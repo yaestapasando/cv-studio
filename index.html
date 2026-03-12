@@ -440,6 +440,29 @@
           fileProtocol: false,
         },
         cv: null,
+        hasOwn(value, key) {
+          return Object.prototype.hasOwnProperty.call(value, key);
+        },
+        isValidSection(sectionId) {
+          return config.sections.some((section) => section.id === sectionId);
+        },
+        update(patch) {
+          const nextState = {
+            booted: state.hasOwn(patch, "booted") ? patch.booted : state.booted,
+            activeSection: state.activeSection,
+            capabilities: state.hasOwn(patch, "capabilities")
+              ? { ...state.capabilities, ...patch.capabilities }
+              : state.capabilities,
+            cv: state.hasOwn(patch, "cv") ? patch.cv : state.cv,
+          };
+          if (state.hasOwn(patch, "activeSection") && state.isValidSection(patch.activeSection)) {
+            nextState.activeSection = patch.activeSection;
+          }
+          state.booted = nextState.booted;
+          state.activeSection = nextState.activeSection;
+          state.capabilities = nextState.capabilities;
+          state.cv = nextState.cv;
+        },
         read() {
           if (!state.capabilities.storage) {
             return null;
@@ -643,7 +666,7 @@
             if (!button) {
               return;
             }
-            state.activeSection = button.dataset.section;
+            state.update({ activeSection: button.dataset.section });
             state.write();
             document.body.dataset.activeSection = state.activeSection;
             ui.renderToolbar();
@@ -658,11 +681,13 @@
           ui.status.textContent = config.appName + " listo: " + storageLabel + ", " + protocolLabel;
         },
         boot() {
-          state.capabilities = app.detectCapabilities();
+          state.update({ capabilities: app.detectCapabilities() });
           const persistedState = state.read();
-          state.cv = persistedState && persistedState.cv ? persistedState.cv : app.cloneInitialCV();
-          state.activeSection = persistedState && persistedState.activeSection ? persistedState.activeSection : "basics";
-          state.booted = true;
+          state.update({
+            cv: persistedState && persistedState.cv ? persistedState.cv : app.cloneInitialCV(),
+            activeSection: persistedState && persistedState.activeSection ? persistedState.activeSection : "basics",
+            booted: true,
+          });
           app.render();
           app.bindEvents();
           app.updateStatus();
