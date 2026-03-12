@@ -76,10 +76,11 @@
             width: 100%;
             max-width: var(--a4-width);
             min-height: var(--a4-height);
-            aspect-ratio: 210 / 297;
-            padding: 40px;
-            box-shadow: var(--shadow);
+            /* aspect-ratio: 210 / 297;  <- Comentado para permitir que crezca si el contenido excede una página */
+            padding: 20mm;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
             margin: 0 auto;
+            position: relative;
         }
 
         /* Diseño Responsive */
