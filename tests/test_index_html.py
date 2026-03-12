@@ -223,7 +223,11 @@ class IndexHtmlTest(unittest.TestCase):
             '<div class=\\"entry-list\\">',
             '<article class=\\"entry-card\\">',
             '<div class=\\"entry-card-header\\">',
+            '<div class=\\"entry-card-actions\\">',
             '<h3 class=\\"entry-card-title\\">',
+            'data-action=\\"remove-experience-entry\\"',
+            'data-experience-index=\\"" + String(index) + "\\"',
+            '>Eliminar</button>',
             '<form class=\\"editor-form experience-form\\" data-experience-index=\\"',
             'id=\\"experience-role-',
             'name=\\"role\\"',
@@ -298,11 +302,35 @@ class IndexHtmlTest(unittest.TestCase):
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
 
+    def test_app_removes_experience_entry(self):
+        expected_snippets = [
+            "removeExperienceEntry(index) {",
+            "!state.cv || !Array.isArray(state.cv.experience)",
+            "!Number.isInteger(index) || index < 0 || index >= state.cv.experience.length",
+            "const nextExperience = state.cv.experience.filter((entry, entryIndex) => entryIndex !== index);",
+            "experience: nextExperience,",
+            'text: "Experiencia " + String(index + 1) + " eliminada.",',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
     def test_toolbar_click_handler_triggers_add_experience_action(self):
         expected_snippets = [
             'const actionButton = event.target.closest("[data-action]");',
             'actionButton.dataset.action === "add-experience-entry"',
             "app.addExperienceEntry();",
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_editor_click_handler_triggers_remove_experience_action(self):
+        expected_snippets = [
+            'ui.editorCanvas.addEventListener("click", (event) => {',
+            'actionButton.dataset.action !== "remove-experience-entry"',
+            "const experienceIndex = Number(actionButton.dataset.experienceIndex);",
+            "app.removeExperienceEntry(experienceIndex);",
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
