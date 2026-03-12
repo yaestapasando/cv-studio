@@ -221,6 +221,11 @@
       color: var(--text);
     }
 
+    textarea.editor-input {
+      resize: vertical;
+      min-height: 132px;
+    }
+
     .editor-note {
       padding: 14px 16px;
       border-radius: 14px;
@@ -743,10 +748,20 @@
               + " placeholder=\"Describe tu perfil profesional\""
               + " value=\"" + ui.escapeHtml(basics.headline) + "\">"
               + "</div>"
-              + "</form>"
               + "<div class=\"editor-group\">"
-              + "<span>Resumen</span>"
-              + "<div class=\"editor-field\">" + ui.escapeHtml(basics.summary) + "</div>"
+              + "<label for=\"summary-input\"><span>Resumen / perfil</span></label>"
+              + "<textarea"
+              + " id=\"summary-input\""
+              + " name=\"summary\""
+              + " class=\"editor-field editor-input\""
+              + " rows=\"6\""
+              + " placeholder=\"Resume tu experiencia, fortalezas y propuesta de valor\">"
+              + ui.escapeHtml(basics.summary)
+              + "</textarea>"
+              + "</div>"
+              + "</form>"
+              + "<div class=\"editor-note\" data-tone=\"muted\">"
+              + "Usa este bloque para presentar tu perfil en tres o cuatro frases concretas."
               + "</div>",
             experience: ""
               + "<div class=\"editor-group\">"
@@ -949,12 +964,15 @@
           ui.editorCanvas.addEventListener("input", (event) => {
             const fullNameInput = event.target.closest("[name=\"fullName\"]");
             const headlineInput = event.target.closest("[name=\"headline\"]");
-            if ((!fullNameInput && !headlineInput) || state.ui.activeSection !== "basics") {
+            const summaryInput = event.target.closest("[name=\"summary\"]");
+            if ((!fullNameInput && !headlineInput && !summaryInput) || state.ui.activeSection !== "basics") {
               return;
             }
             const messageText = fullNameInput
               ? "Nombre completo actualizado."
-              : "Titular profesional actualizado.";
+              : headlineInput
+                ? "Titular profesional actualizado."
+                : "Resumen profesional actualizado.";
             state.update({
               cv: {
                 ...state.cv,
@@ -962,6 +980,7 @@
                   ...state.cv.basics,
                   fullName: fullNameInput ? fullNameInput.value : state.cv.basics.fullName,
                   headline: headlineInput ? headlineInput.value : state.cv.basics.headline,
+                  summary: summaryInput ? summaryInput.value : state.cv.basics.summary,
                 },
                 meta: {
                   ...state.cv.meta,
