@@ -478,6 +478,10 @@
                 <input type="tel" id="field-phone" name="phone" autocomplete="tel" maxlength="30" />
                 <span id="field-phone-error" class="field-error" aria-live="polite" hidden></span>
               </div>
+              <div class="field-group">
+                <label for="field-location">Ubicación</label>
+                <input type="text" id="field-location" name="location" autocomplete="address-level2" maxlength="120" />
+              </div>
             </form>
           </section>
           <section id="section-summary"        role="tabpanel" aria-labelledby="tab-summary"        hidden>
@@ -903,14 +907,16 @@
         var emailError     = document.getElementById('field-email-error');
         var inputPhone     = document.getElementById('field-phone');
         var phoneError     = document.getElementById('field-phone-error');
+        var inputLocation  = document.getElementById('field-location');
 
         // Store → fields (initial + reactive)
         function syncFromStore(state) {
           var p = state.personal || {};
-          if (inputFullName && inputFullName.value !== (p.fullName || '')) inputFullName.value = p.fullName || '';
-          if (inputJobTitle && inputJobTitle.value !== (p.jobTitle || '')) inputJobTitle.value = p.jobTitle || '';
-          if (inputEmail    && inputEmail.value    !== (p.email    || '')) inputEmail.value    = p.email    || '';
-          if (inputPhone    && inputPhone.value    !== (p.phone    || '')) inputPhone.value    = p.phone    || '';
+          if (inputFullName  && inputFullName.value  !== (p.fullName  || '')) inputFullName.value  = p.fullName  || '';
+          if (inputJobTitle  && inputJobTitle.value  !== (p.jobTitle  || '')) inputJobTitle.value  = p.jobTitle  || '';
+          if (inputEmail     && inputEmail.value     !== (p.email     || '')) inputEmail.value     = p.email     || '';
+          if (inputPhone     && inputPhone.value     !== (p.phone     || '')) inputPhone.value     = p.phone     || '';
+          if (inputLocation  && inputLocation.value  !== (p.location  || '')) inputLocation.value  = p.location  || '';
         }
         syncFromStore(CVStore.getState());
         CVStore.subscribe(syncFromStore);
@@ -960,6 +966,14 @@
             }
             CVStore.setState(function (s) {
               return Object.assign({}, s, { personal: Object.assign({}, s.personal, { phone: inputPhone.value }) });
+            });
+          });
+        }
+
+        if (inputLocation) {
+          inputLocation.addEventListener('input', function () {
+            CVStore.setState(function (s) {
+              return Object.assign({}, s, { personal: Object.assign({}, s.personal, { location: inputLocation.value }) });
             });
           });
         }
