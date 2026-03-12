@@ -390,6 +390,92 @@
       text-transform: uppercase;
     }
 
+    .preview-layout[data-template="compact"] {
+      padding: 18px;
+    }
+
+    .preview-layout[data-template="compact"] .preview-placeholder {
+      gap: 12px;
+      min-height: auto;
+    }
+
+    .preview-compact {
+      display: grid;
+      gap: 12px;
+    }
+
+    .preview-compact-header,
+    .preview-compact-section {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: #fff;
+    }
+
+    .preview-compact-header {
+      gap: 8px;
+      display: grid;
+    }
+
+    .preview-eyebrow {
+      margin: 0;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .preview-compact-name,
+    .preview-compact-headline,
+    .preview-compact-summary,
+    .preview-compact-contact,
+    .preview-compact-item,
+    .preview-compact-meta {
+      margin: 0;
+    }
+
+    .preview-compact-name {
+      font-size: 1.45rem;
+      line-height: 1;
+    }
+
+    .preview-compact-headline {
+      color: var(--muted);
+    }
+
+    .preview-compact-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .preview-compact-section {
+      display: grid;
+      gap: 10px;
+    }
+
+    .preview-compact-section h3 {
+      margin: 0;
+      font-size: 0.9rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .preview-compact-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .preview-compact-item {
+      font-weight: 600;
+    }
+
+    .preview-compact-meta {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
     .app-modal {
       width: min(480px, calc(100vw - 32px));
       padding: 0;
@@ -427,6 +513,10 @@
 
       .app-status {
         white-space: normal;
+      }
+
+      .preview-compact-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -467,7 +557,7 @@
           <p>Panel dedicado a la vista previa del documento final, separado del flujo de edicion.</p>
         </div>
         <div class="panel-body">
-          <div class="preview-layout">
+          <div class="preview-layout" id="preview-layout">
             <div class="preview-placeholder" id="preview-content" aria-label="Vista previa del curriculum"></div>
           </div>
         </div>
@@ -911,6 +1001,7 @@
         status: document.getElementById("app-status"),
         toolbar: document.getElementById("editor-toolbar"),
         editorCanvas: document.getElementById("editor-canvas"),
+        previewLayout: document.getElementById("preview-layout"),
         previewContent: document.getElementById("preview-content"),
         modal: document.getElementById("app-modal"),
         escapeHtml(value) {
@@ -1902,6 +1993,105 @@
             : normalizedSkillItems.length
               ? ui.renderAchievementList(normalizedSkillItems, "Habilidades pendientes")
               : "<p>Anade tus habilidades principales para completar esta vista previa.</p>";
+          ui.previewLayout.dataset.template = state.ui.template;
+          if (state.ui.template === "compact") {
+            const compactContacts = [
+              basics.email,
+              basics.phone,
+              basics.location,
+              basics.web,
+              basics.linkedin,
+              basics.github,
+            ]
+              .filter((value) => typeof value === "string")
+              .map((value) => value.trim())
+              .filter(Boolean);
+            const compactSkills = skills.mode === "categories"
+              ? normalizedSkillCategories.length
+                ? normalizedSkillCategories.map((category) => category.name + ": " + category.items.join(", "))
+                : ["Categorias pendientes"]
+              : normalizedSkillItems.length
+                ? normalizedSkillItems
+                : ["Habilidades pendientes"];
+            const compactExperience = state.cv.experience.length
+              ? state.cv.experience.map((entry) => ""
+                + "<div>"
+                + "<p class=\"preview-compact-item\">" + ui.escapeHtml(entry.role || "Puesto pendiente") + "</p>"
+                + "<p class=\"preview-compact-meta\">" + ui.escapeHtml(entry.company || "Empresa pendiente") + " | " + ui.escapeHtml(ui.formatExperiencePeriod(entry)) + "</p>"
+                + "</div>")
+                .join("")
+              : "<p class=\"preview-compact-meta\">Anade experiencia.</p>";
+            const compactProjects = state.cv.projects.length
+              ? state.cv.projects.map((entry) => ""
+                + "<div>"
+                + "<p class=\"preview-compact-item\">" + ui.escapeHtml(entry.name || "Proyecto pendiente") + "</p>"
+                + "<p class=\"preview-compact-meta\">" + ui.escapeHtml(entry.role || "Rol pendiente") + (entry.stack ? " | " + ui.escapeHtml(entry.stack) : "") + "</p>"
+                + "</div>")
+                .join("")
+              : "<p class=\"preview-compact-meta\">Anade proyectos.</p>";
+            const compactEducation = state.cv.education.length
+              ? state.cv.education.map((entry) => ""
+                + "<div>"
+                + "<p class=\"preview-compact-item\">" + ui.escapeHtml(entry.title || "Titulo pendiente") + "</p>"
+                + "<p class=\"preview-compact-meta\">" + ui.escapeHtml(entry.center || "Centro pendiente") + " | " + ui.escapeHtml(entry.dates || "Fechas pendientes") + "</p>"
+                + "</div>")
+                .join("")
+              : "<p class=\"preview-compact-meta\">Anade formacion.</p>";
+            const compactLanguages = state.cv.languages.length
+              ? state.cv.languages.map((entry) => ""
+                + "<p class=\"preview-compact-meta\">" + ui.escapeHtml(entry.name || "Idioma pendiente") + " | " + ui.escapeHtml(entry.level || "Nivel pendiente") + "</p>")
+                .join("")
+              : "<p class=\"preview-compact-meta\">Anade idiomas.</p>";
+            const compactCertifications = state.cv.certifications.length
+              ? state.cv.certifications.map((entry) => ""
+                + "<p class=\"preview-compact-meta\">" + ui.escapeHtml(entry.title || "Certificacion pendiente") + " | " + ui.escapeHtml(entry.issuer || "Emisor pendiente") + "</p>")
+                .join("")
+              : "<p class=\"preview-compact-meta\">Anade certificaciones.</p>";
+            ui.previewContent.innerHTML = ""
+              + "<article class=\"preview-compact\">"
+              + "<header class=\"preview-compact-header\">"
+              + "<p class=\"preview-eyebrow\">Plantilla compacta</p>"
+              + "<p class=\"preview-compact-name\">" + ui.escapeHtml(basics.fullName || "Nombre pendiente") + "</p>"
+              + "<p class=\"preview-compact-headline\">" + ui.escapeHtml(basics.headline || "Titular profesional pendiente") + "</p>"
+              + "<p class=\"preview-compact-contact\">" + ui.escapeHtml(compactContacts.length ? compactContacts.join(" | ") : "Completa tus datos de contacto.") + "</p>"
+              + "<p class=\"preview-compact-summary\">" + ui.escapeHtml(basics.summary || "Completa tu perfil para ver aqui el resumen profesional.") + "</p>"
+              + "</header>"
+              + "<div class=\"preview-compact-grid\">"
+              + "<section class=\"preview-compact-section\">"
+              + "<h3>Experiencia</h3>"
+              + "<div class=\"preview-compact-list\">" + compactExperience + "</div>"
+              + "</section>"
+              + "<section class=\"preview-compact-section\">"
+              + "<h3>Habilidades</h3>"
+              + "<div class=\"preview-compact-list\">"
+              + compactSkills.map((entry) => "<p class=\"preview-compact-meta\">" + ui.escapeHtml(entry) + "</p>").join("")
+              + "</div>"
+              + "</section>"
+              + "<section class=\"preview-compact-section\">"
+              + "<h3>Proyectos</h3>"
+              + "<div class=\"preview-compact-list\">" + compactProjects + "</div>"
+              + "</section>"
+              + "<section class=\"preview-compact-section\">"
+              + "<h3>Formacion</h3>"
+              + "<div class=\"preview-compact-list\">" + compactEducation + "</div>"
+              + "</section>"
+              + "<section class=\"preview-compact-section\">"
+              + "<h3>Idiomas</h3>"
+              + "<div class=\"preview-compact-list\">" + compactLanguages + "</div>"
+              + "</section>"
+              + "<section class=\"preview-compact-section\">"
+              + "<h3>Certificaciones</h3>"
+              + "<div class=\"preview-compact-list\">" + compactCertifications + "</div>"
+              + "</section>"
+              + "<section class=\"preview-compact-section\">"
+              + "<h3>Esquema</h3>"
+              + "<p class=\"preview-compact-meta\">" + ui.escapeHtml(config.cvSchema.title) + "</p>"
+              + "<p class=\"preview-compact-meta\">Obligatorias: " + ui.escapeHtml(requiredSections) + "</p>"
+              + "</section>"
+              + "</div>"
+              + "</article>";
+            return;
+          }
           ui.previewContent.innerHTML = ""
             + "<article class=\"preview-card\">"
             + "<h3>Perfil</h3>"

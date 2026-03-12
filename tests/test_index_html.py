@@ -132,6 +132,7 @@ process.stdout.write(JSON.stringify(result));
         self.assertIn("preview-panel", self.parser.ids)
         self.assertIn("editor-toolbar", self.parser.ids)
         self.assertIn("editor-canvas", self.parser.ids)
+        self.assertIn("preview-layout", self.parser.ids)
         self.assertIn("preview-content", self.parser.ids)
         self.assertIn("app-modal", self.parser.ids)
         self.assertIn("workspace-panel", self.parser.class_names)
@@ -1590,6 +1591,28 @@ CVStudio.app.moveEducationEntryToPosition(0, "2");
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
 
+    def test_preview_supports_compact_visual_representation(self):
+        expected_snippets = [
+            '.preview-layout[data-template="compact"] {',
+            ".preview-compact {",
+            ".preview-compact-header,",
+            ".preview-compact-grid {",
+            ".preview-compact-section {",
+            ".preview-compact-list {",
+            ".preview-compact-item {",
+            'previewLayout: document.getElementById("preview-layout"),',
+            'ui.previewLayout.dataset.template = state.ui.template;',
+            'if (state.ui.template === "compact") {',
+            '<article class=\\"preview-compact\\">',
+            '<p class=\\"preview-eyebrow\\">Plantilla compacta</p>',
+            '<div class=\\"preview-compact-grid\\">',
+            'compactContacts.join(" | ")',
+            '<p class=\\"preview-compact-meta\\">Obligatorias: " + ui.escapeHtml(requiredSections) + "</p>"',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
     def test_bootstrap_defines_initial_state_and_capabilities(self):
         expected_snippets = [
             'storageKey: "cv-studio-document"',
@@ -2010,6 +2033,59 @@ CVStudio.state.update({ cv: CVStudio.app.normalizeCvDocument(cv), ui: { activeSe
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
+
+    def test_render_preview_uses_compact_markup_when_template_is_compact(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+cv.basics = {
+  fullName: "Ada Lovelace",
+  headline: "Staff Engineer",
+  summary: "Crea sistemas mantenibles.",
+  email: "ada@example.com",
+  phone: "+34 600 000 000",
+  location: "Madrid, Espana",
+  web: "ada.dev",
+  linkedin: "linkedin.com/in/ada",
+  github: "github.com/ada",
+};
+cv.experience = [
+  { role: "Lead Engineer", company: "Analytical Engines", location: "Remote", startDate: "2024-01", isCurrent: true, endDate: "", summary: "Dirige la plataforma", achievements: [] },
+];
+cv.skills = {
+  mode: "categories",
+  items: [],
+  categories: [
+    { name: "Frontend", items: ["HTML", "CSS"] },
+    { name: "Backend", items: ["Node.js"] },
+  ],
+};
+cv.projects = [
+  { name: "CV Studio", role: "Creator", url: "cv.dev", stack: "HTML, CSS", summary: "Editor", highlights: [] },
+];
+cv.education = [
+  { title: "Mathematics", center: "London University", dates: "1830 - 1835", details: "", notes: [] },
+];
+cv.languages = [
+  { name: "English", level: "Native" },
+];
+cv.certifications = [
+  { title: "Architecture", issuer: "Royal Society", date: "1840-01" },
+];
+CVStudio.state.update({ cv, ui: { template: "compact" } });
+CVStudio.ui.renderPreview();
+({
+  template: CVStudio.ui.previewLayout.dataset.template,
+  html: CVStudio.ui.previewContent.innerHTML,
+});
+"""
+        )
+        self.assertEqual(result["template"], "compact")
+        self.assertIn('class="preview-compact"', result["html"])
+        self.assertIn("Plantilla compacta", result["html"])
+        self.assertIn("ada@example.com | +34 600 000 000 | Madrid, Espana", result["html"])
+        self.assertIn("Frontend: HTML, CSS", result["html"])
+        self.assertIn("Lead Engineer", result["html"])
 
     def test_surfaces_direct_file_open_verification_in_status(self):
         expected_snippets = [
