@@ -390,6 +390,7 @@
       const config = {
         appName: "CV Studio",
         storageKey: "cv-studio-document",
+        dataModelVersion: 1,
         sections: [
           { id: "basics", label: "Datos personales" },
           { id: "experience", label: "Experiencia" },
@@ -418,7 +419,7 @@
           title: "Curriculum Vitae",
           type: "object",
           additionalProperties: false,
-          required: ["basics", "experience", "education"],
+          required: ["basics", "experience", "education", "meta"],
           properties: {
             basics: { $ref: "#/$defs/basics" },
             experience: {
@@ -431,6 +432,7 @@
               minItems: 1,
               items: { $ref: "#/$defs/educationEntry" },
             },
+            meta: { $ref: "#/$defs/meta" },
           },
           $defs: {
             basics: {
@@ -464,6 +466,15 @@
                 course: { type: "string", minLength: 1 },
                 school: { type: "string", minLength: 1 },
                 period: { type: "string", minLength: 1 },
+              },
+            },
+            meta: {
+              type: "object",
+              additionalProperties: false,
+              required: ["version", "updatedAt"],
+              properties: {
+                version: { type: "integer", const: 1 },
+                updatedAt: { type: "string" },
               },
             },
           },
@@ -521,6 +532,34 @@
         },
         isValidTemplate(templateId) {
           return config.templates.some((template) => template.id === templateId);
+        },
+        getCvModelVersion(cvDocument) {
+          if (!cvDocument || typeof cvDocument !== "object" || !cvDocument.meta || typeof cvDocument.meta !== "object") {
+            return null;
+          }
+          return cvDocument.meta.version;
+        },
+        isCompatibleCv(cvDocument) {
+          return state.getCvModelVersion(cvDocument) === config.dataModelVersion;
+        },
+        normalizeSnapshot(snapshot) {
+          if (!snapshot || typeof snapshot !== "object") {
+            return null;
+          }
+          const normalizedSnapshot = {
+            modelVersion: state.hasOwn(snapshot, "modelVersion")
+              ? snapshot.modelVersion
+              : state.getCvModelVersion(snapshot.cv),
+            ui: snapshot.ui,
+            cv: snapshot.cv,
+          };
+          if (normalizedSnapshot.modelVersion !== config.dataModelVersion) {
+            return null;
+          }
+          if (!state.isCompatibleCv(normalizedSnapshot.cv)) {
+            return null;
+          }
+          return normalizedSnapshot;
         },
         sanitizeUi(uiPatch) {
           const nextUi = {
@@ -588,10 +627,7 @@
               return null;
             }
             const parsedState = JSON.parse(rawState);
-            if (!parsedState || typeof parsedState !== "object") {
-              return null;
-            }
-            return parsedState;
+            return state.normalizeSnapshot(parsedState);
           } catch (error) {
             return null;
           }
@@ -601,6 +637,7 @@
             return;
           }
           const snapshot = {
+            modelVersion: config.dataModelVersion,
             ui: state.ui,
             cv: state.cv,
           };
@@ -792,7 +829,9 @@
       // JS Module: app
       const app = {
         cloneInitialCV() {
-          return JSON.parse(JSON.stringify(config.initialCV));
+          const initialCV = JSON.parse(JSON.stringify(config.initialCV));
+          initialCV.meta.version = config.dataModelVersion;
+          return initialCV;
         },
         detectCapabilities() {
           let storage = false;
@@ -904,7 +943,7 @@
           const runtimeMode = state.capabilities.fileProtocol ? "file" : "browser";
           const protocolLabel = state.capabilities.fileProtocol ? "verificada al abrir index.html directamente en el navegador" : "abierta desde navegador";
           ui.status.dataset.runtimeMode = runtimeMode;
-          ui.status.textContent = config.appName + " listo: " + storageLabel + ", " + protocolLabel;
+          ui.status.textContent = config.appName + " listo: " + storageLabel + ", " + protocolLabel + ", modelo v" + config.dataModelVersion;
         },
         boot() {
           app.subscribeToState();
