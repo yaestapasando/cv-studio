@@ -100,6 +100,7 @@ class IndexHtmlTest(unittest.TestCase):
     def test_basics_section_renders_full_name_form(self):
         expected_snippets = [
             ".editor-form {",
+            ".editor-help {",
             ".editor-input {",
             '<form class=\\"editor-form\\" id=\\"basics-form\\">',
             '<label for=\\"full-name-input\\"><span>Nombre completo</span></label>',
@@ -108,7 +109,9 @@ class IndexHtmlTest(unittest.TestCase):
             'class=\\"editor-field editor-input\\"',
             'type=\\"text\\"',
             'autocomplete=\\"name\\"',
+            'aria-describedby=\\"full-name-help\\"',
             'placeholder=\\"Escribe tu nombre completo\\"',
+            '<p class=\\"editor-help\\" id=\\"full-name-help\\">Usa el mismo nombre que aparecera en tus perfiles profesionales.</p>',
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
@@ -121,8 +124,10 @@ class IndexHtmlTest(unittest.TestCase):
             'name=\\"headline\\"',
             'class=\\"editor-field editor-input\\"',
             'autocomplete=\\"organization-title\\"',
+            'aria-describedby=\\"headline-help\\"',
             'placeholder=\\"Describe tu perfil profesional\\"',
             'value=\\"" + ui.escapeHtml(basics.headline) + "\\">',
+            '<p class=\\"editor-help\\" id=\\"headline-help\\">Resume tu especialidad y seniority en una sola linea.</p>',
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
@@ -136,40 +141,52 @@ class IndexHtmlTest(unittest.TestCase):
             'type=\\"email\\"',
             'autocomplete=\\"email\\"',
             'inputmode=\\"email\\"',
+            'aria-describedby=\\"email-help\\"',
             'placeholder=\\"tu@email.com\\"',
             'value=\\"" + ui.escapeHtml(basics.email) + "\\">',
+            '<p class=\\"editor-help\\" id=\\"email-help\\">Introduce un correo que revises con frecuencia.</p>',
             '<label for=\\"phone-input\\"><span>Telefono</span></label>',
             'id=\\"phone-input\\"',
             'name=\\"phone\\"',
             'type=\\"tel\\"',
             'autocomplete=\\"tel\\"',
             'inputmode=\\"tel\\"',
+            'aria-describedby=\\"phone-help\\"',
             'placeholder=\\"+34 600 000 000\\"',
             'value=\\"" + ui.escapeHtml(basics.phone) + "\\">',
+            '<p class=\\"editor-help\\" id=\\"phone-help\\">Anade prefijo internacional si buscas fuera de tu pais.</p>',
             '<label for=\\"location-input\\"><span>Ubicacion</span></label>',
             'id=\\"location-input\\"',
             'name=\\"location\\"',
             'autocomplete=\\"address-level2\\"',
+            'aria-describedby=\\"location-help\\"',
             'placeholder=\\"Ciudad, pais\\"',
             'value=\\"" + ui.escapeHtml(basics.location) + "\\">',
+            '<p class=\\"editor-help\\" id=\\"location-help\\">Indica ciudad y pais; no hace falta incluir la direccion completa.</p>',
             '<label for=\\"web-input\\"><span>Web</span></label>',
             'id=\\"web-input\\"',
             'name=\\"web\\"',
             'type=\\"url\\"',
             'autocomplete=\\"url\\"',
             'inputmode=\\"url\\"',
+            'aria-describedby=\\"web-help\\"',
             'placeholder=\\"tuweb.com\\"',
             'value=\\"" + ui.escapeHtml(basics.web) + "\\">',
+            '<p class=\\"editor-help\\" id=\\"web-help\\">Incluye tu portfolio o web personal si aporta contexto a tu perfil.</p>',
             '<label for=\\"linkedin-input\\"><span>LinkedIn</span></label>',
             'id=\\"linkedin-input\\"',
             'name=\\"linkedin\\"',
+            'aria-describedby=\\"linkedin-help\\"',
             'placeholder=\\"linkedin.com/in/tu-perfil\\"',
             'value=\\"" + ui.escapeHtml(basics.linkedin) + "\\">',
+            '<p class=\\"editor-help\\" id=\\"linkedin-help\\">Pega la URL publica de tu perfil para que el enlace sea directo.</p>',
             '<label for=\\"github-input\\"><span>GitHub</span></label>',
             'id=\\"github-input\\"',
             'name=\\"github\\"',
+            'aria-describedby=\\"github-help\\"',
             'placeholder=\\"github.com/tu-usuario\\"',
             'value=\\"" + ui.escapeHtml(basics.github) + "\\">',
+            '<p class=\\"editor-help\\" id=\\"github-help\\">Anade tu usuario si tu trabajo tecnico esta publicado ahi.</p>',
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
@@ -184,8 +201,10 @@ class IndexHtmlTest(unittest.TestCase):
             'name=\\"summary\\"',
             'class=\\"editor-field editor-input\\"',
             'rows=\\"6\\"',
+            'aria-describedby=\\"summary-help\\"',
             'placeholder=\\"Resume tu experiencia, fortalezas y propuesta de valor\\"',
             'ui.escapeHtml(basics.summary)',
+            '<p class=\\"editor-help\\" id=\\"summary-help\\">Cuenta impacto, foco y diferencial sin repetir el titular.</p>',
             'Usa este bloque para presentar tu perfil en tres o cuatro frases concretas.',
         ]
         for snippet in expected_snippets:

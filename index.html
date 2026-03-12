@@ -195,6 +195,13 @@
       gap: 8px;
     }
 
+    .editor-help {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
     .editor-form {
       display: grid;
       gap: 14px;
@@ -749,8 +756,10 @@
               + " class=\"editor-field editor-input\""
               + " type=\"text\""
               + " autocomplete=\"name\""
+              + " aria-describedby=\"full-name-help\""
               + " placeholder=\"Escribe tu nombre completo\""
               + " value=\"" + ui.escapeHtml(basics.fullName) + "\">"
+              + "<p class=\"editor-help\" id=\"full-name-help\">Usa el mismo nombre que aparecera en tus perfiles profesionales.</p>"
               + "</div>"
               + "<div class=\"editor-group\">"
               + "<label for=\"headline-input\"><span>Titular profesional</span></label>"
@@ -760,8 +769,10 @@
               + " class=\"editor-field editor-input\""
               + " type=\"text\""
               + " autocomplete=\"organization-title\""
+              + " aria-describedby=\"headline-help\""
               + " placeholder=\"Describe tu perfil profesional\""
               + " value=\"" + ui.escapeHtml(basics.headline) + "\">"
+              + "<p class=\"editor-help\" id=\"headline-help\">Resume tu especialidad y seniority en una sola linea.</p>"
               + "</div>"
               + "<div class=\"editor-group\">"
               + "<label for=\"email-input\"><span>Email</span></label>"
@@ -772,8 +783,10 @@
               + " type=\"email\""
               + " autocomplete=\"email\""
               + " inputmode=\"email\""
+              + " aria-describedby=\"email-help\""
               + " placeholder=\"tu@email.com\""
               + " value=\"" + ui.escapeHtml(basics.email) + "\">"
+              + "<p class=\"editor-help\" id=\"email-help\">Introduce un correo que revises con frecuencia.</p>"
               + "</div>"
               + "<div class=\"editor-group\">"
               + "<label for=\"phone-input\"><span>Telefono</span></label>"
@@ -784,8 +797,10 @@
               + " type=\"tel\""
               + " autocomplete=\"tel\""
               + " inputmode=\"tel\""
+              + " aria-describedby=\"phone-help\""
               + " placeholder=\"+34 600 000 000\""
               + " value=\"" + ui.escapeHtml(basics.phone) + "\">"
+              + "<p class=\"editor-help\" id=\"phone-help\">Anade prefijo internacional si buscas fuera de tu pais.</p>"
               + "</div>"
               + "<div class=\"editor-group\">"
               + "<label for=\"location-input\"><span>Ubicacion</span></label>"
@@ -795,8 +810,10 @@
               + " class=\"editor-field editor-input\""
               + " type=\"text\""
               + " autocomplete=\"address-level2\""
+              + " aria-describedby=\"location-help\""
               + " placeholder=\"Ciudad, pais\""
               + " value=\"" + ui.escapeHtml(basics.location) + "\">"
+              + "<p class=\"editor-help\" id=\"location-help\">Indica ciudad y pais; no hace falta incluir la direccion completa.</p>"
               + "</div>"
               + "<div class=\"editor-group\">"
               + "<label for=\"web-input\"><span>Web</span></label>"
@@ -807,8 +824,10 @@
               + " type=\"url\""
               + " autocomplete=\"url\""
               + " inputmode=\"url\""
+              + " aria-describedby=\"web-help\""
               + " placeholder=\"tuweb.com\""
               + " value=\"" + ui.escapeHtml(basics.web) + "\">"
+              + "<p class=\"editor-help\" id=\"web-help\">Incluye tu portfolio o web personal si aporta contexto a tu perfil.</p>"
               + "</div>"
               + "<div class=\"editor-group\">"
               + "<label for=\"linkedin-input\"><span>LinkedIn</span></label>"
@@ -819,8 +838,10 @@
               + " type=\"url\""
               + " autocomplete=\"url\""
               + " inputmode=\"url\""
+              + " aria-describedby=\"linkedin-help\""
               + " placeholder=\"linkedin.com/in/tu-perfil\""
               + " value=\"" + ui.escapeHtml(basics.linkedin) + "\">"
+              + "<p class=\"editor-help\" id=\"linkedin-help\">Pega la URL publica de tu perfil para que el enlace sea directo.</p>"
               + "</div>"
               + "<div class=\"editor-group\">"
               + "<label for=\"github-input\"><span>GitHub</span></label>"
@@ -831,8 +852,10 @@
               + " type=\"url\""
               + " autocomplete=\"url\""
               + " inputmode=\"url\""
+              + " aria-describedby=\"github-help\""
               + " placeholder=\"github.com/tu-usuario\""
               + " value=\"" + ui.escapeHtml(basics.github) + "\">"
+              + "<p class=\"editor-help\" id=\"github-help\">Anade tu usuario si tu trabajo tecnico esta publicado ahi.</p>"
               + "</div>"
               + "<div class=\"editor-group\">"
               + "<label for=\"summary-input\"><span>Resumen / perfil</span></label>"
@@ -841,9 +864,11 @@
               + " name=\"summary\""
               + " class=\"editor-field editor-input\""
               + " rows=\"6\""
+              + " aria-describedby=\"summary-help\""
               + " placeholder=\"Resume tu experiencia, fortalezas y propuesta de valor\">"
               + ui.escapeHtml(basics.summary)
               + "</textarea>"
+              + "<p class=\"editor-help\" id=\"summary-help\">Cuenta impacto, foco y diferencial sin repetir el titular.</p>"
               + "</div>"
               + "</form>"
               + "<div class=\"editor-note\" data-tone=\"muted\">"
