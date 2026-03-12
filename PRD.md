@@ -52,8 +52,8 @@ La representación visual del currículum en formato documento.
 ### Feature 5: Importación y Exportación de Datos (Backup)
 Permitir al usuario guardar su progreso en un archivo físico para llevarlo a otro ordenador.
 
-- [ ] Crear botón de "Exportar Datos", que genere y descargue un archivo `.json` utilizando la API `Blob` y `URL.createObjectURL`.
-- [ ] Crear botón/input file oculto para "Importar Datos", que lea un `.json` local usando `FileReader`.
+- [x] Crear botón de "Exportar Datos", que genere y descargue un archivo `.json` utilizando la API `Blob` y `URL.createObjectURL`.
+- [x] Crear botón/input file oculto para "Importar Datos", que lea un `.json` local usando `FileReader`.
 - [ ] Implementar validación básica del JSON al importar para evitar romper la aplicación.
 
 ### Feature 6: Exportación a PDF
