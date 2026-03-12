@@ -402,27 +402,32 @@
         },
         initialCV: {
           basics: {
-            fullName: "Ada Lovelace",
-            headline: "Analista y autora de algoritmos",
-            summary: "Plantilla inicial cargada localmente para validar el arranque de la SPA sin servidor.",
-            email: "ada@example.com",
-            location: "Londres, Reino Unido",
+            fullName: "",
+            headline: "",
+            summary: "",
+            email: "",
+            phone: "",
+            location: "",
+            website: "",
+            linkedin: "",
+            github: "",
           },
-          experience: [
-            {
-              role: "Colaboradora en la maquina analitica",
-              company: "Proyecto Babbage",
-              period: "1842 - 1843",
-              summary: "Desarrollo conceptual de secuencias y notas tecnicas aplicadas al calculo programable.",
-            },
-          ],
-          education: [
-            {
-              course: "Matematicas avanzadas",
-              school: "Tutoria privada",
-              period: "1830 - 1835",
-            },
-          ],
+          experience: [],
+          education: [],
+          projects: [],
+          skills: [],
+          languages: [],
+          certifications: [],
+          template: "classic",
+          theme: {
+            fontScale: 1,
+            accent: "#1f4b99",
+            spacing: "normal",
+          },
+          meta: {
+            version: 1,
+            updatedAt: "",
+          },
         },
       };
 
@@ -470,8 +475,17 @@
         },
         renderEditor() {
           const basics = state.cv.basics;
-          const experience = state.cv.experience[0];
-          const education = state.cv.education[0];
+          const experience = state.cv.experience[0] || {
+            role: "",
+            company: "",
+            period: "",
+            summary: "",
+          };
+          const education = state.cv.education[0] || {
+            course: "",
+            school: "",
+            period: "",
+          };
           const sections = {
             basics: ""
               + "<div class=\"editor-group\">"
@@ -489,28 +503,28 @@
             experience: ""
               + "<div class=\"editor-group\">"
               + "<span>Puesto y contexto</span>"
-              + "<div class=\"editor-field\">" + ui.escapeHtml(experience.role) + " - " + ui.escapeHtml(experience.company) + "</div>"
+              + "<div class=\"editor-field\">" + ui.escapeHtml(experience.role || "Sin experiencia anadida") + (experience.company ? " - " + ui.escapeHtml(experience.company) : "") + "</div>"
               + "</div>"
               + "<div class=\"editor-group\">"
               + "<span>Periodo</span>"
-              + "<div class=\"editor-field\">" + ui.escapeHtml(experience.period) + "</div>"
+              + "<div class=\"editor-field\">" + ui.escapeHtml(experience.period || "Pendiente") + "</div>"
               + "</div>"
               + "<div class=\"editor-group\">"
               + "<span>Resumen del bloque</span>"
-              + "<div class=\"editor-field\">" + ui.escapeHtml(experience.summary) + "</div>"
+              + "<div class=\"editor-field\">" + ui.escapeHtml(experience.summary || "Todavia no hay contenido en esta seccion.") + "</div>"
               + "</div>",
             education: ""
               + "<div class=\"editor-group\">"
               + "<span>Programa</span>"
-              + "<div class=\"editor-field\">" + ui.escapeHtml(education.course) + "</div>"
+              + "<div class=\"editor-field\">" + ui.escapeHtml(education.course || "Sin formacion anadida") + "</div>"
               + "</div>"
               + "<div class=\"editor-group\">"
               + "<span>Centro</span>"
-              + "<div class=\"editor-field\">" + ui.escapeHtml(education.school) + "</div>"
+              + "<div class=\"editor-field\">" + ui.escapeHtml(education.school || "Pendiente") + "</div>"
               + "</div>"
               + "<div class=\"editor-group\">"
               + "<span>Periodo</span>"
-              + "<div class=\"editor-field\">" + ui.escapeHtml(education.period) + "</div>"
+              + "<div class=\"editor-field\">" + ui.escapeHtml(education.period || "Pendiente") + "</div>"
               + "</div>",
             schema: ""
               + "<div class=\"editor-group\">"
@@ -531,26 +545,35 @@
         },
         renderPreview() {
           const basics = state.cv.basics;
-          const experience = state.cv.experience[0];
-          const education = state.cv.education[0];
+          const experience = state.cv.experience[0] || {
+            role: "",
+            company: "",
+            period: "",
+            summary: "",
+          };
+          const education = state.cv.education[0] || {
+            course: "",
+            school: "",
+            period: "",
+          };
           const requiredSections = config.cvSchema.required.join(", ");
           ui.previewContent.innerHTML = ""
             + "<article class=\"preview-card\">"
             + "<h3>Perfil</h3>"
-            + "<p>" + ui.escapeHtml(basics.fullName) + "</p>"
-            + "<p class=\"preview-meta\">" + ui.escapeHtml(basics.headline) + "</p>"
-            + "<p>" + ui.escapeHtml(basics.summary) + "</p>"
+            + "<p>" + ui.escapeHtml(basics.fullName || "Nombre pendiente") + "</p>"
+            + "<p class=\"preview-meta\">" + ui.escapeHtml(basics.headline || "Titular profesional pendiente") + "</p>"
+            + "<p>" + ui.escapeHtml(basics.summary || "Completa tu perfil para ver aqui el resumen profesional.") + "</p>"
             + "</article>"
             + "<article class=\"preview-card\">"
             + "<h3>Experiencia</h3>"
-            + "<p>" + ui.escapeHtml(experience.role) + " - " + ui.escapeHtml(experience.company) + "</p>"
-            + "<p class=\"preview-meta\">" + ui.escapeHtml(experience.period) + "</p>"
-            + "<p>" + ui.escapeHtml(experience.summary) + "</p>"
+            + "<p>" + ui.escapeHtml(experience.role || "Sin experiencia anadida") + (experience.company ? " - " + ui.escapeHtml(experience.company) : "") + "</p>"
+            + "<p class=\"preview-meta\">" + ui.escapeHtml(experience.period || "Pendiente") + "</p>"
+            + "<p>" + ui.escapeHtml(experience.summary || "Anade tu primera experiencia para completar esta vista previa.") + "</p>"
             + "</article>"
             + "<article class=\"preview-card\">"
             + "<h3>Formacion</h3>"
-            + "<p>" + ui.escapeHtml(education.course) + "</p>"
-            + "<p class=\"preview-meta\">" + ui.escapeHtml(education.school) + " - " + ui.escapeHtml(education.period) + "</p>"
+            + "<p>" + ui.escapeHtml(education.course || "Sin formacion anadida") + "</p>"
+            + "<p class=\"preview-meta\">" + ui.escapeHtml(education.school || "Pendiente") + " - " + ui.escapeHtml(education.period || "Pendiente") + "</p>"
             + "</article>"
             + "<article class=\"preview-card\">"
             + "<h3>Esquema JSON</h3>"
