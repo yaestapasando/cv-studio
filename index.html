@@ -767,9 +767,13 @@
                 + "</button>";
             })
             .join("");
+          const contextualActions = state.ui.activeSection === "experience"
+            ? "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"add-experience-entry\" aria-pressed=\"false\">Anadir experiencia</button>"
+            : "";
           ui.toolbar.innerHTML = sectionButtons
             + "<span class=\"toolbar-divider\" aria-hidden=\"true\"></span>"
             + templateButtons
+            + contextualActions
             + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-modal=\"template-help\" aria-pressed=\"false\">Ayuda plantilla</button>";
         },
         renderEditor() {
@@ -1149,6 +1153,34 @@
             },
           });
         },
+        addExperienceEntry() {
+          if (!state.cv || !Array.isArray(state.cv.experience)) {
+            return;
+          }
+          const nextEntry = {
+            role: "",
+            company: "",
+            period: "",
+            summary: "",
+          };
+          const nextExperience = [...state.cv.experience, nextEntry];
+          state.update({
+            cv: {
+              ...state.cv,
+              experience: nextExperience,
+              meta: {
+                ...state.cv.meta,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+            ui: {
+              message: {
+                tone: "success",
+                text: "Experiencia " + String(nextExperience.length) + " anadida.",
+              },
+            },
+          });
+        },
         bindEvents() {
           ui.toolbar.addEventListener("click", (event) => {
             const button = event.target.closest("[data-section]");
@@ -1175,6 +1207,11 @@
                   },
                 },
               });
+              return;
+            }
+            const actionButton = event.target.closest("[data-action]");
+            if (actionButton && actionButton.dataset.action === "add-experience-entry") {
+              app.addExperienceEntry();
               return;
             }
             const modalButton = event.target.closest("[data-modal]");

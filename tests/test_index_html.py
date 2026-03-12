@@ -234,6 +234,43 @@ class IndexHtmlTest(unittest.TestCase):
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
 
+    def test_experience_section_exposes_add_action_in_toolbar(self):
+        expected_snippets = [
+            'const contextualActions = state.ui.activeSection === "experience"',
+            'data-action=\\"add-experience-entry\\"',
+            '>Anadir experiencia</button>',
+            "+ contextualActions",
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_app_adds_empty_experience_entry(self):
+        expected_snippets = [
+            "addExperienceEntry() {",
+            "const nextEntry = {",
+            'role: "",',
+            'company: "",',
+            'period: "",',
+            'summary: "",',
+            "const nextExperience = [...state.cv.experience, nextEntry];",
+            "experience: nextExperience,",
+            'text: "Experiencia " + String(nextExperience.length) + " anadida.",',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_toolbar_click_handler_triggers_add_experience_action(self):
+        expected_snippets = [
+            'const actionButton = event.target.closest("[data-action]");',
+            'actionButton.dataset.action === "add-experience-entry"',
+            "app.addExperienceEntry();",
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
     def test_preview_section_renders_all_experience_entries(self):
         expected_snippets = [
             'const experiencePreview = state.cv.experience.length',
