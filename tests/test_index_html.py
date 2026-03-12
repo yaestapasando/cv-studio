@@ -145,6 +145,8 @@ class IndexHtmlTest(unittest.TestCase):
 
     def test_defines_internal_html_css_js_sections(self):
         expected_markers = [
+            "<!-- Maintenance: head contains inline CSS only; keep visual tokens before layout and components. -->",
+            "<!-- Maintenance: body is split into app shell markup followed by one self-contained bootstrap script. -->",
             "<!-- HTML Section: App Shell -->",
             "<!-- HTML Section: Header -->",
             "<!-- HTML Section: Workspace -->",
@@ -158,6 +160,11 @@ class IndexHtmlTest(unittest.TestCase):
             "// JS Section: Namespace",
             "// JS Section: Modules",
             "// JS Section: Bootstrap",
+            "// Maintenance map:",
+            "// 1. config centralizes static labels, section definitions and seed CV data.",
+            "// 2. state stores the active UI section plus runtime capability flags.",
+            "// 3. ui owns DOM references, escaping, and all HTML rendering.",
+            "// 4. app coordinates cloning, capability detection, event binding and boot.",
             "// Module convention: declare modules in config -> state -> ui -> app order.",
             "// JS Module: config",
             "// JS Module: state",

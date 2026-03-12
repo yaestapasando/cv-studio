@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CV Studio</title>
+  <!-- Maintenance: head contains inline CSS only; keep visual tokens before layout and components. -->
   <style>
     /* CSS Section: Theme */
     :root {
@@ -268,6 +269,7 @@
   </style>
 </head>
 <body>
+  <!-- Maintenance: body is split into app shell markup followed by one self-contained bootstrap script. -->
   <!-- HTML Section: App Shell -->
   <div class="app-shell" id="app">
     <!-- HTML Section: Header -->
@@ -313,6 +315,11 @@
   <script>
     // JS Section: Namespace
     const CVStudio = (() => {
+      // Maintenance map:
+      // 1. config centralizes static labels, section definitions and seed CV data.
+      // 2. state stores the active UI section plus runtime capability flags.
+      // 3. ui owns DOM references, escaping, and all HTML rendering.
+      // 4. app coordinates cloning, capability detection, event binding and boot.
       // JS Section: Modules
       // Module convention: declare modules in config -> state -> ui -> app order.
       // JS Module: config
