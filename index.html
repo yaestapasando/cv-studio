@@ -361,6 +361,22 @@
         .cv-summary {
             white-space: pre-line;
         }
+
+        .cv-skills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .cv-skill-tag {
+            background-color: var(--bg-editor);
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: var(--text-main);
+            border: 1px solid #e2e8f0;
+        }
     </style>
 </head>
 <body>
@@ -411,6 +427,13 @@
                 <div class="form-group">
                     <label for="summary">Descripción</label>
                     <textarea id="summary" data-path="summary" placeholder="Breve descripción de tu perfil profesional, objetivos y logros principales..."></textarea>
+                </div>
+            </div>
+            <div class="form-section">
+                <h2>Habilidades</h2>
+                <div class="form-group">
+                    <label for="skills">Habilidades</label>
+                    <input type="text" id="skills" data-path="skills" placeholder="Ej. JavaScript, React, Node.js (separadas por comas)">
                 </div>
             </div>
             <div class="form-section">
@@ -575,8 +598,11 @@
                         // ya que se renderizan bajo demanda
                         if (path.startsWith('experience') || path.startsWith('education')) return;
                         
-                        const value = this.getValueByPath(path);
+                        let value = this.getValueByPath(path);
                         if (value !== undefined) {
+                            if (path === 'skills' && Array.isArray(value)) {
+                                value = value.join(', ');
+                            }
                             if (input.type === 'checkbox') {
                                 input.checked = !!value;
                             } else {
@@ -608,7 +634,11 @@
                         current = current[keys[i]];
                     }
                     
-                    current[keys[keys.length - 1]] = value;
+                    if (path === 'skills' && typeof value === 'string') {
+                        current[keys[keys.length - 1]] = value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                    } else {
+                        current[keys[keys.length - 1]] = value;
+                    }
                 },
 
                 addExperience: function() {
@@ -844,7 +874,7 @@
                     console.debug('CV Studio: Renderizando vista previa...');
                     if (!this.preview) return;
                     
-                    const { personalData, summary, experience, education } = this.state;
+                    const { personalData, summary, experience, education, skills } = this.state;
                     
                     let experienceHtml = '';
                     if (experience && experience.length > 0) {
@@ -894,6 +924,31 @@
                         `;
                     }
 
+                    let skillsHtml = '';
+                    if (skills && typeof skills === 'string' && skills.trim().length > 0) {
+                        const skillList = skills.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                        if (skillList.length > 0) {
+                            skillsHtml = `
+                                <div class="cv-section">
+                                    <h2 class="cv-section-title">Habilidades</h2>
+                                    <div class="cv-skills">
+                                        ${skillList.map(skill => `<span class="cv-skill-tag">${skill}</span>`).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    } else if (Array.isArray(skills) && skills.length > 0) {
+                        // Support for legacy array format if exists
+                        skillsHtml = `
+                            <div class="cv-section">
+                                <h2 class="cv-section-title">Habilidades</h2>
+                                <div class="cv-skills">
+                                    ${skills.map(skill => `<span class="cv-skill-tag">${skill}</span>`).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+
                     // Renderizado básico para validar reactividad
                     this.preview.innerHTML = `
                         <div class="cv-header">
@@ -912,6 +967,7 @@
                             <h2 class="cv-section-title">Perfil Profesional</h2>
                             <p class="cv-summary">${summary || 'Breve descripción de tu perfil profesional, objetivos y logros principales...'}</p>
                         </div>
+                        ${skillsHtml}
                         ${experienceHtml}
                         ${educationHtml}
                     `;
