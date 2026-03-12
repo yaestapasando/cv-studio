@@ -446,6 +446,7 @@
                 <div class="flex-between" style="gap: 0.5rem;">
                     <button type="button" id="import-data" class="btn btn-primary btn-sm">Importar Datos</button>
                     <button type="button" id="export-data" class="btn btn-primary btn-sm">Exportar Datos</button>
+                    <button type="button" id="export-pdf" class="btn btn-primary btn-sm">Exportar a PDF</button>
                     <input type="file" id="import-input" style="display: none;" accept=".json">
                 </div>
             </div>
@@ -579,6 +580,7 @@
                     this.educationListContainer = document.getElementById('education-list');
                     this.addEducationBtn = document.getElementById('add-education');
                     this.exportBtn = document.getElementById('export-data');
+                    this.exportPdfBtn = document.getElementById('export-pdf');
                     this.importBtn = document.getElementById('import-data');
                     this.importInput = document.getElementById('import-input');
                 },
@@ -590,6 +592,13 @@
                     if (this.exportBtn) {
                         this.exportBtn.addEventListener('click', () => {
                             self.exportData();
+                        });
+                    }
+
+                    // Botón exportar PDF
+                    if (this.exportPdfBtn) {
+                        this.exportPdfBtn.addEventListener('click', () => {
+                            self.exportPDF();
                         });
                     }
 
@@ -1091,6 +1100,11 @@
                     
                     document.body.removeChild(link);
                     URL.revokeObjectURL(url);
+                },
+
+                exportPDF: function() {
+                    console.info('CV Studio: Exportando a PDF...');
+                    window.print();
                 },
 
                 importData: function() {
