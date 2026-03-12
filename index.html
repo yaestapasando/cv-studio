@@ -186,10 +186,104 @@
             resize: vertical;
         }
 
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mb-0 { margin-bottom: 0 !important; }
+        .mb-1 { margin-bottom: 1rem !important; }
+        .mt-neg-sm { margin-top: -0.5rem !important; }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-group input {
+            width: auto !important;
+        }
+
         .form-group input:focus,
         .form-group textarea:focus {
             outline: none;
             border-color: var(--primary);
+        }
+
+        /* Botones y Acciones */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        .experience-item {
+            background: var(--bg-editor);
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            border: 1px solid #e2e8f0;
+            position: relative;
+        }
+
+        .experience-item-header {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 0.5rem;
+        }
+
+        .experience-item-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        @media (width <= 640px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
         }
 
         /* Estilos de la Vista Previa (CV) */
@@ -218,6 +312,54 @@
             margin-top: 1.5rem;
             line-height: 1.6;
             color: var(--text-main);
+        }
+
+        .cv-section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary);
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.25rem;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .cv-item {
+            margin-bottom: 1rem;
+        }
+
+        .cv-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.25rem;
+        }
+
+        .cv-item-title {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .cv-item-subtitle {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .cv-item-date {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-align: right;
+            min-width: 120px;
+        }
+
+        .cv-item-description {
+            font-size: 0.9rem;
+            white-space: pre-line;
+        }
+
+        .cv-summary {
+            white-space: pre-line;
         }
     </style>
 </head>
@@ -268,6 +410,15 @@
                 <h2>Extracto / Perfil Profesional</h2>
                 <div class="form-group">
                     <textarea id="summary" data-path="summary" placeholder="Breve descripción de tu perfil profesional, objetivos y logros principales..."></textarea>
+                </div>
+            </div>
+            <div class="form-section">
+                <div class="flex-between mb-1">
+                    <h2 class="mb-0">Experiencia Laboral</h2>
+                    <button type="button" id="add-experience" class="btn btn-primary btn-sm">+ Añadir</button>
+                </div>
+                <div id="experience-list">
+                    <!-- Dinámico -->
                 </div>
             </div>
         </aside>
@@ -324,6 +475,8 @@
                     this.app = document.getElementById('app');
                     this.preview = document.getElementById('cv-paper');
                     this.editor = document.querySelector('.editor-panel');
+                    this.experienceListContainer = document.getElementById('experience-list');
+                    this.addExperienceBtn = document.getElementById('add-experience');
                 },
 
                 bindEvents: function() {
@@ -333,9 +486,41 @@
                     this.editor.addEventListener('input', (e) => {
                         const path = e.target.getAttribute('data-path');
                         if (path) {
-                            self.updateStateByPath(path, e.target.value);
+                            const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+                            self.updateStateByPath(path, value);
+
+                            // Si cambió 'current', necesitamos refrescar el editor para habilitar/deshabilitar el campo fecha fin
+                            if (path.includes('experience') && path.endsWith('.current')) {
+                                self.renderExperienceEditor();
+                            }
                         }
                     });
+
+                    // Botón añadir experiencia
+                    if (this.addExperienceBtn) {
+                        this.addExperienceBtn.addEventListener('click', () => {
+                            self.addExperience();
+                        });
+                    }
+
+                    // Botones en el editor (remover, reordenar)
+                    if (this.experienceListContainer) {
+                        this.experienceListContainer.addEventListener('click', (e) => {
+                            const btn = e.target.closest('button');
+                            if (!btn) return;
+
+                            const action = btn.getAttribute('data-action');
+                            const id = btn.getAttribute('data-id');
+
+                            if (action === 'remove') {
+                                self.removeExperience(id);
+                            } else if (action === 'move-up') {
+                                self.moveExperience(id, -1);
+                            } else if (action === 'move-down') {
+                                self.moveExperience(id, 1);
+                            }
+                        });
+                    }
                 },
 
                 /**
@@ -345,11 +530,21 @@
                     const inputs = this.editor.querySelectorAll('[data-path]');
                     inputs.forEach(input => {
                         const path = input.getAttribute('data-path');
+                        // No sincronizamos automáticamente campos de listas dinámicas aquí, 
+                        // ya que se renderizan bajo demanda
+                        if (path.startsWith('experience')) return;
+                        
                         const value = this.getValueByPath(path);
                         if (value !== undefined) {
-                            input.value = value;
+                            if (input.type === 'checkbox') {
+                                input.checked = !!value;
+                            } else {
+                                input.value = value;
+                            }
                         }
                     });
+                    
+                    this.renderExperienceEditor();
                 },
 
                 /**
@@ -367,10 +562,100 @@
                     let current = this.state;
                     
                     for (let i = 0; i < keys.length - 1; i++) {
+                        // Si la siguiente clave es un índice de array (número), nos aseguramos de que el actual sea el array
                         current = current[keys[i]];
                     }
                     
                     current[keys[keys.length - 1]] = value;
+                },
+
+                addExperience: function() {
+                    const newExp = {
+                        id: Date.now().toString(),
+                        company: '',
+                        position: '',
+                        location: '',
+                        startDate: '',
+                        endDate: '',
+                        current: false,
+                        description: ''
+                    };
+                    this.state.experience.push(newExp);
+                    this.renderExperienceEditor();
+                },
+
+                removeExperience: function(id) {
+                    const index = this.state.experience.findIndex(exp => exp.id === id);
+                    if (index !== -1) {
+                        this.state.experience.splice(index, 1);
+                        this.renderExperienceEditor();
+                    }
+                },
+
+                moveExperience: function(id, direction) {
+                    const index = this.state.experience.findIndex(exp => exp.id === id);
+                    if (index === -1) return;
+
+                    const newIndex = index + direction;
+                    if (newIndex < 0 || newIndex >= this.state.experience.length) return;
+
+                    const items = [...this.state.experience];
+                    const [movedItem] = items.splice(index, 1);
+                    items.splice(newIndex, 0, movedItem);
+                    
+                    // Reemplazamos el array completo para disparar la reactividad adecuadamente
+                    this.state.experience = items;
+                    this.renderExperienceEditor();
+                },
+
+                renderExperienceEditor: function() {
+                    if (!this.experienceListContainer) return;
+
+                    const self = this;
+                    this.experienceListContainer.innerHTML = '';
+
+                    this.state.experience.forEach((exp, index) => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'experience-item';
+                        itemDiv.innerHTML = `
+                            <div class="experience-item-header">
+                                <div class="experience-item-controls">
+                                    <button class="btn btn-sm" data-action="move-up" data-id="${exp.id}" title="Subir" ${index === 0 ? 'disabled' : ''}>↑</button>
+                                    <button class="btn btn-sm" data-action="move-down" data-id="${exp.id}" title="Bajar" ${index === this.state.experience.length - 1 ? 'disabled' : ''}>↓</button>
+                                    <button class="btn btn-danger btn-sm" data-action="remove" data-id="${exp.id}">Eliminar</button>
+                                </div>
+                            </div>
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label>Empresa</label>
+                                    <input type="text" data-path="experience.${index}.company" value="${exp.company}" placeholder="Ej. Google">
+                                </div>
+                                <div class="form-group">
+                                    <label>Puesto</label>
+                                    <input type="text" data-path="experience.${index}.position" value="${exp.position}" placeholder="Ej. Senior Developer">
+                                </div>
+                            </div>
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label>Fecha Inicio</label>
+                                    <input type="text" data-path="experience.${index}.startDate" value="${exp.startDate}" placeholder="Ej. Ene 2020">
+                                </div>
+                                <div class="form-group">
+                                    <label>Fecha Fin</label>
+                                    <input type="text" data-path="experience.${index}.endDate" value="${exp.endDate}" placeholder="Ej. Actual" ${exp.current ? 'disabled' : ''}>
+                                </div>
+                            </div>
+                            <div class="form-group checkbox-group mt-neg-sm mb-1">
+                                <input type="checkbox" data-path="experience.${index}.current" id="curr-${exp.id}" ${exp.current ? 'checked' : ''}>
+                                <label for="curr-${exp.id}" class="mb-0">Trabajo actual</label>
+                            </div>
+                            <div class="form-group">
+                                <label>Descripción</label>
+                                <textarea data-path="experience.${index}.description" placeholder="Describe tus responsabilidades y logros...">${exp.description}</textarea>
+                            </div>
+                        `;
+                        self.experienceListContainer.appendChild(itemDiv);
+                    });
                 },
 
                 createReactiveState: function(initialState) {
@@ -419,8 +704,31 @@
                     console.debug('CV Studio: Renderizando vista previa...');
                     if (!this.preview) return;
                     
-                    const { personalData, summary } = this.state;
+                    const { personalData, summary, experience } = this.state;
                     
+                    let experienceHtml = '';
+                    if (experience && experience.length > 0) {
+                        experienceHtml = `
+                            <div class="cv-section">
+                                <h2 class="cv-section-title">Experiencia Laboral</h2>
+                                ${experience.map(exp => `
+                                    <div class="cv-item">
+                                        <div class="cv-item-header">
+                                            <div>
+                                                <span class="cv-item-title">${exp.position || 'Puesto'}</span>
+                                                ${exp.company ? ` | <span class="cv-item-subtitle">${exp.company}</span>` : ''}
+                                            </div>
+                                            <div class="cv-item-date">
+                                                ${exp.startDate || ''} ${exp.startDate || (exp.endDate || exp.current) ? '-' : ''} ${exp.current ? 'Actual' : (exp.endDate || '')}
+                                            </div>
+                                        </div>
+                                        ${exp.description ? `<p class="cv-item-description">${exp.description}</p>` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    }
+
                     // Renderizado básico para validar reactividad
                     this.preview.innerHTML = `
                         <div class="cv-header">
@@ -436,8 +744,9 @@
                             </div>
                         </div>
                         <div class="cv-section">
-                            <p>${summary || 'Breve descripción de tu perfil profesional, objetivos y logros principales...'}</p>
+                            <p class="cv-summary">${summary || 'Breve descripción de tu perfil profesional, objetivos y logros principales...'}</p>
                         </div>
+                        ${experienceHtml}
                     `;
                 },
 
