@@ -290,6 +290,9 @@ class IndexHtmlTest(unittest.TestCase):
             'const contextualActions = state.ui.activeSection === "experience"',
             'data-action=\\"add-experience-entry\\"',
             '>Anadir experiencia</button>',
+            'state.ui.activeSection === "education"',
+            'data-action=\\"add-education-entry\\"',
+            '>Anadir formacion</button>',
             "+ contextualActions",
         ]
         for snippet in expected_snippets:
@@ -389,6 +392,115 @@ class IndexHtmlTest(unittest.TestCase):
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
 
+    def test_education_section_lists_existing_entries(self):
+        expected_snippets = [
+            "educationFieldLabels: {",
+            'course: "Programa"',
+            'school: "Centro"',
+            'period: "Periodo"',
+            'const educationEntries = state.cv.education.length',
+            '<div class=\\"editor-note\\" data-tone=\\"muted\\">Listado de formacion existente en el documento.</div>',
+            '<article class=\\"entry-card\\">',
+            '<span class=\\"entry-card-index\\">Formacion ',
+            'data-action=\\"move-education-entry-up\\"',
+            '>Subir</button>',
+            'data-action=\\"move-education-entry-down\\"',
+            '>Bajar</button>',
+            'data-action=\\"remove-education-entry\\"',
+            'data-education-index=\\"" + String(index) + "\\"',
+            '<form class=\\"editor-form education-form\\" data-education-index=\\"',
+            'id=\\"education-course-',
+            'name=\\"course\\"',
+            'data-education-field=\\"course\\"',
+            'placeholder=\\"Ej. Grado en Diseno\\"',
+            'id=\\"education-school-',
+            'name=\\"school\\"',
+            'data-education-field=\\"school\\"',
+            'placeholder=\\"Ej. Universidad de Valencia\\"',
+            'id=\\"education-period-',
+            'name=\\"period\\"',
+            'data-education-field=\\"period\\"',
+            'placeholder=\\"Ej. 2018 - 2022\\"',
+            'ui.escapeHtml(entry.course || "Programa pendiente")',
+            'ui.escapeHtml(entry.school || "Centro pendiente")',
+            'ui.escapeHtml(entry.period || "Periodo pendiente")',
+            '<div class=\\"editor-note\\" data-tone=\\"muted\\">Todavia no hay formacion guardada en el CV.</div>',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_app_manages_education_entries(self):
+        expected_snippets = [
+            "normalizeEducationEntry(entry) {",
+            'course: entry && typeof entry.course === "string" ? entry.course : "",',
+            'school: entry && typeof entry.school === "string" ? entry.school : "",',
+            'period: entry && typeof entry.period === "string" ? entry.period : "",',
+            'const education = Array.isArray(cvDocument.education)',
+            '? cvDocument.education.map((entry) => app.normalizeEducationEntry(entry))',
+            "updateEducationField(index, fieldName, fieldValue) {",
+            '!state.cv || !Array.isArray(state.cv.education) || !state.hasOwn(config.educationFieldLabels, fieldName)',
+            "const currentEntry = state.cv.education[index];",
+            "const nextEducation = state.cv.education.map((entry, entryIndex) => entryIndex === index",
+            '[fieldName]: fieldValue,',
+            'text: config.educationFieldLabels[fieldName] + " actualizado en formacion " + String(index + 1) + ".",',
+            "addEducationEntry() {",
+            'course: "",',
+            'school: "",',
+            'period: "",',
+            "const nextEducation = [...state.cv.education, nextEntry];",
+            'text: "Formacion " + String(nextEducation.length) + " anadida.",',
+            "removeEducationEntry(index) {",
+            "!state.cv || !Array.isArray(state.cv.education)",
+            "!Number.isInteger(index) || index < 0 || index >= state.cv.education.length",
+            "const nextEducation = state.cv.education.filter((entry, entryIndex) => entryIndex !== index);",
+            'text: "Formacion " + String(index + 1) + " eliminada.",',
+            "moveEducationEntry(index, direction) {",
+            "const nextEducation = [...state.cv.education];",
+            "const movedEntry = nextEducation[index];",
+            "nextEducation[index] = nextEducation[targetIndex];",
+            "nextEducation[targetIndex] = movedEntry;",
+            'text: "Formacion " + String(index + 1) + " movida a la posicion " + String(targetIndex + 1) + ".",',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_education_inputs_and_actions_sync_with_global_state(self):
+        expected_snippets = [
+            'actionButton.dataset.action === "add-education-entry"',
+            "app.addEducationEntry();",
+            'state.ui.activeSection !== "education" || !state.hasOwn(config.educationFieldLabels, fieldName)',
+            'const educationForm = input.closest("[data-education-index]");',
+            "const educationIndex = educationForm ? Number(educationForm.dataset.educationIndex) : -1;",
+            "app.updateEducationField(educationIndex, fieldName, input.value);",
+            'const educationIndex = Number(actionButton.dataset.educationIndex);',
+            'actionButton.dataset.action === "remove-education-entry"',
+            "app.removeEducationEntry(educationIndex);",
+            'actionButton.dataset.action === "move-education-entry-up"',
+            'app.moveEducationEntry(educationIndex, "up");',
+            'actionButton.dataset.action === "move-education-entry-down"',
+            'app.moveEducationEntry(educationIndex, "down");',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_preview_section_renders_all_education_entries(self):
+        expected_snippets = [
+            'const educationPreview = state.cv.education.length',
+            'state.cv.education.map((entry) => ""',
+            '<h3>Formacion</h3>',
+            'ui.escapeHtml(entry.course || "Programa pendiente")',
+            'ui.escapeHtml(entry.school || "Centro pendiente")',
+            'ui.escapeHtml(entry.period || "Periodo pendiente")',
+            'Anade tu primera formacion para completar esta vista previa.',
+            "+ educationPreview",
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
     def test_bootstrap_defines_initial_state_and_capabilities(self):
         expected_snippets = [
             'storageKey: "cv-studio-document"',
@@ -436,6 +548,10 @@ class IndexHtmlTest(unittest.TestCase):
             'endDate: "Fecha de fin"',
             'summary: "Descripcion"',
             'achievements: "Logros"',
+            "educationFieldLabels: {",
+            'course: "Programa"',
+            'school: "Centro"',
+            'period: "Periodo"',
             "cv: null,",
             "ui: {",
             "message: { ...config.uiDefaults.message },",
@@ -652,6 +768,7 @@ class IndexHtmlTest(unittest.TestCase):
             "app.updateBasicsField(fieldName, input.value);",
             'const fieldValue = input.type === "checkbox" ? input.checked : input.value;',
             "app.updateExperienceField(experienceIndex, fieldName, fieldValue);",
+            "app.updateEducationField(educationIndex, fieldName, input.value);",
             "updatedAt: new Date().toISOString(),",
             "event.target.closest(\"[data-section]\")",
             "event.target.closest(\"[data-template]\")",
@@ -674,15 +791,20 @@ class IndexHtmlTest(unittest.TestCase):
             'basics.location || "Ubicacion pendiente"',
             'const experienceEntries = state.cv.experience.length',
             'const experiencePreview = state.cv.experience.length',
-            'education.course || "Sin formacion anadida"',
+            'const educationEntries = state.cv.education.length',
+            'const educationPreview = state.cv.education.length',
             'state.cv.experience.map((entry, index) => ""',
             'state.cv.experience.map((entry) => ""',
+            'state.cv.education.map((entry, index) => ""',
+            'state.cv.education.map((entry) => ""',
             'entry.role || "Puesto pendiente"',
             'entry.company || "Empresa pendiente"',
             'entry.location || "Ubicacion pendiente"',
             'entry.summary || "Resumen pendiente"',
             'Todavia no hay experiencias guardadas en el CV.',
             'Anade tu primera experiencia para completar esta vista previa.',
+            'Todavia no hay formacion guardada en el CV.',
+            'Anade tu primera formacion para completar esta vista previa.',
             'state.ui.template',
             '<p class=\\"preview-template\\">',
             'id=\\"cv-schema-output\\"',

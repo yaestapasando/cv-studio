@@ -520,6 +520,11 @@
           summary: "Descripcion",
           achievements: "Logros",
         },
+        educationFieldLabels: {
+          course: "Programa",
+          school: "Centro",
+          period: "Periodo",
+        },
         cvSchema: {
           $id: "cv-studio/schema/cv",
           $comment: "Compatible con JSON Schema Draft 2020-12.",
@@ -854,7 +859,9 @@
             .join("");
           const contextualActions = state.ui.activeSection === "experience"
             ? "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"add-experience-entry\" aria-pressed=\"false\">Anadir experiencia</button>"
-            : "";
+            : state.ui.activeSection === "education"
+              ? "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"add-education-entry\" aria-pressed=\"false\">Anadir formacion</button>"
+              : "";
           ui.toolbar.innerHTML = sectionButtons
             + "<span class=\"toolbar-divider\" aria-hidden=\"true\"></span>"
             + templateButtons
@@ -863,11 +870,6 @@
         },
         renderEditor() {
           const basics = state.cv.basics;
-          const education = state.cv.education[0] || {
-            course: "",
-            school: "",
-            period: "",
-          };
           const activeSection = state.ui.activeSection;
           const experienceEntries = state.cv.experience.length
             ? "<div class=\"entry-list\">"
@@ -996,6 +998,75 @@
                 .join("")
               + "</div>"
             : "<div class=\"editor-note\" data-tone=\"muted\">Todavia no hay experiencias guardadas en el CV.</div>";
+          const educationEntries = state.cv.education.length
+            ? "<div class=\"entry-list\">"
+              + state.cv.education.map((entry, index) => ""
+                + "<article class=\"entry-card\">"
+                + "<div class=\"entry-card-header\">"
+                + "<div>"
+                + "<h3 class=\"entry-card-title\">" + ui.escapeHtml(entry.course || "Programa pendiente") + "</h3>"
+                + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.school || "Centro pendiente") + "</p>"
+                + "</div>"
+                + "<div class=\"entry-card-actions\">"
+                + "<span class=\"entry-card-index\">Formacion " + String(index + 1) + "</span>"
+                + "<div class=\"entry-card-action-group\">"
+                + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"move-education-entry-up\" data-education-index=\"" + String(index) + "\" aria-pressed=\"false\">Subir</button>"
+                + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"move-education-entry-down\" data-education-index=\"" + String(index) + "\" aria-pressed=\"false\">Bajar</button>"
+                + "</div>"
+                + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"remove-education-entry\" data-education-index=\"" + String(index) + "\" aria-pressed=\"false\">Eliminar</button>"
+                + "</div>"
+                + "</div>"
+                + "<form class=\"editor-form education-form\" data-education-index=\"" + String(index) + "\">"
+                + "<div class=\"editor-group\">"
+                + "<label for=\"education-course-" + String(index) + "\"><span>Programa</span></label>"
+                + "<input"
+                + " id=\"education-course-" + String(index) + "\""
+                + " name=\"course\""
+                + " data-education-field=\"course\""
+                + " class=\"editor-field editor-input\""
+                + " type=\"text\""
+                + " placeholder=\"Ej. Grado en Diseno\""
+                + " value=\"" + ui.escapeHtml(entry.course || "") + "\">"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<label for=\"education-school-" + String(index) + "\"><span>Centro</span></label>"
+                + "<input"
+                + " id=\"education-school-" + String(index) + "\""
+                + " name=\"school\""
+                + " data-education-field=\"school\""
+                + " class=\"editor-field editor-input\""
+                + " type=\"text\""
+                + " placeholder=\"Ej. Universidad de Valencia\""
+                + " value=\"" + ui.escapeHtml(entry.school || "") + "\">"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<label for=\"education-period-" + String(index) + "\"><span>Periodo</span></label>"
+                + "<input"
+                + " id=\"education-period-" + String(index) + "\""
+                + " name=\"period\""
+                + " data-education-field=\"period\""
+                + " class=\"editor-field editor-input\""
+                + " type=\"text\""
+                + " placeholder=\"Ej. 2018 - 2022\""
+                + " value=\"" + ui.escapeHtml(entry.period || "") + "\">"
+                + "</div>"
+                + "</form>"
+                + "<div class=\"editor-group\">"
+                + "<span>Resumen actual</span>"
+                + "<div class=\"editor-field\">" + ui.escapeHtml(entry.course || "Sin formacion anadida") + "</div>"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<span>Centro actual</span>"
+                + "<div class=\"editor-field\">" + ui.escapeHtml(entry.school || "Pendiente") + "</div>"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<span>Periodo actual</span>"
+                + "<div class=\"editor-field\">" + ui.escapeHtml(entry.period || "Pendiente") + "</div>"
+                + "</div>"
+                + "</article>")
+                .join("")
+              + "</div>"
+            : "<div class=\"editor-note\" data-tone=\"muted\">Todavia no hay formacion guardada en el CV.</div>";
           const sections = {
             basics: ""
               + "<form class=\"editor-form\" id=\"basics-form\">"
@@ -1129,18 +1200,8 @@
               + "<div class=\"editor-note\" data-tone=\"muted\">Listado de experiencias existentes en el documento.</div>"
               + experienceEntries,
             education: ""
-              + "<div class=\"editor-group\">"
-              + "<span>Programa</span>"
-              + "<div class=\"editor-field\">" + ui.escapeHtml(education.course || "Sin formacion anadida") + "</div>"
-              + "</div>"
-              + "<div class=\"editor-group\">"
-              + "<span>Centro</span>"
-              + "<div class=\"editor-field\">" + ui.escapeHtml(education.school || "Pendiente") + "</div>"
-              + "</div>"
-              + "<div class=\"editor-group\">"
-              + "<span>Periodo</span>"
-              + "<div class=\"editor-field\">" + ui.escapeHtml(education.period || "Pendiente") + "</div>"
-              + "</div>",
+              + "<div class=\"editor-note\" data-tone=\"muted\">Listado de formacion existente en el documento.</div>"
+              + educationEntries,
             schema: ""
               + "<div class=\"editor-group\">"
               + "<span>Esquema publicado</span>"
@@ -1160,11 +1221,6 @@
         },
         renderPreview() {
           const basics = state.cv.basics;
-          const education = state.cv.education[0] || {
-            course: "",
-            school: "",
-            period: "",
-          };
           const requiredSections = config.cvSchema.required.join(", ");
           const experiencePreview = state.cv.experience.length
             ? state.cv.experience.map((entry) => ""
@@ -1177,6 +1233,15 @@
               + "</div>")
               .join("")
             : "<p>Anade tu primera experiencia para completar esta vista previa.</p>";
+          const educationPreview = state.cv.education.length
+            ? state.cv.education.map((entry) => ""
+              + "<div class=\"preview-card\">"
+              + "<p>" + ui.escapeHtml(entry.course || "Programa pendiente") + "</p>"
+              + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.school || "Centro pendiente") + "</p>"
+              + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.period || "Periodo pendiente") + "</p>"
+              + "</div>")
+              .join("")
+            : "<p>Anade tu primera formacion para completar esta vista previa.</p>";
           ui.previewContent.innerHTML = ""
             + "<article class=\"preview-card\">"
             + "<h3>Perfil</h3>"
@@ -1197,8 +1262,7 @@
             + "</article>"
             + "<article class=\"preview-card\">"
             + "<h3>Formacion</h3>"
-            + "<p>" + ui.escapeHtml(education.course || "Sin formacion anadida") + "</p>"
-            + "<p class=\"preview-meta\">" + ui.escapeHtml(education.school || "Pendiente") + " - " + ui.escapeHtml(education.period || "Pendiente") + "</p>"
+            + educationPreview
             + "</article>"
             + "<article class=\"preview-card\">"
             + "<h3>Esquema JSON</h3>"
@@ -1246,6 +1310,13 @@
           }
           return [];
         },
+        normalizeEducationEntry(entry) {
+          return {
+            course: entry && typeof entry.course === "string" ? entry.course : "",
+            school: entry && typeof entry.school === "string" ? entry.school : "",
+            period: entry && typeof entry.period === "string" ? entry.period : "",
+          };
+        },
         cloneInitialCV() {
           const initialCV = app.normalizeCvDocument(JSON.parse(JSON.stringify(config.initialCV)));
           initialCV.meta.version = config.dataModelVersion;
@@ -1269,6 +1340,9 @@
               };
             })
             : [];
+          const education = Array.isArray(cvDocument.education)
+            ? cvDocument.education.map((entry) => app.normalizeEducationEntry(entry))
+            : [];
           return {
             ...config.initialCV,
             ...cvDocument,
@@ -1277,7 +1351,7 @@
               ...(cvDocument.basics && typeof cvDocument.basics === "object" ? cvDocument.basics : {}),
             },
             experience,
-            education: Array.isArray(cvDocument.education) ? cvDocument.education : [],
+            education,
             meta: {
               ...config.initialCV.meta,
               ...(cvDocument.meta && typeof cvDocument.meta === "object" ? cvDocument.meta : {}),
@@ -1429,6 +1503,37 @@
             },
           });
         },
+        updateEducationField(index, fieldName, fieldValue) {
+          if (!state.cv || !Array.isArray(state.cv.education) || !state.hasOwn(config.educationFieldLabels, fieldName)) {
+            return;
+          }
+          const currentEntry = state.cv.education[index];
+          if (!currentEntry) {
+            return;
+          }
+          const nextEducation = state.cv.education.map((entry, entryIndex) => entryIndex === index
+            ? {
+              ...entry,
+              [fieldName]: fieldValue,
+            }
+            : entry);
+          state.update({
+            cv: {
+              ...state.cv,
+              education: nextEducation,
+              meta: {
+                ...state.cv.meta,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+            ui: {
+              message: {
+                tone: "success",
+                text: config.educationFieldLabels[fieldName] + " actualizado en formacion " + String(index + 1) + ".",
+              },
+            },
+          });
+        },
         addExperienceEntry() {
           if (!state.cv || !Array.isArray(state.cv.experience)) {
             return;
@@ -1461,6 +1566,33 @@
             },
           });
         },
+        addEducationEntry() {
+          if (!state.cv || !Array.isArray(state.cv.education)) {
+            return;
+          }
+          const nextEntry = {
+            course: "",
+            school: "",
+            period: "",
+          };
+          const nextEducation = [...state.cv.education, nextEntry];
+          state.update({
+            cv: {
+              ...state.cv,
+              education: nextEducation,
+              meta: {
+                ...state.cv.meta,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+            ui: {
+              message: {
+                tone: "success",
+                text: "Formacion " + String(nextEducation.length) + " anadida.",
+              },
+            },
+          });
+        },
         removeExperienceEntry(index) {
           if (!state.cv || !Array.isArray(state.cv.experience)) {
             return;
@@ -1482,6 +1614,31 @@
               message: {
                 tone: "success",
                 text: "Experiencia " + String(index + 1) + " eliminada.",
+              },
+            },
+          });
+        },
+        removeEducationEntry(index) {
+          if (!state.cv || !Array.isArray(state.cv.education)) {
+            return;
+          }
+          if (!Number.isInteger(index) || index < 0 || index >= state.cv.education.length) {
+            return;
+          }
+          const nextEducation = state.cv.education.filter((entry, entryIndex) => entryIndex !== index);
+          state.update({
+            cv: {
+              ...state.cv,
+              education: nextEducation,
+              meta: {
+                ...state.cv.meta,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+            ui: {
+              message: {
+                tone: "success",
+                text: "Formacion " + String(index + 1) + " eliminada.",
               },
             },
           });
@@ -1522,6 +1679,42 @@
             },
           });
         },
+        moveEducationEntry(index, direction) {
+          if (!state.cv || !Array.isArray(state.cv.education)) {
+            return;
+          }
+          if (!Number.isInteger(index) || index < 0 || index >= state.cv.education.length) {
+            return;
+          }
+          const targetIndex = direction === "up"
+            ? index - 1
+            : direction === "down"
+              ? index + 1
+              : -1;
+          if (targetIndex < 0 || targetIndex >= state.cv.education.length) {
+            return;
+          }
+          const nextEducation = [...state.cv.education];
+          const movedEntry = nextEducation[index];
+          nextEducation[index] = nextEducation[targetIndex];
+          nextEducation[targetIndex] = movedEntry;
+          state.update({
+            cv: {
+              ...state.cv,
+              education: nextEducation,
+              meta: {
+                ...state.cv.meta,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+            ui: {
+              message: {
+                tone: "success",
+                text: "Formacion " + String(index + 1) + " movida a la posicion " + String(targetIndex + 1) + ".",
+              },
+            },
+          });
+        },
         bindEvents() {
           ui.toolbar.addEventListener("click", (event) => {
             const button = event.target.closest("[data-section]");
@@ -1555,6 +1748,10 @@
               app.addExperienceEntry();
               return;
             }
+            if (actionButton && actionButton.dataset.action === "add-education-entry") {
+              app.addEducationEntry();
+              return;
+            }
             const modalButton = event.target.closest("[data-modal]");
             if (!modalButton) {
               return;
@@ -1584,6 +1781,15 @@
               return;
             }
             if (state.ui.activeSection !== "experience" || !state.hasOwn(config.experienceFieldLabels, fieldName)) {
+              if (state.ui.activeSection !== "education" || !state.hasOwn(config.educationFieldLabels, fieldName)) {
+                return;
+              }
+              const educationForm = input.closest("[data-education-index]");
+              const educationIndex = educationForm ? Number(educationForm.dataset.educationIndex) : -1;
+              if (!Number.isInteger(educationIndex) || educationIndex < 0) {
+                return;
+              }
+              app.updateEducationField(educationIndex, fieldName, input.value);
               return;
             }
             const experienceForm = input.closest("[data-experience-index]");
@@ -1610,6 +1816,19 @@
             }
             if (actionButton.dataset.action === "move-experience-entry-down") {
               app.moveExperienceEntry(experienceIndex, "down");
+              return;
+            }
+            const educationIndex = Number(actionButton.dataset.educationIndex);
+            if (actionButton.dataset.action === "remove-education-entry") {
+              app.removeEducationEntry(educationIndex);
+              return;
+            }
+            if (actionButton.dataset.action === "move-education-entry-up") {
+              app.moveEducationEntry(educationIndex, "up");
+              return;
+            }
+            if (actionButton.dataset.action === "move-education-entry-down") {
+              app.moveEducationEntry(educationIndex, "down");
             }
           });
           ui.editorCanvas.addEventListener("blur", (event) => {
