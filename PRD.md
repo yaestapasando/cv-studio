@@ -69,7 +69,7 @@ Aprovechar las capacidades de impresión del navegador para generar el PDF sin l
 ### Feature 7: Pulido y Testing Manual
 Asegurar la calidad y robustez de la aplicación "Single-File".
 
-- [ ] Revisar que la aplicación funciona completamente offline desconectando el Wi-Fi.
-- [ ] Testear la generación de PDF en Chrome/Edge y Safari/Firefox para corregir discrepancias en la impresión.
-- [ ] Minificar o limpiar código innecesario para mantener el archivo HTML lo más ligero posible.
-- [ ] Validar la accesibilidad básica del formulario (labels, focus states).
+- [x] Revisar que la aplicación funciona completamente offline desconectando el Wi-Fi.
+- [x] Testear la generación de PDF en Chrome/Edge y Safari/Firefox para corregir discrepancias en la impresión.
+- [x] Minificar o limpiar código innecesario para mantener el archivo HTML lo más ligero posible.
+- [x] Validar la accesibilidad básica del formulario (labels, focus states).
