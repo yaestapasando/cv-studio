@@ -4,7 +4,7 @@
   "description": "Este es un proyecto base que sirve como punto de partida para el desarrollo de una aplicación web destinada a la creación y gestión de CVs (Currículum Vitae).",
   "main": "index.js",
   "scripts": {
-    "test": "node --test test.js schema.test.js reactivity.test.js merge_deep.test.js experience.test.js",
+    "test": "node --test test.js schema.test.js reactivity.test.js merge_deep.test.js experience.test.js summary.test.js",
     "lint": "eslint . && stylelint \"**/*.html\""
   },
   "repository": {
