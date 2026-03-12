@@ -128,6 +128,35 @@ class IndexHtmlTest(unittest.TestCase):
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
 
+    def test_basics_section_renders_contact_fields(self):
+        expected_snippets = [
+            '<label for=\\"email-input\\"><span>Email</span></label>',
+            'id=\\"email-input\\"',
+            'name=\\"email\\"',
+            'type=\\"email\\"',
+            'autocomplete=\\"email\\"',
+            'inputmode=\\"email\\"',
+            'placeholder=\\"tu@email.com\\"',
+            'value=\\"" + ui.escapeHtml(basics.email) + "\\">',
+            '<label for=\\"phone-input\\"><span>Telefono</span></label>',
+            'id=\\"phone-input\\"',
+            'name=\\"phone\\"',
+            'type=\\"tel\\"',
+            'autocomplete=\\"tel\\"',
+            'inputmode=\\"tel\\"',
+            'placeholder=\\"+34 600 000 000\\"',
+            'value=\\"" + ui.escapeHtml(basics.phone) + "\\">',
+            '<label for=\\"location-input\\"><span>Ubicacion</span></label>',
+            'id=\\"location-input\\"',
+            'name=\\"location\\"',
+            'autocomplete=\\"address-level2\\"',
+            'placeholder=\\"Ciudad, pais\\"',
+            'value=\\"" + ui.escapeHtml(basics.location) + "\\">',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
     def test_basics_section_renders_summary_profile_form(self):
         expected_snippets = [
             'textarea.editor-input {',
@@ -167,7 +196,9 @@ class IndexHtmlTest(unittest.TestCase):
             'version: { type: "integer", const: 1 },',
             "initialCV: {",
             'fullName: ""',
+            'email: ""',
             'phone: ""',
+            'location: ""',
             'website: ""',
             "experience: [],",
             "education: [],",
@@ -274,13 +305,22 @@ class IndexHtmlTest(unittest.TestCase):
             "ui.editorCanvas.addEventListener(\"input\"",
             "event.target.closest(\"[name=\\\"fullName\\\"]\")",
             "event.target.closest(\"[name=\\\"headline\\\"]\")",
+            "event.target.closest(\"[name=\\\"email\\\"]\")",
+            "event.target.closest(\"[name=\\\"phone\\\"]\")",
+            "event.target.closest(\"[name=\\\"location\\\"]\")",
             "event.target.closest(\"[name=\\\"summary\\\"]\")",
             ' ? "Nombre completo actualizado."',
             "Titular profesional actualizado.",
+            "Email actualizado.",
+            "Telefono actualizado.",
+            "Ubicacion actualizada.",
             "Resumen profesional actualizado.",
             "const messageText = fullNameInput",
             "fullName: fullNameInput ? fullNameInput.value : state.cv.basics.fullName,",
             "headline: headlineInput ? headlineInput.value : state.cv.basics.headline,",
+            "email: emailInput ? emailInput.value : state.cv.basics.email,",
+            "phone: phoneInput ? phoneInput.value : state.cv.basics.phone,",
+            "location: locationInput ? locationInput.value : state.cv.basics.location,",
             "summary: summaryInput ? summaryInput.value : state.cv.basics.summary,",
             "updatedAt: new Date().toISOString(),",
             "event.target.closest(\"[data-section]\")",
@@ -299,6 +339,9 @@ class IndexHtmlTest(unittest.TestCase):
             "ui.modal.showModal();",
             "ui.modal.close();",
             'basics.fullName || "Nombre pendiente"',
+            'basics.email || "Email pendiente"',
+            'basics.phone || "Telefono pendiente"',
+            'basics.location || "Ubicacion pendiente"',
             'experience.role || "Sin experiencia anadida"',
             'education.course || "Sin formacion anadida"',
             'experience.summary || "Anade tu primera experiencia para completar esta vista previa."',

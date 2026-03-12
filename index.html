@@ -749,6 +749,41 @@
               + " value=\"" + ui.escapeHtml(basics.headline) + "\">"
               + "</div>"
               + "<div class=\"editor-group\">"
+              + "<label for=\"email-input\"><span>Email</span></label>"
+              + "<input"
+              + " id=\"email-input\""
+              + " name=\"email\""
+              + " class=\"editor-field editor-input\""
+              + " type=\"email\""
+              + " autocomplete=\"email\""
+              + " inputmode=\"email\""
+              + " placeholder=\"tu@email.com\""
+              + " value=\"" + ui.escapeHtml(basics.email) + "\">"
+              + "</div>"
+              + "<div class=\"editor-group\">"
+              + "<label for=\"phone-input\"><span>Telefono</span></label>"
+              + "<input"
+              + " id=\"phone-input\""
+              + " name=\"phone\""
+              + " class=\"editor-field editor-input\""
+              + " type=\"tel\""
+              + " autocomplete=\"tel\""
+              + " inputmode=\"tel\""
+              + " placeholder=\"+34 600 000 000\""
+              + " value=\"" + ui.escapeHtml(basics.phone) + "\">"
+              + "</div>"
+              + "<div class=\"editor-group\">"
+              + "<label for=\"location-input\"><span>Ubicacion</span></label>"
+              + "<input"
+              + " id=\"location-input\""
+              + " name=\"location\""
+              + " class=\"editor-field editor-input\""
+              + " type=\"text\""
+              + " autocomplete=\"address-level2\""
+              + " placeholder=\"Ciudad, pais\""
+              + " value=\"" + ui.escapeHtml(basics.location) + "\">"
+              + "</div>"
+              + "<div class=\"editor-group\">"
               + "<label for=\"summary-input\"><span>Resumen / perfil</span></label>"
               + "<textarea"
               + " id=\"summary-input\""
@@ -825,6 +860,9 @@
             + "<h3>Perfil</h3>"
             + "<p>" + ui.escapeHtml(basics.fullName || "Nombre pendiente") + "</p>"
             + "<p class=\"preview-meta\">" + ui.escapeHtml(basics.headline || "Titular profesional pendiente") + "</p>"
+            + "<p class=\"preview-meta\">" + ui.escapeHtml(basics.email || "Email pendiente") + "</p>"
+            + "<p class=\"preview-meta\">" + ui.escapeHtml(basics.phone || "Telefono pendiente") + "</p>"
+            + "<p class=\"preview-meta\">" + ui.escapeHtml(basics.location || "Ubicacion pendiente") + "</p>"
             + "<p>" + ui.escapeHtml(basics.summary || "Completa tu perfil para ver aqui el resumen profesional.") + "</p>"
             + "<p class=\"preview-template\">" + ui.escapeHtml(state.ui.template) + "</p>"
             + "</article>"
@@ -964,14 +1002,23 @@
           ui.editorCanvas.addEventListener("input", (event) => {
             const fullNameInput = event.target.closest("[name=\"fullName\"]");
             const headlineInput = event.target.closest("[name=\"headline\"]");
+            const emailInput = event.target.closest("[name=\"email\"]");
+            const phoneInput = event.target.closest("[name=\"phone\"]");
+            const locationInput = event.target.closest("[name=\"location\"]");
             const summaryInput = event.target.closest("[name=\"summary\"]");
-            if ((!fullNameInput && !headlineInput && !summaryInput) || state.ui.activeSection !== "basics") {
+            if ((!fullNameInput && !headlineInput && !emailInput && !phoneInput && !locationInput && !summaryInput) || state.ui.activeSection !== "basics") {
               return;
             }
             const messageText = fullNameInput
               ? "Nombre completo actualizado."
               : headlineInput
                 ? "Titular profesional actualizado."
+                : emailInput
+                  ? "Email actualizado."
+                  : phoneInput
+                    ? "Telefono actualizado."
+                    : locationInput
+                      ? "Ubicacion actualizada."
                 : "Resumen profesional actualizado.";
             state.update({
               cv: {
@@ -980,6 +1027,9 @@
                   ...state.cv.basics,
                   fullName: fullNameInput ? fullNameInput.value : state.cv.basics.fullName,
                   headline: headlineInput ? headlineInput.value : state.cv.basics.headline,
+                  email: emailInput ? emailInput.value : state.cv.basics.email,
+                  phone: phoneInput ? phoneInput.value : state.cv.basics.phone,
+                  location: locationInput ? locationInput.value : state.cv.basics.location,
                   summary: summaryInput ? summaryInput.value : state.cv.basics.summary,
                 },
                 meta: {
