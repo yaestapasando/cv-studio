@@ -440,6 +440,34 @@
           fileProtocol: false,
         },
         cv: null,
+        read() {
+          if (!state.capabilities.storage) {
+            return null;
+          }
+          try {
+            const rawState = window.localStorage.getItem(config.storageKey);
+            if (!rawState) {
+              return null;
+            }
+            const parsedState = JSON.parse(rawState);
+            if (!parsedState || typeof parsedState !== "object") {
+              return null;
+            }
+            return parsedState;
+          } catch (error) {
+            return null;
+          }
+        },
+        write() {
+          if (!state.capabilities.storage || !state.cv) {
+            return;
+          }
+          const snapshot = {
+            activeSection: state.activeSection,
+            cv: state.cv,
+          };
+          window.localStorage.setItem(config.storageKey, JSON.stringify(snapshot));
+        },
       };
 
       // JS Module: ui
@@ -616,6 +644,7 @@
               return;
             }
             state.activeSection = button.dataset.section;
+            state.write();
             document.body.dataset.activeSection = state.activeSection;
             ui.renderToolbar();
             ui.renderEditor();
@@ -629,12 +658,15 @@
           ui.status.textContent = config.appName + " listo: " + storageLabel + ", " + protocolLabel;
         },
         boot() {
-          state.cv = app.cloneInitialCV();
           state.capabilities = app.detectCapabilities();
+          const persistedState = state.read();
+          state.cv = persistedState && persistedState.cv ? persistedState.cv : app.cloneInitialCV();
+          state.activeSection = persistedState && persistedState.activeSection ? persistedState.activeSection : "basics";
           state.booted = true;
           app.render();
           app.bindEvents();
           app.updateStatus();
+          state.write();
           document.body.dataset.appReady = "true";
           document.body.dataset.activeSection = state.activeSection;
           document.body.dataset.runtimeMode = state.capabilities.fileProtocol ? "file" : "browser";

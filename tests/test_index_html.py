@@ -118,6 +118,8 @@ class IndexHtmlTest(unittest.TestCase):
             "version: 1,",
             'activeSection: "basics"',
             "cv: null,",
+            "read() {",
+            "write() {",
             "detectCapabilities() {",
             "window.localStorage.setItem(probeKey, \"ok\");",
             'fileProtocol: window.location.protocol === "file:",',
@@ -125,6 +127,22 @@ class IndexHtmlTest(unittest.TestCase):
             "JSON.parse(JSON.stringify(config.initialCV))",
             "formatJson(value) {",
             "JSON.stringify(value, null, 2)",
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_state_utilities_read_and_write_local_snapshot(self):
+        expected_snippets = [
+            "if (!state.capabilities.storage) {",
+            "const rawState = window.localStorage.getItem(config.storageKey);",
+            "const parsedState = JSON.parse(rawState);",
+            "return parsedState;",
+            "if (!state.capabilities.storage || !state.cv) {",
+            "const snapshot = {",
+            "activeSection: state.activeSection,",
+            "cv: state.cv,",
+            "window.localStorage.setItem(config.storageKey, JSON.stringify(snapshot));",
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
@@ -155,6 +173,19 @@ class IndexHtmlTest(unittest.TestCase):
             'config.cvSchema.required.join(", ")',
             "<h3>Esquema JSON</h3>",
             "config.cvSchema.$comment",
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_boot_uses_persisted_state_when_available(self):
+        expected_snippets = [
+            "const persistedState = state.read();",
+            "state.cv = persistedState && persistedState.cv ? persistedState.cv : app.cloneInitialCV();",
+            'state.activeSection = persistedState && persistedState.activeSection ? persistedState.activeSection : "basics";',
+            "state.write();",
+            "state.activeSection = button.dataset.section;",
+            "state.write();",
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
