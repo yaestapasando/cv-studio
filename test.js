@@ -132,3 +132,42 @@ test('Reactive state and render mechanism', (t) => {
         assert.ok(htmlContent.includes('this.preview.innerHTML ='), 'Missing innerHTML update in render');
     });
 });
+
+test('Auto-save functionality', (t) => {
+    const htmlPath = path.join(__dirname, 'index.html');
+    const htmlContent = fs.readFileSync(htmlPath, 'utf8');
+
+    t.test('should have STORAGE_KEY defined', () => {
+        assert.ok(htmlContent.includes('const STORAGE_KEY ='), 'Missing STORAGE_KEY');
+    });
+
+    t.test('should have a debounce function', () => {
+        assert.ok(htmlContent.includes('debounce: function'), 'Missing debounce function');
+    });
+
+    t.test('should have saveToLocalStorage function', () => {
+        assert.ok(htmlContent.includes('saveToLocalStorage: function'), 'Missing saveToLocalStorage function');
+        assert.ok(htmlContent.includes('localStorage.setItem(STORAGE_KEY'), 'Missing localStorage.setItem call');
+    });
+
+    t.test('should have loadFromLocalStorage function', () => {
+        assert.ok(htmlContent.includes('loadFromLocalStorage: function'), 'Missing loadFromLocalStorage function');
+        assert.ok(htmlContent.includes('localStorage.getItem(STORAGE_KEY)'), 'Missing localStorage.getItem call');
+    });
+
+    t.test('should call debouncedSave on state change', () => {
+        assert.ok(htmlContent.includes('self.debouncedSave()'), 'Missing debouncedSave call on state change');
+    });
+
+    t.test('should initialize debouncedSave', () => {
+        assert.ok(htmlContent.includes('CVStudio.debouncedSave = CVStudio.debounce'), 'Missing debouncedSave initialization');
+    });
+
+    t.test('should call loadFromLocalStorage on init', () => {
+        assert.ok(htmlContent.includes('this.loadFromLocalStorage()'), 'Missing loadFromLocalStorage call on init');
+    });
+
+    t.test('should have syncEditorWithState function', () => {
+        assert.ok(htmlContent.includes('syncEditorWithState: function'), 'Missing syncEditorWithState function');
+    });
+});

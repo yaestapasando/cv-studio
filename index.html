@@ -256,11 +256,14 @@
         (function() {
             'use strict';
 
+            const STORAGE_KEY = 'cv_studio_data';
+
             const CVStudio = {
                 init: function() {
                     console.info('CV Studio: Inicializando aplicación...');
                     this.cacheDOM();
-                    this.state = this.createReactiveState({
+                    
+                    const initialState = {
                         personalData: {
                             firstName: '',
                             lastName: '',
@@ -276,8 +279,14 @@
                         experience: [], // Array of objects: { id: string, company: string, position: string, location: string, startDate: string, endDate: string, current: boolean, description: string }
                         education: [],  // Array of objects: { id: string, institution: string, degree: string, field: string, location: string, startDate: string, endDate: string, current: boolean, description: string }
                         skills: []      // Array of strings: ['JavaScript', 'HTML', 'CSS']
-                    });
+                    };
+
+                    const savedState = this.loadFromLocalStorage();
+                    const stateToUse = savedState ? this.mergeDeep(initialState, savedState) : initialState;
+
+                    this.state = this.createReactiveState(stateToUse);
                     this.bindEvents();
+                    this.syncEditorWithState();
                     this.render();
                 },
 
@@ -297,6 +306,27 @@
                             self.updateStateByPath(path, e.target.value);
                         }
                     });
+                },
+
+                /**
+                 * Sincroniza los campos del editor con el estado cargado
+                 */
+                syncEditorWithState: function() {
+                    const inputs = this.editor.querySelectorAll('[data-path]');
+                    inputs.forEach(input => {
+                        const path = input.getAttribute('data-path');
+                        const value = this.getValueByPath(path);
+                        if (value !== undefined) {
+                            input.value = value;
+                        }
+                    });
+                },
+
+                /**
+                 * Obtiene un valor del estado basándose en una cadena de ruta
+                 */
+                getValueByPath: function(path) {
+                    return path.split('.').reduce((obj, key) => (obj && obj[key] !== 'undefined') ? obj[key] : undefined, this.state);
                 },
 
                 /**
@@ -334,12 +364,14 @@
                                 if (target[key] === value) return true;
                                 target[key] = value;
                                 self.render();
+                                self.debouncedSave();
                                 return true;
                             },
                             deleteProperty(target, key) {
                                 const deleted = delete target[key];
                                 if (deleted) {
                                     self.render();
+                                    self.debouncedSave();
                                 }
                                 return deleted;
                             }
@@ -371,9 +403,68 @@
                     `;
                 },
 
-                // Feature 2: Gestión del Estado
-                state: null
+                // Persistencia
+                saveToLocalStorage: function() {
+                    try {
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+                        console.debug('CV Studio: Estado guardado en localStorage');
+                    } catch (error) {
+                        console.error('CV Studio: Error al guardar en localStorage', error);
+                    }
+                },
+
+                loadFromLocalStorage: function() {
+                    try {
+                        const saved = localStorage.getItem(STORAGE_KEY);
+                        return saved ? JSON.parse(saved) : null;
+                    } catch (error) {
+                        console.error('CV Studio: Error al cargar de localStorage', error);
+                        return null;
+                    }
+                },
+
+                debounce: function(func, wait) {
+                    let timeout;
+                    return function executedFunction(...args) {
+                        const later = () => {
+                            clearTimeout(timeout);
+                            func.apply(this, args);
+                        };
+                        clearTimeout(timeout);
+                        timeout = setTimeout(later, wait);
+                    };
+                },
+
+                debouncedSave: null,
+
+                /**
+                 * Utilidad para mezclar objetos de forma profunda
+                 */
+                mergeDeep: function(target, source) {
+                    const output = Object.assign({}, target);
+                    if (this.isObject(target) && this.isObject(source)) {
+                        Object.keys(source).forEach(key => {
+                            if (this.isObject(source[key])) {
+                                if (!(key in target)) {
+                                    Object.assign(output, { [key]: source[key] });
+                                } else {
+                                    output[key] = this.mergeDeep(target[key], source[key]);
+                                }
+                            } else {
+                                Object.assign(output, { [key]: source[key] });
+                            }
+                        });
+                    }
+                    return output;
+                },
+
+                isObject: function(item) {
+                    return (item && typeof item === 'object' && !Array.isArray(item));
+                }
             };
+
+            // Inicializar el guardado con debounce (500ms)
+            CVStudio.debouncedSave = CVStudio.debounce(CVStudio.saveToLocalStorage.bind(CVStudio), 500);
 
             // Iniciar aplicación al cargar el DOM
             document.addEventListener('DOMContentLoaded', () => {
