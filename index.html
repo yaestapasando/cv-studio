@@ -514,6 +514,47 @@
         }
       };
 
+      // ── Reactive state store ──────────────────────────────────────────────────
+
+      function createStore(initialState) {
+        var _state     = JSON.parse(JSON.stringify(initialState));
+        var _listeners = [];
+
+        function getState() {
+          return JSON.parse(JSON.stringify(_state));
+        }
+
+        function setState(updater) {
+          var nextState;
+          if (typeof updater === 'function') {
+            nextState = updater(JSON.parse(JSON.stringify(_state)));
+          } else if (updater !== null && typeof updater === 'object') {
+            nextState = Object.assign(JSON.parse(JSON.stringify(_state)), updater);
+          } else {
+            return;
+          }
+          _state = nextState;
+          var snapshot = JSON.parse(JSON.stringify(_state));
+          _listeners.slice().forEach(function (fn) { fn(snapshot); });
+        }
+
+        function subscribe(fn) {
+          if (typeof fn !== 'function') return function () {};
+          _listeners.push(fn);
+          return function () {
+            _listeners = _listeners.filter(function (l) { return l !== fn; });
+          };
+        }
+
+        function unsubscribe(fn) {
+          _listeners = _listeners.filter(function (l) { return l !== fn; });
+        }
+
+        return { getState: getState, setState: setState, subscribe: subscribe, unsubscribe: unsubscribe };
+      }
+
+      var CVStore = createStore(DEFAULT_CV);
+
       // ── Tab navigation ────────────────────────────────────────────────────────
 
       function activateTab(name) {
@@ -547,7 +588,7 @@
       }
 
       // Expose minimal public API (used by tests and future modules)
-      window.CVStudio = { DEFAULT_CV: DEFAULT_CV, activateTab: activateTab, init: init };
+      window.CVStudio = { DEFAULT_CV: DEFAULT_CV, createStore: createStore, CVStore: CVStore, activateTab: activateTab, init: init };
 
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
