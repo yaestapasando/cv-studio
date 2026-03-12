@@ -269,16 +269,16 @@ class IndexHtmlTest(unittest.TestCase):
             'id=\\"experience-achievements-',
             'name=\\"achievements\\"',
             'data-experience-field=\\"achievements\\"',
-            'rows=\\"4\\"',
-            'placeholder=\\"Resume resultados, metricas o hitos clave\\"',
-            'ui.escapeHtml(entry.achievements || "")',
+            'rows=\\"6\\"',
+            'placeholder=\\"Escribe un logro por linea para crear multiples bullets\\"',
+            'ui.escapeHtml(ui.getExperienceAchievements(entry).join("\\n"))',
             'ui.escapeHtml(entry.location || "")',
             'ui.escapeHtml(ui.formatExperiencePeriod(entry))',
             '<span class=\\"entry-card-index\\">Experiencia ',
             'ui.escapeHtml(entry.role || "Puesto pendiente")',
             'ui.escapeHtml(entry.company || "Empresa pendiente")',
             'ui.escapeHtml(entry.summary || "Todavia no hay contenido en esta experiencia.")',
-            'ui.escapeHtml(entry.achievements || "Todavia no hay logros definidos para esta experiencia.")',
+            'ui.renderAchievementList(ui.getExperienceAchievements(entry), "Todavia no hay logros definidos para esta experiencia.")',
             '<div class=\\"editor-note\\" data-tone=\\"muted\\">Todavia no hay experiencias guardadas en el CV.</div>',
         ]
         for snippet in expected_snippets:
@@ -307,7 +307,7 @@ class IndexHtmlTest(unittest.TestCase):
             'isCurrent: false,',
             'endDate: "",',
             'summary: "",',
-            'achievements: "",',
+            'achievements: [],',
             "const nextExperience = [...state.cv.experience, nextEntry];",
             "experience: nextExperience,",
             'text: "Experiencia " + String(nextExperience.length) + " anadida.",',
@@ -381,7 +381,7 @@ class IndexHtmlTest(unittest.TestCase):
             'ui.escapeHtml(entry.location || "Ubicacion pendiente")',
             'ui.escapeHtml(ui.formatExperiencePeriod(entry))',
             'ui.escapeHtml(entry.summary || "Resumen pendiente")',
-            'ui.escapeHtml(entry.achievements || "Logros pendientes")',
+            'ui.renderAchievementList(ui.getExperienceAchievements(entry), "Logros pendientes")',
             '<p>Anade tu primera experiencia para completar esta vista previa.</p>',
             '+ experiencePreview',
         ]
@@ -461,7 +461,9 @@ class IndexHtmlTest(unittest.TestCase):
             'startDate: { type: "string", minLength: 1 },',
             'isCurrent: { type: "boolean" },',
             'endDate: { type: "string" },',
-            'achievements: { type: "string" },',
+            'achievements: {',
+            'type: "array",',
+            'items: { type: "string", minLength: 1 },',
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
@@ -514,7 +516,11 @@ class IndexHtmlTest(unittest.TestCase):
             'updateExperienceField(index, fieldName, fieldValue) {',
             '!state.cv || !Array.isArray(state.cv.experience) || !state.hasOwn(config.experienceFieldLabels, fieldName)',
             "const currentEntry = state.cv.experience[index];",
-            'const normalizedFieldValue = fieldName === "isCurrent" ? Boolean(fieldValue) : fieldValue;',
+            'const normalizedFieldValue = fieldName === "isCurrent"',
+            '? Boolean(fieldValue)',
+            ': fieldName === "achievements"',
+            '? app.normalizeExperienceAchievements(fieldValue)',
+            ': fieldValue;',
             "const nextExperience = state.cv.experience.map((entry, entryIndex) => entryIndex === index",
             '[fieldName]: normalizedFieldValue,',
             'endDate: fieldName === "isCurrent" && normalizedFieldValue ? "" : entry.endDate,',
@@ -526,7 +532,26 @@ class IndexHtmlTest(unittest.TestCase):
             'const fieldValue = input.type === "checkbox" ? input.checked : input.value;',
             "app.updateExperienceField(experienceIndex, fieldName, fieldValue);",
             'isCurrent: Boolean(entry && entry.isCurrent),',
-            'achievements: entry && typeof entry.achievements === "string" ? entry.achievements : "",',
+            'achievements: app.normalizeExperienceAchievements(entry ? entry.achievements : []),',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_experience_achievements_support_multiple_bullets(self):
+        expected_snippets = [
+            ".achievement-list {",
+            '.achievement-list[data-tone="muted"] {',
+            "getExperienceAchievements(entry) {",
+            "if (entry && Array.isArray(entry.achievements)) {",
+            '.split("\\n")',
+            "renderAchievementList(achievements, emptyMessage) {",
+            'return "<p class=\\"achievement-list\\" data-tone=\\"muted\\">" + ui.escapeHtml(emptyMessage) + "</p>";',
+            'return "<ul class=\\"achievement-list\\">"',
+            'achievements.map((achievement) => "<li>" + ui.escapeHtml(achievement) + "</li>").join("")',
+            "normalizeExperienceAchievements(achievements) {",
+            "if (Array.isArray(achievements)) {",
+            "if (typeof achievements === \"string\") {",
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):

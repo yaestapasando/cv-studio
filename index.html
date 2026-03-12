@@ -310,6 +310,17 @@
       white-space: nowrap;
     }
 
+    .achievement-list {
+      margin: 0;
+      padding-left: 18px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .achievement-list[data-tone="muted"] {
+      color: var(--muted);
+    }
+
     .preview-layout {
       min-height: 100%;
       border: 1px solid var(--border);
@@ -559,7 +570,10 @@
                 isCurrent: { type: "boolean" },
                 endDate: { type: "string" },
                 summary: { type: "string", minLength: 1 },
-                achievements: { type: "string" },
+                achievements: {
+                  type: "array",
+                  items: { type: "string", minLength: 1 },
+                },
               },
             },
             educationEntry: {
@@ -790,6 +804,29 @@
           }
           return "Pendiente";
         },
+        getExperienceAchievements(entry) {
+          if (entry && Array.isArray(entry.achievements)) {
+            return entry.achievements
+              .filter((achievement) => typeof achievement === "string")
+              .map((achievement) => achievement.trim())
+              .filter(Boolean);
+          }
+          if (entry && typeof entry.achievements === "string") {
+            return entry.achievements
+              .split("\n")
+              .map((achievement) => achievement.trim())
+              .filter(Boolean);
+          }
+          return [];
+        },
+        renderAchievementList(achievements, emptyMessage) {
+          if (!achievements.length) {
+            return "<p class=\"achievement-list\" data-tone=\"muted\">" + ui.escapeHtml(emptyMessage) + "</p>";
+          }
+          return "<ul class=\"achievement-list\">"
+            + achievements.map((achievement) => "<li>" + ui.escapeHtml(achievement) + "</li>").join("")
+            + "</ul>";
+        },
         renderToolbar() {
           const sectionButtons = config.sections
             .map((section) => {
@@ -937,9 +974,9 @@
                 + " name=\"achievements\""
                 + " data-experience-field=\"achievements\""
                 + " class=\"editor-field editor-input\""
-                + " rows=\"4\""
-                + " placeholder=\"Resume resultados, metricas o hitos clave\">"
-                + ui.escapeHtml(entry.achievements || "")
+                + " rows=\"6\""
+                + " placeholder=\"Escribe un logro por linea para crear multiples bullets\">"
+                + ui.escapeHtml(ui.getExperienceAchievements(entry).join("\n"))
                 + "</textarea>"
                 + "</div>"
                 + "</form>"
@@ -953,7 +990,7 @@
                 + "</div>"
                 + "<div class=\"editor-group\">"
                 + "<span>Logros actuales</span>"
-                + "<div class=\"editor-field\">" + ui.escapeHtml(entry.achievements || "Todavia no hay logros definidos para esta experiencia.") + "</div>"
+                + "<div class=\"editor-field\">" + ui.renderAchievementList(ui.getExperienceAchievements(entry), "Todavia no hay logros definidos para esta experiencia.") + "</div>"
                 + "</div>"
                 + "</article>")
                 .join("")
@@ -1136,7 +1173,7 @@
               + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.location || "Ubicacion pendiente") + "</p>"
               + "<p class=\"preview-meta\">" + ui.escapeHtml(ui.formatExperiencePeriod(entry)) + "</p>"
               + "<p>" + ui.escapeHtml(entry.summary || "Resumen pendiente") + "</p>"
-              + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.achievements || "Logros pendientes") + "</p>"
+              + ui.renderAchievementList(ui.getExperienceAchievements(entry), "Logros pendientes")
               + "</div>")
               .join("")
             : "<p>Anade tu primera experiencia para completar esta vista previa.</p>";
@@ -1194,6 +1231,21 @@
 
       // JS Module: app
       const app = {
+        normalizeExperienceAchievements(achievements) {
+          if (Array.isArray(achievements)) {
+            return achievements
+              .filter((achievement) => typeof achievement === "string")
+              .map((achievement) => achievement.trim())
+              .filter(Boolean);
+          }
+          if (typeof achievements === "string") {
+            return achievements
+              .split("\n")
+              .map((achievement) => achievement.trim())
+              .filter(Boolean);
+          }
+          return [];
+        },
         cloneInitialCV() {
           const initialCV = app.normalizeCvDocument(JSON.parse(JSON.stringify(config.initialCV)));
           initialCV.meta.version = config.dataModelVersion;
@@ -1213,7 +1265,7 @@
                 isCurrent: Boolean(entry && entry.isCurrent),
                 endDate: entry && typeof entry.endDate === "string" ? entry.endDate : "",
                 summary: entry && typeof entry.summary === "string" ? entry.summary : "",
-                achievements: entry && typeof entry.achievements === "string" ? entry.achievements : "",
+                achievements: app.normalizeExperienceAchievements(entry ? entry.achievements : []),
               };
             })
             : [];
@@ -1348,7 +1400,11 @@
           if (!currentEntry) {
             return;
           }
-          const normalizedFieldValue = fieldName === "isCurrent" ? Boolean(fieldValue) : fieldValue;
+          const normalizedFieldValue = fieldName === "isCurrent"
+            ? Boolean(fieldValue)
+            : fieldName === "achievements"
+              ? app.normalizeExperienceAchievements(fieldValue)
+              : fieldValue;
           const nextExperience = state.cv.experience.map((entry, entryIndex) => entryIndex === index
             ? {
               ...entry,
@@ -1385,7 +1441,7 @@
             isCurrent: false,
             endDate: "",
             summary: "",
-            achievements: "",
+            achievements: [],
           };
           const nextExperience = [...state.cv.experience, nextEntry];
           state.update({
