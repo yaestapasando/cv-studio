@@ -466,6 +466,54 @@
     (function () {
       'use strict';
 
+      // ── CV data model ─────────────────────────────────────────────────────────
+
+      var DEFAULT_CV = {
+        personal: {
+          fullName:  '',
+          jobTitle:  '',
+          email:     '',
+          phone:     '',
+          location:  '',
+          linkedIn:  '',
+          website:   '',
+          photo:     ''   // base64 data URL
+        },
+        summary: '',
+        experience: [
+          // { id, company, role, startDate, endDate, current, description }
+        ],
+        education: [
+          // { id, institution, degree, field, startDate, endDate, current }
+        ],
+        skills: [
+          // { id, name, level }  level: 'basic'|'intermediate'|'advanced'|'expert'
+        ],
+        languages: [
+          // { id, name, level }  level: 'A1'|'A2'|'B1'|'B2'|'C1'|'C2'|string
+        ],
+        projects: [
+          // { id, name, description, url, technologies }
+        ],
+        certifications: [
+          // { id, name, issuer, date, url }
+        ],
+        optional: {
+          volunteering:  { enabled: false, items: [] },
+          publications:  { enabled: false, items: [] },
+          awards:        { enabled: false, items: [] },
+          references:    { enabled: false, text: '' }
+        },
+        meta: {
+          template:     'classic',
+          accentColor:  '#2563eb',
+          fontPair:     'sans-serif',
+          fontSize:     'normal',
+          lang:         'es',
+          theme:        'auto'
+        }
+      };
+
       // ── Tab navigation ────────────────────────────────────────────────────────
 
       function activateTab(name) {
@@ -499,7 +547,7 @@
       }
 
       // Expose minimal public API (used by tests and future modules)
-      window.CVStudio = { activateTab: activateTab, init: init };
+      window.CVStudio = { DEFAULT_CV: DEFAULT_CV, activateTab: activateTab, init: init };
 
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
