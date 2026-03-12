@@ -205,6 +205,12 @@
             font-size: 1.25rem;
             color: var(--primary);
             font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .cv-contact {
+            font-size: 0.9rem;
+            color: var(--text-muted);
             margin-bottom: 1.5rem;
         }
 
@@ -232,6 +238,30 @@
                 <div class="form-group">
                     <label for="title">Profesión</label>
                     <input type="text" id="title" data-path="personalData.title" placeholder="Ej. Desarrollador Fullstack">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" data-path="personalData.email" placeholder="Ej. juan.perez@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="phone">Teléfono</label>
+                    <input type="tel" id="phone" data-path="personalData.phone" placeholder="Ej. +34 600 000 000">
+                </div>
+                <div class="form-group">
+                    <label for="location">Ubicación</label>
+                    <input type="text" id="location" data-path="personalData.location" placeholder="Ej. Madrid, España">
+                </div>
+                <div class="form-group">
+                    <label for="linkedin">LinkedIn</label>
+                    <input type="url" id="linkedin" data-path="personalData.linkedin" placeholder="Ej. linkedin.com/in/juanperez">
+                </div>
+                <div class="form-group">
+                    <label for="github">GitHub</label>
+                    <input type="url" id="github" data-path="personalData.github" placeholder="Ej. github.com/juanperez">
+                </div>
+                <div class="form-group">
+                    <label for="website">Sitio Web</label>
+                    <input type="url" id="website" data-path="personalData.website" placeholder="Ej. juanperez.dev">
                 </div>
             </div>
             <div class="form-section">
@@ -396,6 +426,14 @@
                         <div class="cv-header">
                             <h1>${personalData.firstName || 'Tu Nombre'} ${personalData.lastName || ''}</h1>
                             <p class="cv-title">${personalData.title || 'Tu Profesión'}</p>
+                            <div class="cv-contact">
+                                ${personalData.email ? `<span>${personalData.email}</span>` : ''}
+                                ${personalData.phone ? `<span> | ${personalData.phone}</span>` : ''}
+                                ${personalData.location ? `<span> | ${personalData.location}</span>` : ''}
+                                ${personalData.linkedin ? `<span> | ${personalData.linkedin}</span>` : ''}
+                                ${personalData.github ? `<span> | ${personalData.github}</span>` : ''}
+                                ${personalData.website ? `<span> | ${personalData.website}</span>` : ''}
+                            </div>
                         </div>
                         <div class="cv-section">
                             <p>${summary || 'Escribe aquí tu resumen profesional...'}</p>

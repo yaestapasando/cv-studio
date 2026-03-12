@@ -45,6 +45,23 @@ test('index.html structure', (t) => {
         assert.ok(htmlContent.includes('id="cv-paper"'), 'Missing cv-paper id');
     });
 
+    t.test('should have personal data input fields', () => {
+        const requiredFields = [
+            'data-path="personalData.firstName"',
+            'data-path="personalData.lastName"',
+            'data-path="personalData.email"',
+            'data-path="personalData.phone"',
+            'data-path="personalData.location"',
+            'data-path="personalData.title"',
+            'data-path="personalData.linkedin"',
+            'data-path="personalData.github"',
+            'data-path="personalData.website"'
+        ];
+        requiredFields.forEach(field => {
+            assert.ok(htmlContent.includes(field), `Missing personal data field: ${field}`);
+        });
+    });
+
     t.test('should have CSS variables defined', () => {
         const requiredVars = [
             '--primary',
