@@ -425,6 +425,8 @@ class IndexHtmlTest(unittest.TestCase):
             'ui.escapeHtml(entry.school || "Centro pendiente")',
             'ui.escapeHtml(entry.period || "Periodo pendiente")',
             '<div class=\\"editor-note\\" data-tone=\\"muted\\">Todavia no hay formacion guardada en el CV.</div>',
+            'data-action=\\"add-education-entry\\"',
+            '>Anadir otra formacion</button>',
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
@@ -481,6 +483,17 @@ class IndexHtmlTest(unittest.TestCase):
             'app.moveEducationEntry(educationIndex, "up");',
             'actionButton.dataset.action === "move-education-entry-down"',
             'app.moveEducationEntry(educationIndex, "down");',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_education_section_exposes_inline_add_action(self):
+        expected_snippets = [
+            'education: ""',
+            '+ educationEntries',
+            'data-action=\\"add-education-entry\\"',
+            '>Anadir otra formacion</button>',
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
