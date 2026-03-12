@@ -336,7 +336,8 @@
     }
 
     .field-group input[type="text"],
-    .field-group input[type="email"] {
+    .field-group input[type="email"],
+    .field-group input[type="tel"] {
       padding: var(--space-2) var(--space-3);
       background: var(--color-bg);
       color: var(--color-text);
@@ -348,7 +349,8 @@
     }
 
     .field-group input[type="text"]:focus,
-    .field-group input[type="email"]:focus {
+    .field-group input[type="email"]:focus,
+    .field-group input[type="tel"]:focus {
       outline: none;
       border-color: var(--color-accent);
       box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent);
@@ -470,6 +472,11 @@
                 <label for="field-email">Correo electrónico</label>
                 <input type="email" id="field-email" name="email" autocomplete="email" maxlength="254" />
                 <span id="field-email-error" class="field-error" aria-live="polite" hidden></span>
+              </div>
+              <div class="field-group">
+                <label for="field-phone">Teléfono</label>
+                <input type="tel" id="field-phone" name="phone" autocomplete="tel" maxlength="30" />
+                <span id="field-phone-error" class="field-error" aria-live="polite" hidden></span>
               </div>
             </form>
           </section>
@@ -880,6 +887,13 @@
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
       }
 
+      // ── Phone validation ──────────────────────────────────────────────────────
+
+      function isValidPhone(value) {
+        if (!value) return true; // empty is allowed; field is optional
+        return /^[\d\s\-+().]{7,30}$/.test(value);
+      }
+
       // ── Personal form bindings ────────────────────────────────────────────────
 
       function initPersonalFields() {
@@ -887,6 +901,8 @@
         var inputJobTitle  = document.getElementById('field-jobTitle');
         var inputEmail     = document.getElementById('field-email');
         var emailError     = document.getElementById('field-email-error');
+        var inputPhone     = document.getElementById('field-phone');
+        var phoneError     = document.getElementById('field-phone-error');
 
         // Store → fields (initial + reactive)
         function syncFromStore(state) {
@@ -894,6 +910,7 @@
           if (inputFullName && inputFullName.value !== (p.fullName || '')) inputFullName.value = p.fullName || '';
           if (inputJobTitle && inputJobTitle.value !== (p.jobTitle || '')) inputJobTitle.value = p.jobTitle || '';
           if (inputEmail    && inputEmail.value    !== (p.email    || '')) inputEmail.value    = p.email    || '';
+          if (inputPhone    && inputPhone.value    !== (p.phone    || '')) inputPhone.value    = p.phone    || '';
         }
         syncFromStore(CVStore.getState());
         CVStore.subscribe(syncFromStore);
@@ -930,6 +947,22 @@
             });
           });
         }
+
+        if (inputPhone) {
+          inputPhone.addEventListener('input', function () {
+            var valid = isValidPhone(inputPhone.value);
+            if (valid) {
+              inputPhone.classList.remove('field-invalid');
+              if (phoneError) { phoneError.hidden = true; phoneError.textContent = ''; }
+            } else {
+              inputPhone.classList.add('field-invalid');
+              if (phoneError) { phoneError.hidden = false; phoneError.textContent = 'Número de teléfono no válido'; }
+            }
+            CVStore.setState(function (s) {
+              return Object.assign({}, s, { personal: Object.assign({}, s.personal, { phone: inputPhone.value }) });
+            });
+          });
+        }
       }
 
       // ── Bootstrap ─────────────────────────────────────────────────────────────
@@ -940,7 +973,7 @@
       }
 
       // Expose minimal public API (used by tests and future modules)
-      window.CVStudio = { DEFAULT_CV: DEFAULT_CV, createStore: createStore, CVStore: CVStore, createEventBus: createEventBus, EventBus: EventBus, activateTab: activateTab, render: render, isValidEmail: isValidEmail, initPersonalFields: initPersonalFields, init: init };
+      window.CVStudio = { DEFAULT_CV: DEFAULT_CV, createStore: createStore, CVStore: CVStore, createEventBus: createEventBus, EventBus: EventBus, activateTab: activateTab, render: render, isValidEmail: isValidEmail, isValidPhone: isValidPhone, initPersonalFields: initPersonalFields, init: init };
 
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
