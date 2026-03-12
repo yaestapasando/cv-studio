@@ -521,9 +521,10 @@
           achievements: "Logros",
         },
         educationFieldLabels: {
-          course: "Programa",
-          school: "Centro",
-          period: "Periodo",
+          title: "Titulo",
+          center: "Centro",
+          dates: "Fechas",
+          details: "Detalles",
         },
         cvSchema: {
           $id: "cv-studio/schema/cv",
@@ -584,11 +585,12 @@
             educationEntry: {
               type: "object",
               additionalProperties: false,
-              required: ["course", "school", "period"],
+              required: ["title", "center", "dates"],
               properties: {
-                course: { type: "string", minLength: 1 },
-                school: { type: "string", minLength: 1 },
-                period: { type: "string", minLength: 1 },
+                title: { type: "string", minLength: 1 },
+                center: { type: "string", minLength: 1 },
+                dates: { type: "string", minLength: 1 },
+                details: { type: "string" },
               },
             },
             meta: {
@@ -1004,8 +1006,8 @@
                 + "<article class=\"entry-card\">"
                 + "<div class=\"entry-card-header\">"
                 + "<div>"
-                + "<h3 class=\"entry-card-title\">" + ui.escapeHtml(entry.course || "Programa pendiente") + "</h3>"
-                + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.school || "Centro pendiente") + "</p>"
+                + "<h3 class=\"entry-card-title\">" + ui.escapeHtml(entry.title || "Titulo pendiente") + "</h3>"
+                + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.center || "Centro pendiente") + "</p>"
                 + "</div>"
                 + "<div class=\"entry-card-actions\">"
                 + "<span class=\"entry-card-index\">Formacion " + String(index + 1) + "</span>"
@@ -1018,50 +1020,66 @@
                 + "</div>"
                 + "<form class=\"editor-form education-form\" data-education-index=\"" + String(index) + "\">"
                 + "<div class=\"editor-group\">"
-                + "<label for=\"education-course-" + String(index) + "\"><span>Programa</span></label>"
+                + "<label for=\"education-title-" + String(index) + "\"><span>Titulo</span></label>"
                 + "<input"
-                + " id=\"education-course-" + String(index) + "\""
-                + " name=\"course\""
-                + " data-education-field=\"course\""
+                + " id=\"education-title-" + String(index) + "\""
+                + " name=\"title\""
+                + " data-education-field=\"title\""
                 + " class=\"editor-field editor-input\""
                 + " type=\"text\""
                 + " placeholder=\"Ej. Grado en Diseno\""
-                + " value=\"" + ui.escapeHtml(entry.course || "") + "\">"
+                + " value=\"" + ui.escapeHtml(entry.title || "") + "\">"
                 + "</div>"
                 + "<div class=\"editor-group\">"
-                + "<label for=\"education-school-" + String(index) + "\"><span>Centro</span></label>"
+                + "<label for=\"education-center-" + String(index) + "\"><span>Centro</span></label>"
                 + "<input"
-                + " id=\"education-school-" + String(index) + "\""
-                + " name=\"school\""
-                + " data-education-field=\"school\""
+                + " id=\"education-center-" + String(index) + "\""
+                + " name=\"center\""
+                + " data-education-field=\"center\""
                 + " class=\"editor-field editor-input\""
                 + " type=\"text\""
                 + " placeholder=\"Ej. Universidad de Valencia\""
-                + " value=\"" + ui.escapeHtml(entry.school || "") + "\">"
+                + " value=\"" + ui.escapeHtml(entry.center || "") + "\">"
                 + "</div>"
                 + "<div class=\"editor-group\">"
-                + "<label for=\"education-period-" + String(index) + "\"><span>Periodo</span></label>"
+                + "<label for=\"education-dates-" + String(index) + "\"><span>Fechas</span></label>"
                 + "<input"
-                + " id=\"education-period-" + String(index) + "\""
-                + " name=\"period\""
-                + " data-education-field=\"period\""
+                + " id=\"education-dates-" + String(index) + "\""
+                + " name=\"dates\""
+                + " data-education-field=\"dates\""
                 + " class=\"editor-field editor-input\""
                 + " type=\"text\""
                 + " placeholder=\"Ej. 2018 - 2022\""
-                + " value=\"" + ui.escapeHtml(entry.period || "") + "\">"
+                + " value=\"" + ui.escapeHtml(entry.dates || "") + "\">"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<label for=\"education-details-" + String(index) + "\"><span>Detalles</span></label>"
+                + "<textarea"
+                + " id=\"education-details-" + String(index) + "\""
+                + " name=\"details\""
+                + " data-education-field=\"details\""
+                + " class=\"editor-field editor-input\""
+                + " rows=\"4\""
+                + " placeholder=\"Contexto relevante, menciones, especializacion o logros academicos\">"
+                + ui.escapeHtml(entry.details || "")
+                + "</textarea>"
                 + "</div>"
                 + "</form>"
                 + "<div class=\"editor-group\">"
-                + "<span>Resumen actual</span>"
-                + "<div class=\"editor-field\">" + ui.escapeHtml(entry.course || "Sin formacion anadida") + "</div>"
+                + "<span>Titulo actual</span>"
+                + "<div class=\"editor-field\">" + ui.escapeHtml(entry.title || "Sin formacion anadida") + "</div>"
                 + "</div>"
                 + "<div class=\"editor-group\">"
                 + "<span>Centro actual</span>"
-                + "<div class=\"editor-field\">" + ui.escapeHtml(entry.school || "Pendiente") + "</div>"
+                + "<div class=\"editor-field\">" + ui.escapeHtml(entry.center || "Pendiente") + "</div>"
                 + "</div>"
                 + "<div class=\"editor-group\">"
-                + "<span>Periodo actual</span>"
-                + "<div class=\"editor-field\">" + ui.escapeHtml(entry.period || "Pendiente") + "</div>"
+                + "<span>Fechas actuales</span>"
+                + "<div class=\"editor-field\">" + ui.escapeHtml(entry.dates || "Pendiente") + "</div>"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<span>Detalles actuales</span>"
+                + "<div class=\"editor-field\">" + ui.escapeHtml(entry.details || "Sin detalles anadidos") + "</div>"
                 + "</div>"
                 + "</article>")
                 .join("")
@@ -1237,9 +1255,10 @@
           const educationPreview = state.cv.education.length
             ? state.cv.education.map((entry) => ""
               + "<div class=\"preview-card\">"
-              + "<p>" + ui.escapeHtml(entry.course || "Programa pendiente") + "</p>"
-              + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.school || "Centro pendiente") + "</p>"
-              + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.period || "Periodo pendiente") + "</p>"
+              + "<p>" + ui.escapeHtml(entry.title || "Titulo pendiente") + "</p>"
+              + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.center || "Centro pendiente") + "</p>"
+              + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.dates || "Fechas pendientes") + "</p>"
+              + "<p>" + ui.escapeHtml(entry.details || "Detalles pendientes") + "</p>"
               + "</div>")
               .join("")
             : "<p>Anade tu primera formacion para completar esta vista previa.</p>";
@@ -1313,9 +1332,22 @@
         },
         normalizeEducationEntry(entry) {
           return {
-            course: entry && typeof entry.course === "string" ? entry.course : "",
-            school: entry && typeof entry.school === "string" ? entry.school : "",
-            period: entry && typeof entry.period === "string" ? entry.period : "",
+            title: entry && typeof entry.title === "string"
+              ? entry.title
+              : entry && typeof entry.course === "string"
+                ? entry.course
+                : "",
+            center: entry && typeof entry.center === "string"
+              ? entry.center
+              : entry && typeof entry.school === "string"
+                ? entry.school
+                : "",
+            dates: entry && typeof entry.dates === "string"
+              ? entry.dates
+              : entry && typeof entry.period === "string"
+                ? entry.period
+                : "",
+            details: entry && typeof entry.details === "string" ? entry.details : "",
           };
         },
         cloneInitialCV() {
@@ -1572,9 +1604,10 @@
             return;
           }
           const nextEntry = {
-            course: "",
-            school: "",
-            period: "",
+            title: "",
+            center: "",
+            dates: "",
+            details: "",
           };
           const nextEducation = [...state.cv.education, nextEntry];
           state.update({
