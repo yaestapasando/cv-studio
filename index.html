@@ -1753,7 +1753,8 @@
               + "</div>",
             experience: ""
               + "<div class=\"editor-note\" data-tone=\"muted\">Listado de experiencias existentes en el documento.</div>"
-              + experienceEntries,
+              + experienceEntries
+              + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"add-experience-entry\" aria-pressed=\"false\">Anadir otra experiencia</button>",
             skills: ""
               + "<div class=\"editor-note\" data-tone=\"muted\">Elige si prefieres mostrar habilidades en una lista simple o agrupadas por categorias.</div>"
               + "<form class=\"editor-form\" id=\"skills-form\">"
@@ -2977,6 +2978,26 @@
           ui.editorCanvas.addEventListener("click", (event) => {
             const actionButton = event.target.closest("[data-action]");
             if (!actionButton) {
+              return;
+            }
+            if (actionButton.dataset.action === "add-experience-entry") {
+              app.addExperienceEntry();
+              return;
+            }
+            if (actionButton.dataset.action === "add-project-entry") {
+              app.addProjectEntry();
+              return;
+            }
+            if (actionButton.dataset.action === "add-language-entry") {
+              app.addLanguageEntry();
+              return;
+            }
+            if (actionButton.dataset.action === "add-certification-entry") {
+              app.addCertificationEntry();
+              return;
+            }
+            if (actionButton.dataset.action === "add-education-entry") {
+              app.addEducationEntry();
               return;
             }
             const experienceIndex = Number(actionButton.dataset.experienceIndex);

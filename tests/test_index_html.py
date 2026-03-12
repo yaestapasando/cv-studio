@@ -59,9 +59,18 @@ function createElement() {{
     textContent: "",
     dataset: {{}},
     open: false,
-    addEventListener() {{}},
+    listeners: {{}},
+    addEventListener(type, listener) {{
+      if (!this.listeners[type]) {{
+        this.listeners[type] = [];
+      }}
+      this.listeners[type].push(listener);
+    }},
     showModal() {{ this.open = true; }},
     close() {{ this.open = false; }},
+    querySelector() {{ return null; }},
+    setCustomValidity() {{}},
+    reportValidity() {{ return true; }},
   }};
 }}
 
@@ -1125,6 +1134,17 @@ CVStudio.app.updateProjectField(0, "highlights", "Uno\\n\\nDos\\n Tres ");
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
 
+    def test_experience_section_exposes_inline_add_action(self):
+        expected_snippets = [
+            'experience: ""',
+            '+ experienceEntries',
+            'data-action=\\"add-experience-entry\\"',
+            '>Anadir otra experiencia</button>',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
     def test_app_adds_empty_experience_entry(self):
         expected_snippets = [
             "addExperienceEntry() {",
@@ -1145,6 +1165,76 @@ CVStudio.app.updateProjectField(0, "highlights", "Uno\\n\\nDos\\n Tres ");
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
+
+    def test_editor_click_handler_triggers_inline_add_actions(self):
+        expected_snippets = [
+            'ui.editorCanvas.addEventListener("click", (event) => {',
+            'actionButton.dataset.action === "add-experience-entry"',
+            "app.addExperienceEntry();",
+            'actionButton.dataset.action === "add-project-entry"',
+            "app.addProjectEntry();",
+            'actionButton.dataset.action === "add-language-entry"',
+            "app.addLanguageEntry();",
+            'actionButton.dataset.action === "add-certification-entry"',
+            "app.addCertificationEntry();",
+            'actionButton.dataset.action === "add-education-entry"',
+            "app.addEducationEntry();",
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_editor_click_handler_adds_entries_from_inline_buttons(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+CVStudio.state.update({
+  cv,
+  ui: { activeSection: "experience" },
+  capabilities: { storage: false, fileProtocol: true },
+  booted: true,
+});
+CVStudio.app.bindEvents();
+const editorCanvas = CVStudio.ui.editorCanvas;
+const clickListener = editorCanvas.listeners.click[0];
+const actions = [
+  { section: "experience", action: "add-experience-entry", key: "experience" },
+  { section: "projects", action: "add-project-entry", key: "projects" },
+  { section: "languages", action: "add-language-entry", key: "languages" },
+  { section: "certifications", action: "add-certification-entry", key: "certifications" },
+  { section: "education", action: "add-education-entry", key: "education" },
+];
+const counts = actions.map((entry) => {
+  CVStudio.state.update({ ui: { activeSection: entry.section } });
+  clickListener({
+    target: {
+      closest(selector) {
+        if (selector === "[data-action]") {
+          return { dataset: { action: entry.action } };
+        }
+        return null;
+      },
+    },
+  });
+  return { key: entry.key, count: CVStudio.state.cv[entry.key].length };
+});
+({
+  counts,
+  message: CVStudio.state.ui.message.text,
+});
+"""
+        )
+        self.assertEqual(
+            result["counts"],
+            [
+                {"key": "experience", "count": 1},
+                {"key": "projects", "count": 1},
+                {"key": "languages", "count": 1},
+                {"key": "certifications", "count": 1},
+                {"key": "education", "count": 1},
+            ],
+        )
+        self.assertEqual(result["message"], "Formacion 1 anadida.")
 
     def test_app_removes_experience_entry(self):
         expected_snippets = [
