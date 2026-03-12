@@ -142,7 +142,50 @@ process.stdout.write(JSON.stringify(result));
         self.assertIn("dialog", self.parser.start_tags)
         self.assertIn("script", self.parser.start_tags)
         self.assertIn("const CVStudio = (() => {", self.content)
+        self.assertIn("const supportedSectionCatalog = [", self.content)
+        self.assertIn("supportedSectionCatalog,", self.content)
         self.assertIn("CVStudio.app.boot();", self.content)
+
+    def test_defines_supported_section_catalog(self):
+        expected_snippets = [
+            'const supportedSectionCatalog = [',
+            '{ id: "basics", label: "Datos personales", storageKey: "basics", visibility: "required" }',
+            '{ id: "experience", label: "Experiencia", storageKey: "experience", visibility: "optional" }',
+            '{ id: "skills", label: "Habilidades", storageKey: "skills", visibility: "optional" }',
+            '{ id: "languages", label: "Idiomas", storageKey: "languages", visibility: "optional" }',
+            '{ id: "certifications", label: "Certificaciones", storageKey: "certifications", visibility: "optional" }',
+            '{ id: "projects", label: "Proyectos", storageKey: "projects", visibility: "optional" }',
+            '{ id: "education", label: "Formacion", storageKey: "education", visibility: "optional" }',
+            '...supportedSectionCatalog.map(({ id, label }) => ({ id, label })),',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_runtime_exposes_supported_sections_catalog(self):
+        result = self.run_js_scenario("""
+(() => {
+  const catalog = CVStudio.config.supportedSectionCatalog;
+  return {
+    count: catalog.length,
+    ids: catalog.map((section) => section.id),
+    requiredVisibility: catalog.find((section) => section.id === "basics").visibility,
+    optionalCount: catalog.filter((section) => section.visibility === "optional").length,
+    sectionButtons: CVStudio.config.sections.map((section) => section.id),
+  };
+})()
+""")
+        self.assertEqual(result["count"], 7)
+        self.assertEqual(
+            result["ids"],
+            ["basics", "experience", "skills", "languages", "certifications", "projects", "education"],
+        )
+        self.assertEqual(result["requiredVisibility"], "required")
+        self.assertEqual(result["optionalCount"], 6)
+        self.assertEqual(
+            result["sectionButtons"],
+            ["basics", "experience", "skills", "languages", "certifications", "projects", "education", "schema"],
+        )
 
     def test_defines_two_panel_workspace_layout(self):
         expected_snippets = [
@@ -372,7 +415,7 @@ process.stdout.write(JSON.stringify(result));
 
     def test_skills_section_supports_simple_and_categorized_modes(self):
         expected_snippets = [
-            '{ id: "skills", label: "Habilidades" },',
+            '{ id: "skills", label: "Habilidades", storageKey: "skills", visibility: "optional" },',
             "skillFieldLabels: {",
             'mode: "Modo de habilidades"',
             'items: "Lista simple"',
@@ -408,7 +451,7 @@ process.stdout.write(JSON.stringify(result));
 
     def test_languages_section_supports_language_and_level_entries(self):
         expected_snippets = [
-            '{ id: "languages", label: "Idiomas" },',
+            '{ id: "languages", label: "Idiomas", storageKey: "languages", visibility: "optional" },',
             "languageFieldLabels: {",
             'name: "Idioma"',
             'level: "Nivel"',
@@ -470,7 +513,7 @@ process.stdout.write(JSON.stringify(result));
 
     def test_certifications_section_supports_title_issuer_and_date_entries(self):
         expected_snippets = [
-            '{ id: "certifications", label: "Certificaciones" },',
+            '{ id: "certifications", label: "Certificaciones", storageKey: "certifications", visibility: "optional" },',
             "certificationFieldLabels: {",
             'title: "Certificacion"',
             'issuer: "Emisor"',

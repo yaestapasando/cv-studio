@@ -577,18 +577,22 @@
       // JS Section: Modules
       // Module convention: declare modules in config -> state -> ui -> app order.
       // JS Module: config
+      const supportedSectionCatalog = [
+        { id: "basics", label: "Datos personales", storageKey: "basics", visibility: "required" },
+        { id: "experience", label: "Experiencia", storageKey: "experience", visibility: "optional" },
+        { id: "skills", label: "Habilidades", storageKey: "skills", visibility: "optional" },
+        { id: "languages", label: "Idiomas", storageKey: "languages", visibility: "optional" },
+        { id: "certifications", label: "Certificaciones", storageKey: "certifications", visibility: "optional" },
+        { id: "projects", label: "Proyectos", storageKey: "projects", visibility: "optional" },
+        { id: "education", label: "Formacion", storageKey: "education", visibility: "optional" },
+      ];
       const config = {
         appName: "CV Studio",
         storageKey: "cv-studio-document",
         dataModelVersion: 1,
+        supportedSectionCatalog,
         sections: [
-          { id: "basics", label: "Datos personales" },
-          { id: "experience", label: "Experiencia" },
-          { id: "skills", label: "Habilidades" },
-          { id: "languages", label: "Idiomas" },
-          { id: "certifications", label: "Certificaciones" },
-          { id: "projects", label: "Proyectos" },
-          { id: "education", label: "Formacion" },
+          ...supportedSectionCatalog.map(({ id, label }) => ({ id, label })),
           { id: "schema", label: "Esquema JSON" },
         ],
         templates: [
