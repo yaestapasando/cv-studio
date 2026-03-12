@@ -458,6 +458,59 @@ process.stdout.write(JSON.stringify(result));
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
 
+    def test_certifications_section_supports_title_issuer_and_date_entries(self):
+        expected_snippets = [
+            '{ id: "certifications", label: "Certificaciones" },',
+            "certificationFieldLabels: {",
+            'title: "Certificacion"',
+            'issuer: "Emisor"',
+            'date: "Fecha"',
+            'certifications: {',
+            'items: { $ref: "#/$defs/certificationEntry" },',
+            "certificationEntry: {",
+            'required: ["title", "issuer", "date"],',
+            'certifications: [],',
+            'const certificationEntries = state.cv.certifications.length',
+            'Documenta cada certificacion con su emisor y fecha de obtencion.',
+            '<form class=\\"editor-form certification-form\\" data-certification-index=\\"',
+            'id=\\"certification-title-',
+            'name=\\"title\\"',
+            'data-certification-field=\\"title\\"',
+            'placeholder=\\"Ej. AWS Certified Developer\\"',
+            'id=\\"certification-issuer-',
+            'name=\\"issuer\\"',
+            'data-certification-field=\\"issuer\\"',
+            'placeholder=\\"Ej. Amazon Web Services\\"',
+            'id=\\"certification-date-',
+            'name=\\"date\\"',
+            'data-certification-field=\\"date\\"',
+            'type=\\"month\\"',
+            '<span class=\\"entry-card-index\\">Certificacion ',
+            'data-action=\\"move-certification-entry-up\\"',
+            'data-action=\\"move-certification-entry-down\\"',
+            'data-action=\\"remove-certification-entry\\"',
+            'data-certification-index=\\"" + String(index) + "\\"',
+            'data-action=\\"add-certification-entry\\"',
+            '>Anadir otra certificacion</button>',
+            '<div class=\\"editor-note\\" data-tone=\\"muted\\">Todavia no hay certificaciones guardadas en el CV.</div>',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_certifications_preview_renders_title_issuer_and_date(self):
+        expected_snippets = [
+            'const certificationPreview = state.cv.certifications.length',
+            '<h3>Certificaciones</h3>',
+            'ui.escapeHtml(entry.title || "Certificacion pendiente")',
+            'ui.escapeHtml(entry.issuer || "Emisor pendiente")',
+            'ui.escapeHtml(entry.date || "Fecha pendiente")',
+            'Anade al menos una certificacion para completar esta vista previa.',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
     def test_app_normalizes_and_updates_skills(self):
         expected_snippets = [
             "getSkillItems(value) {",
@@ -514,6 +567,44 @@ process.stdout.write(JSON.stringify(result));
             'app.moveListEntry("languages", index, targetIndex, "Idioma", "movido");',
             "moveLanguageEntryToPosition(index, rawTargetPosition) {",
             'app.moveListEntry("languages", index, Number(rawTargetPosition) - 1, "Idioma", "movido");',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_app_manages_certification_entries(self):
+        expected_snippets = [
+            "normalizeCertificationEntry(entry) {",
+            'title: entry && typeof entry.title === "string"',
+            ': entry && typeof entry.name === "string"',
+            'issuer: entry && typeof entry.issuer === "string"',
+            ': entry && typeof entry.authority === "string"',
+            'date: entry && typeof entry.date === "string"',
+            ': entry && typeof entry.issuedAt === "string"',
+            "const certifications = Array.isArray(cvDocument.certifications)",
+            "? cvDocument.certifications.map((entry) => app.normalizeCertificationEntry(entry))",
+            "certifications,",
+            "updateCertificationField(index, fieldName, fieldValue) {",
+            "!state.cv || !Array.isArray(state.cv.certifications) || !state.hasOwn(config.certificationFieldLabels, fieldName)",
+            "const currentEntry = state.cv.certifications[index];",
+            "const nextCertifications = state.cv.certifications.map((entry, entryIndex) => entryIndex === index",
+            "certifications: nextCertifications,",
+            'text: config.certificationFieldLabels[fieldName] + " actualizado en certificacion " + String(index + 1) + ".",',
+            "addCertificationEntry() {",
+            'title: "",',
+            'issuer: "",',
+            'date: "",',
+            "const nextCertifications = [...state.cv.certifications, nextEntry];",
+            'text: "Certificacion " + String(nextCertifications.length) + " anadida.",',
+            "removeCertificationEntry(index) {",
+            "!state.cv || !Array.isArray(state.cv.certifications)",
+            "!Number.isInteger(index) || index < 0 || index >= state.cv.certifications.length",
+            "const nextCertifications = state.cv.certifications.filter((entry, entryIndex) => entryIndex !== index);",
+            'text: "Certificacion " + String(index + 1) + " eliminada.",',
+            "moveCertificationEntry(index, direction) {",
+            'app.moveListEntry("certifications", index, targetIndex, "Certificacion", "movida");',
+            "moveCertificationEntryToPosition(index, rawTargetPosition) {",
+            'app.moveListEntry("certifications", index, Number(rawTargetPosition) - 1, "Certificacion", "movida");',
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
@@ -625,6 +716,74 @@ CVStudio.app.updateLanguageField(1, "level", "C1");
             ],
         )
         self.assertEqual(result["message"], "Nivel actualizado en idioma 2.")
+
+    def test_normalize_certification_entry_supports_legacy_fields(self):
+        result = self.run_js_scenario(
+            """
+const certification = CVStudio.app.normalizeCertificationEntry({
+  name: "AWS Developer",
+  authority: "AWS",
+  issuedAt: "2025-01",
+});
+({
+  title: certification.title,
+  issuer: certification.issuer,
+  date: certification.date,
+});
+"""
+        )
+        self.assertEqual(result["title"], "AWS Developer")
+        self.assertEqual(result["issuer"], "AWS")
+        self.assertEqual(result["date"], "2025-01")
+
+    def test_update_certification_field_supports_title_issuer_and_date(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+cv.certifications = [
+  { title: "AWS Developer", issuer: "AWS", date: "2025-01" },
+];
+CVStudio.state.update({ cv, ui: { activeSection: "certifications" } });
+CVStudio.app.updateCertificationField(0, "issuer", "Amazon Web Services");
+CVStudio.app.addCertificationEntry();
+CVStudio.app.updateCertificationField(1, "title", "PSM I");
+CVStudio.app.updateCertificationField(1, "issuer", "Scrum.org");
+CVStudio.app.updateCertificationField(1, "date", "2024-09");
+({
+  certifications: CVStudio.state.cv.certifications,
+  message: CVStudio.state.ui.message.text,
+});
+"""
+        )
+        self.assertEqual(
+            result["certifications"],
+            [
+                {"title": "AWS Developer", "issuer": "Amazon Web Services", "date": "2025-01"},
+                {"title": "PSM I", "issuer": "Scrum.org", "date": "2024-09"},
+            ],
+        )
+        self.assertEqual(result["message"], "Fecha actualizado en certificacion 2.")
+
+    def test_app_reorders_certification_entries_functionally(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+cv.certifications = [
+  { title: "Primera", issuer: "A", date: "2024-01" },
+  { title: "Segunda", issuer: "B", date: "2024-02" },
+  { title: "Tercera", issuer: "C", date: "2024-03" },
+];
+CVStudio.state.update({ cv, ui: { activeSection: "certifications" } });
+CVStudio.app.moveCertificationEntryToPosition(2, "1");
+CVStudio.app.removeCertificationEntry(1);
+({
+  titles: CVStudio.state.cv.certifications.map((entry) => entry.title),
+  message: CVStudio.state.ui.message.text,
+});
+"""
+        )
+        self.assertEqual(result["titles"], ["Tercera", "Segunda"])
+        self.assertEqual(result["message"], "Certificacion 2 eliminada.")
 
     def test_app_reorders_language_entries_functionally(self):
         result = self.run_js_scenario(
@@ -954,6 +1113,9 @@ CVStudio.app.updateProjectField(0, "highlights", "Uno\\n\\nDos\\n Tres ");
             'state.ui.activeSection === "languages"',
             'data-action=\\"add-language-entry\\"',
             '>Anadir idioma</button>',
+            'state.ui.activeSection === "certifications"',
+            'data-action=\\"add-certification-entry\\"',
+            '>Anadir certificacion</button>',
             'state.ui.activeSection === "education"',
             'data-action=\\"add-education-entry\\"',
             '>Anadir formacion</button>',
@@ -1667,12 +1829,16 @@ CVStudio.state.update({ cv: CVStudio.app.normalizeCvDocument(cv), ui: { activeSe
             'const experiencePreview = state.cv.experience.length',
             'const projectEntries = state.cv.projects.length',
             'const projectPreview = state.cv.projects.length',
+            'const certificationEntries = state.cv.certifications.length',
+            'const certificationPreview = state.cv.certifications.length',
             'const educationEntries = state.cv.education.length',
             'const educationPreview = state.cv.education.length',
             'state.cv.experience.map((entry, index) => ""',
             'state.cv.experience.map((entry) => ""',
             'state.cv.projects.map((entry, index) => ""',
             'state.cv.projects.map((entry) => ""',
+            'state.cv.certifications.map((entry, index) => ""',
+            'state.cv.certifications.map((entry) => ""',
             'state.cv.education.map((entry, index) => ""',
             'state.cv.education.map((entry) => ""',
             'entry.role || "Puesto pendiente"',
@@ -1683,6 +1849,8 @@ CVStudio.state.update({ cv: CVStudio.app.normalizeCvDocument(cv), ui: { activeSe
             'Anade tu primera experiencia para completar esta vista previa.',
             'Todavia no hay proyectos guardados en el CV.',
             'Anade tu primer proyecto para completar esta vista previa.',
+            'Todavia no hay certificaciones guardadas en el CV.',
+            'Anade al menos una certificacion para completar esta vista previa.',
             'Todavia no hay formacion guardada en el CV.',
             'Anade tu primera formacion para completar esta vista previa.',
             'state.ui.template',
