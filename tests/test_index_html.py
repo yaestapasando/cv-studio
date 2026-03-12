@@ -152,6 +152,24 @@ class IndexHtmlTest(unittest.TestCase):
             'autocomplete=\\"address-level2\\"',
             'placeholder=\\"Ciudad, pais\\"',
             'value=\\"" + ui.escapeHtml(basics.location) + "\\">',
+            '<label for=\\"web-input\\"><span>Web</span></label>',
+            'id=\\"web-input\\"',
+            'name=\\"web\\"',
+            'type=\\"url\\"',
+            'autocomplete=\\"url\\"',
+            'inputmode=\\"url\\"',
+            'placeholder=\\"tuweb.com\\"',
+            'value=\\"" + ui.escapeHtml(basics.web) + "\\">',
+            '<label for=\\"linkedin-input\\"><span>LinkedIn</span></label>',
+            'id=\\"linkedin-input\\"',
+            'name=\\"linkedin\\"',
+            'placeholder=\\"linkedin.com/in/tu-perfil\\"',
+            'value=\\"" + ui.escapeHtml(basics.linkedin) + "\\">',
+            '<label for=\\"github-input\\"><span>GitHub</span></label>',
+            'id=\\"github-input\\"',
+            'name=\\"github\\"',
+            'placeholder=\\"github.com/tu-usuario\\"',
+            'value=\\"" + ui.escapeHtml(basics.github) + "\\">',
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
@@ -199,7 +217,9 @@ class IndexHtmlTest(unittest.TestCase):
             'email: ""',
             'phone: ""',
             'location: ""',
-            'website: ""',
+            'web: ""',
+            'linkedin: ""',
+            'github: ""',
             "experience: [],",
             "education: [],",
             "projects: [],",
@@ -222,6 +242,29 @@ class IndexHtmlTest(unittest.TestCase):
             "return initialCV;",
             "formatJson(value) {",
             "JSON.stringify(value, null, 2)",
+            'phone: { type: "string" },',
+            'web: { type: "string", format: "uri-reference" },',
+            'linkedin: { type: "string", format: "uri-reference" },',
+            'github: { type: "string", format: "uri-reference" },',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_basics_section_updates_external_links_and_preview(self):
+        expected_snippets = [
+            'const webInput = event.target.closest("[name=\\"web\\"]");',
+            'const linkedinInput = event.target.closest("[name=\\"linkedin\\"]");',
+            'const githubInput = event.target.closest("[name=\\"github\\"]");',
+            'web: webInput ? webInput.value : state.cv.basics.web,',
+            'linkedin: linkedinInput ? linkedinInput.value : state.cv.basics.linkedin,',
+            'github: githubInput ? githubInput.value : state.cv.basics.github,',
+            '? "Web actualizada."',
+            '? "LinkedIn actualizado."',
+            '? "GitHub actualizado."',
+            'ui.escapeHtml(basics.web || "Web pendiente")',
+            'ui.escapeHtml(basics.linkedin || "LinkedIn pendiente")',
+            'ui.escapeHtml(basics.github || "GitHub pendiente")',
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):

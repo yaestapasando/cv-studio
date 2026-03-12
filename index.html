@@ -460,7 +460,11 @@
                 headline: { type: "string", minLength: 1 },
                 summary: { type: "string", minLength: 1 },
                 email: { type: "string", format: "email" },
+                phone: { type: "string" },
                 location: { type: "string", minLength: 1 },
+                web: { type: "string", format: "uri-reference" },
+                linkedin: { type: "string", format: "uri-reference" },
+                github: { type: "string", format: "uri-reference" },
               },
             },
             experienceEntry: {
@@ -503,7 +507,7 @@
             email: "",
             phone: "",
             location: "",
-            website: "",
+            web: "",
             linkedin: "",
             github: "",
           },
@@ -784,6 +788,42 @@
               + " value=\"" + ui.escapeHtml(basics.location) + "\">"
               + "</div>"
               + "<div class=\"editor-group\">"
+              + "<label for=\"web-input\"><span>Web</span></label>"
+              + "<input"
+              + " id=\"web-input\""
+              + " name=\"web\""
+              + " class=\"editor-field editor-input\""
+              + " type=\"url\""
+              + " autocomplete=\"url\""
+              + " inputmode=\"url\""
+              + " placeholder=\"tuweb.com\""
+              + " value=\"" + ui.escapeHtml(basics.web) + "\">"
+              + "</div>"
+              + "<div class=\"editor-group\">"
+              + "<label for=\"linkedin-input\"><span>LinkedIn</span></label>"
+              + "<input"
+              + " id=\"linkedin-input\""
+              + " name=\"linkedin\""
+              + " class=\"editor-field editor-input\""
+              + " type=\"url\""
+              + " autocomplete=\"url\""
+              + " inputmode=\"url\""
+              + " placeholder=\"linkedin.com/in/tu-perfil\""
+              + " value=\"" + ui.escapeHtml(basics.linkedin) + "\">"
+              + "</div>"
+              + "<div class=\"editor-group\">"
+              + "<label for=\"github-input\"><span>GitHub</span></label>"
+              + "<input"
+              + " id=\"github-input\""
+              + " name=\"github\""
+              + " class=\"editor-field editor-input\""
+              + " type=\"url\""
+              + " autocomplete=\"url\""
+              + " inputmode=\"url\""
+              + " placeholder=\"github.com/tu-usuario\""
+              + " value=\"" + ui.escapeHtml(basics.github) + "\">"
+              + "</div>"
+              + "<div class=\"editor-group\">"
               + "<label for=\"summary-input\"><span>Resumen / perfil</span></label>"
               + "<textarea"
               + " id=\"summary-input\""
@@ -863,6 +903,9 @@
             + "<p class=\"preview-meta\">" + ui.escapeHtml(basics.email || "Email pendiente") + "</p>"
             + "<p class=\"preview-meta\">" + ui.escapeHtml(basics.phone || "Telefono pendiente") + "</p>"
             + "<p class=\"preview-meta\">" + ui.escapeHtml(basics.location || "Ubicacion pendiente") + "</p>"
+            + "<p class=\"preview-meta\">" + ui.escapeHtml(basics.web || "Web pendiente") + "</p>"
+            + "<p class=\"preview-meta\">" + ui.escapeHtml(basics.linkedin || "LinkedIn pendiente") + "</p>"
+            + "<p class=\"preview-meta\">" + ui.escapeHtml(basics.github || "GitHub pendiente") + "</p>"
             + "<p>" + ui.escapeHtml(basics.summary || "Completa tu perfil para ver aqui el resumen profesional.") + "</p>"
             + "<p class=\"preview-template\">" + ui.escapeHtml(state.ui.template) + "</p>"
             + "</article>"
@@ -1005,8 +1048,11 @@
             const emailInput = event.target.closest("[name=\"email\"]");
             const phoneInput = event.target.closest("[name=\"phone\"]");
             const locationInput = event.target.closest("[name=\"location\"]");
+            const webInput = event.target.closest("[name=\"web\"]");
+            const linkedinInput = event.target.closest("[name=\"linkedin\"]");
+            const githubInput = event.target.closest("[name=\"github\"]");
             const summaryInput = event.target.closest("[name=\"summary\"]");
-            if ((!fullNameInput && !headlineInput && !emailInput && !phoneInput && !locationInput && !summaryInput) || state.ui.activeSection !== "basics") {
+            if ((!fullNameInput && !headlineInput && !emailInput && !phoneInput && !locationInput && !webInput && !linkedinInput && !githubInput && !summaryInput) || state.ui.activeSection !== "basics") {
               return;
             }
             const messageText = fullNameInput
@@ -1019,7 +1065,13 @@
                     ? "Telefono actualizado."
                     : locationInput
                       ? "Ubicacion actualizada."
-                : "Resumen profesional actualizado.";
+                      : webInput
+                        ? "Web actualizada."
+                        : linkedinInput
+                          ? "LinkedIn actualizado."
+                          : githubInput
+                            ? "GitHub actualizado."
+                            : "Resumen profesional actualizado.";
             state.update({
               cv: {
                 ...state.cv,
@@ -1030,6 +1082,9 @@
                   email: emailInput ? emailInput.value : state.cv.basics.email,
                   phone: phoneInput ? phoneInput.value : state.cv.basics.phone,
                   location: locationInput ? locationInput.value : state.cv.basics.location,
+                  web: webInput ? webInput.value : state.cv.basics.web,
+                  linkedin: linkedinInput ? linkedinInput.value : state.cv.basics.linkedin,
+                  github: githubInput ? githubInput.value : state.cv.basics.github,
                   summary: summaryInput ? summaryInput.value : state.cv.basics.summary,
                 },
                 meta: {
