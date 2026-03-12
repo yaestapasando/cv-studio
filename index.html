@@ -337,7 +337,8 @@
 
     .field-group input[type="text"],
     .field-group input[type="email"],
-    .field-group input[type="tel"] {
+    .field-group input[type="tel"],
+    .field-group input[type="url"] {
       padding: var(--space-2) var(--space-3);
       background: var(--color-bg);
       color: var(--color-text);
@@ -350,7 +351,8 @@
 
     .field-group input[type="text"]:focus,
     .field-group input[type="email"]:focus,
-    .field-group input[type="tel"]:focus {
+    .field-group input[type="tel"]:focus,
+    .field-group input[type="url"]:focus {
       outline: none;
       border-color: var(--color-accent);
       box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent);
@@ -481,6 +483,11 @@
               <div class="field-group">
                 <label for="field-location">Ubicación</label>
                 <input type="text" id="field-location" name="location" autocomplete="address-level2" maxlength="120" />
+              </div>
+              <div class="field-group">
+                <label for="field-linkedIn">LinkedIn</label>
+                <input type="url" id="field-linkedIn" name="linkedIn" autocomplete="url" maxlength="200" placeholder="https://www.linkedin.com/in/usuario" />
+                <span id="field-linkedIn-error" class="field-error" aria-live="polite" hidden></span>
               </div>
             </form>
           </section>
@@ -898,6 +905,13 @@
         return /^[\d\s\-+().]{7,30}$/.test(value);
       }
 
+      // ── LinkedIn URL validation ───────────────────────────────────────────────
+
+      function isValidLinkedIn(value) {
+        if (!value) return true; // empty is allowed; field is optional
+        return /^https?:\/\/(www\.)?linkedin\.com\/.+/.test(value);
+      }
+
       // ── Personal form bindings ────────────────────────────────────────────────
 
       function initPersonalFields() {
@@ -908,6 +922,8 @@
         var inputPhone     = document.getElementById('field-phone');
         var phoneError     = document.getElementById('field-phone-error');
         var inputLocation  = document.getElementById('field-location');
+        var inputLinkedIn  = document.getElementById('field-linkedIn');
+        var linkedInError  = document.getElementById('field-linkedIn-error');
 
         // Store → fields (initial + reactive)
         function syncFromStore(state) {
@@ -917,6 +933,7 @@
           if (inputEmail     && inputEmail.value     !== (p.email     || '')) inputEmail.value     = p.email     || '';
           if (inputPhone     && inputPhone.value     !== (p.phone     || '')) inputPhone.value     = p.phone     || '';
           if (inputLocation  && inputLocation.value  !== (p.location  || '')) inputLocation.value  = p.location  || '';
+          if (inputLinkedIn  && inputLinkedIn.value  !== (p.linkedIn  || '')) inputLinkedIn.value  = p.linkedIn  || '';
         }
         syncFromStore(CVStore.getState());
         CVStore.subscribe(syncFromStore);
@@ -977,6 +994,22 @@
             });
           });
         }
+
+        if (inputLinkedIn) {
+          inputLinkedIn.addEventListener('input', function () {
+            var valid = isValidLinkedIn(inputLinkedIn.value);
+            if (valid) {
+              inputLinkedIn.classList.remove('field-invalid');
+              if (linkedInError) { linkedInError.hidden = true; linkedInError.textContent = ''; }
+            } else {
+              inputLinkedIn.classList.add('field-invalid');
+              if (linkedInError) { linkedInError.hidden = false; linkedInError.textContent = 'URL de LinkedIn no válida'; }
+            }
+            CVStore.setState(function (s) {
+              return Object.assign({}, s, { personal: Object.assign({}, s.personal, { linkedIn: inputLinkedIn.value }) });
+            });
+          });
+        }
       }
 
       // ── Bootstrap ─────────────────────────────────────────────────────────────
@@ -987,7 +1020,7 @@
       }
 
       // Expose minimal public API (used by tests and future modules)
-      window.CVStudio = { DEFAULT_CV: DEFAULT_CV, createStore: createStore, CVStore: CVStore, createEventBus: createEventBus, EventBus: EventBus, activateTab: activateTab, render: render, isValidEmail: isValidEmail, isValidPhone: isValidPhone, initPersonalFields: initPersonalFields, init: init };
+      window.CVStudio = { DEFAULT_CV: DEFAULT_CV, createStore: createStore, CVStore: CVStore, createEventBus: createEventBus, EventBus: EventBus, activateTab: activateTab, render: render, isValidEmail: isValidEmail, isValidPhone: isValidPhone, isValidLinkedIn: isValidLinkedIn, initPersonalFields: initPersonalFields, init: init };
 
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
