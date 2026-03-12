@@ -732,11 +732,18 @@
               + " placeholder=\"Escribe tu nombre completo\""
               + " value=\"" + ui.escapeHtml(basics.fullName) + "\">"
               + "</div>"
-              + "</form>"
               + "<div class=\"editor-group\">"
-              + "<span>Titular profesional</span>"
-              + "<div class=\"editor-field\">" + ui.escapeHtml(basics.headline) + "</div>"
+              + "<label for=\"headline-input\"><span>Titular profesional</span></label>"
+              + "<input"
+              + " id=\"headline-input\""
+              + " name=\"headline\""
+              + " class=\"editor-field editor-input\""
+              + " type=\"text\""
+              + " autocomplete=\"organization-title\""
+              + " placeholder=\"Describe tu perfil profesional\""
+              + " value=\"" + ui.escapeHtml(basics.headline) + "\">"
               + "</div>"
+              + "</form>"
               + "<div class=\"editor-group\">"
               + "<span>Resumen</span>"
               + "<div class=\"editor-field\">" + ui.escapeHtml(basics.summary) + "</div>"
@@ -941,15 +948,20 @@
           });
           ui.editorCanvas.addEventListener("input", (event) => {
             const fullNameInput = event.target.closest("[name=\"fullName\"]");
-            if (!fullNameInput || state.ui.activeSection !== "basics") {
+            const headlineInput = event.target.closest("[name=\"headline\"]");
+            if ((!fullNameInput && !headlineInput) || state.ui.activeSection !== "basics") {
               return;
             }
+            const messageText = fullNameInput
+              ? "Nombre completo actualizado."
+              : "Titular profesional actualizado.";
             state.update({
               cv: {
                 ...state.cv,
                 basics: {
                   ...state.cv.basics,
-                  fullName: fullNameInput.value,
+                  fullName: fullNameInput ? fullNameInput.value : state.cv.basics.fullName,
+                  headline: headlineInput ? headlineInput.value : state.cv.basics.headline,
                 },
                 meta: {
                   ...state.cv.meta,
@@ -959,7 +971,7 @@
               ui: {
                 message: {
                   tone: "success",
-                  text: "Nombre completo actualizado.",
+                  text: messageText,
                 },
               },
             });

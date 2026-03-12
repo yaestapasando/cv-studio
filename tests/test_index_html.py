@@ -114,6 +114,20 @@ class IndexHtmlTest(unittest.TestCase):
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
 
+    def test_basics_section_renders_professional_headline_form(self):
+        expected_snippets = [
+            '<label for=\\"headline-input\\"><span>Titular profesional</span></label>',
+            'id=\\"headline-input\\"',
+            'name=\\"headline\\"',
+            'class=\\"editor-field editor-input\\"',
+            'autocomplete=\\"organization-title\\"',
+            'placeholder=\\"Describe tu perfil profesional\\"',
+            'value=\\"" + ui.escapeHtml(basics.headline) + "\\">',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
     def test_bootstrap_defines_initial_state_and_capabilities(self):
         expected_snippets = [
             'storageKey: "cv-studio-document"',
@@ -242,8 +256,12 @@ class IndexHtmlTest(unittest.TestCase):
             "ui.toolbar.addEventListener(\"click\"",
             "ui.editorCanvas.addEventListener(\"input\"",
             "event.target.closest(\"[name=\\\"fullName\\\"]\")",
-            'text: "Nombre completo actualizado."',
-            "fullName: fullNameInput.value,",
+            "event.target.closest(\"[name=\\\"headline\\\"]\")",
+            ' ? "Nombre completo actualizado."',
+            "Titular profesional actualizado.",
+            "const messageText = fullNameInput",
+            "fullName: fullNameInput ? fullNameInput.value : state.cv.basics.fullName,",
+            "headline: headlineInput ? headlineInput.value : state.cv.basics.headline,",
             "updatedAt: new Date().toISOString(),",
             "event.target.closest(\"[data-section]\")",
             "event.target.closest(\"[data-template]\")",
