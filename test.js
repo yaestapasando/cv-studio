@@ -81,21 +81,29 @@ test('CV state structure', (t) => {
         assert.ok(htmlContent.includes('website:'), 'Missing website in personalData');
         assert.ok(htmlContent.includes('location:'), 'Missing location in personalData');
         assert.ok(htmlContent.includes('title:'), 'Missing title in personalData');
+        assert.ok(htmlContent.includes('linkedin:'), 'Missing linkedin in personalData');
+        assert.ok(htmlContent.includes('github:'), 'Missing github in personalData');
     });
 
     t.test('should have a summary field', () => {
         assert.ok(htmlContent.includes('summary:'), 'Missing summary in state');
     });
 
-    t.test('should have an experience array', () => {
+    t.test('should have an experience array with structure comment', () => {
         assert.ok(htmlContent.includes('experience: []'), 'Missing experience in state');
+        assert.ok(htmlContent.includes('company: string'), 'Missing company in experience schema');
+        assert.ok(htmlContent.includes('position: string'), 'Missing position in experience schema');
+        assert.ok(htmlContent.includes('startDate: string'), 'Missing startDate in experience schema');
+        assert.ok(htmlContent.includes('endDate: string'), 'Missing endDate in experience schema');
     });
 
-    t.test('should have an education array', () => {
+    t.test('should have an education array with structure comment', () => {
         assert.ok(htmlContent.includes('education: []'), 'Missing education in state');
+        assert.ok(htmlContent.includes('institution: string'), 'Missing institution in education schema');
+        assert.ok(htmlContent.includes('degree: string'), 'Missing degree in education schema');
     });
 
-    t.test('should have a skills array', () => {
+    t.test('should have a skills array with structure comment', () => {
         assert.ok(htmlContent.includes('skills: []'), 'Missing skills in state');
     });
 });

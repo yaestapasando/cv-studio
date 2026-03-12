@@ -171,12 +171,14 @@
                             phone: '',
                             website: '',
                             location: '',
-                            title: ''
+                            title: '',
+                            linkedin: '',
+                            github: ''
                         },
                         summary: '',
-                        experience: [], // { id, company, position, startDate, endDate, current, description }
-                        education: [],  // { id, institution, degree, startDate, endDate, description }
-                        skills: []      // strings[]
+                        experience: [], // Array of objects: { id: string, company: string, position: string, location: string, startDate: string, endDate: string, current: boolean, description: string }
+                        education: [],  // Array of objects: { id: string, institution: string, degree: string, field: string, location: string, startDate: string, endDate: string, current: boolean, description: string }
+                        skills: []      // Array of strings: ['JavaScript', 'HTML', 'CSS']
                     });
                     this.render();
                 },
