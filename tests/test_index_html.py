@@ -56,10 +56,12 @@ class IndexHtmlTest(unittest.TestCase):
         self.assertIn("editor-toolbar", self.parser.ids)
         self.assertIn("editor-canvas", self.parser.ids)
         self.assertIn("preview-content", self.parser.ids)
+        self.assertIn("app-modal", self.parser.ids)
         self.assertIn("workspace-panel", self.parser.class_names)
 
     def test_embeds_style_and_script(self):
         self.assertIn("style", self.parser.start_tags)
+        self.assertIn("dialog", self.parser.start_tags)
         self.assertIn("script", self.parser.start_tags)
         self.assertIn("const CVStudio = (() => {", self.content)
         self.assertIn("CVStudio.app.boot();", self.content)
@@ -98,6 +100,13 @@ class IndexHtmlTest(unittest.TestCase):
     def test_bootstrap_defines_initial_state_and_capabilities(self):
         expected_snippets = [
             'storageKey: "cv-studio-document"',
+            "templates: [",
+            '{ id: "classic", label: "Classic" }',
+            '{ id: "compact", label: "Compact" }',
+            "uiDefaults: {",
+            'activeSection: "basics"',
+            'template: "classic"',
+            'tone: "info"',
             "cvSchema: {",
             '$comment: "Compatible con JSON Schema Draft 2020-12."',
             '$id: "cv-studio/schema/cv"',
@@ -111,13 +120,14 @@ class IndexHtmlTest(unittest.TestCase):
             "experience: [],",
             "education: [],",
             "projects: [],",
-            'template: "classic"',
             "theme: {",
             'accent: "#1f4b99"',
             "meta: {",
             "version: 1,",
-            'activeSection: "basics"',
             "cv: null,",
+            "ui: {",
+            "message: { ...config.uiDefaults.message },",
+            "modal: { ...config.uiDefaults.modal },",
             "read() {",
             "write() {",
             "detectCapabilities() {",
@@ -139,6 +149,12 @@ class IndexHtmlTest(unittest.TestCase):
             "Object.prototype.hasOwnProperty.call(value, key);",
             "isValidSection(sectionId) {",
             "config.sections.some((section) => section.id === sectionId);",
+            "isValidTemplate(templateId) {",
+            "config.templates.some((template) => template.id === templateId);",
+            "sanitizeUi(uiPatch) {",
+            "const nextUi = {",
+            'activeSection: state.ui.activeSection,',
+            'template: state.ui.template,',
             "subscribe(listener) {",
             'if (typeof listener !== "function") {',
             "state.listeners.push(listener);",
@@ -151,9 +167,10 @@ class IndexHtmlTest(unittest.TestCase):
             'booted: state.hasOwn(patch, "booted") ? patch.booted : state.booted,',
             'capabilities: state.hasOwn(patch, "capabilities")',
             'cv: state.hasOwn(patch, "cv") ? patch.cv : state.cv,',
-            'if (state.hasOwn(patch, "activeSection") && state.isValidSection(patch.activeSection)) {',
+            'ui: state.hasOwn(patch, "ui") ? state.sanitizeUi(patch.ui) : state.ui,',
             "state.booted = nextState.booted;",
             "state.capabilities = nextState.capabilities;",
+            "state.ui = nextState.ui;",
             "state.notify();",
             "if (!state.capabilities.storage) {",
             "const rawState = window.localStorage.getItem(config.storageKey);",
@@ -161,7 +178,7 @@ class IndexHtmlTest(unittest.TestCase):
             "return parsedState;",
             "if (!state.capabilities.storage || !state.cv) {",
             "const snapshot = {",
-            "activeSection: state.activeSection,",
+            "ui: state.ui,",
             "cv: state.cv,",
             "window.localStorage.setItem(config.storageKey, JSON.stringify(snapshot));",
         ]
@@ -174,10 +191,13 @@ class IndexHtmlTest(unittest.TestCase):
             "renderToolbar() {",
             "renderEditor() {",
             "renderPreview() {",
+            "renderModal() {",
             "app.bindEvents();",
             "app.updateStatus();",
             "syncDom() {",
-            'document.body.dataset.activeSection = state.activeSection;',
+            'document.body.dataset.activeSection = state.ui.activeSection;',
+            'document.body.dataset.activeTemplate = state.ui.template;',
+            'document.body.dataset.modalOpen = String(state.ui.modal.open);',
             'document.body.dataset.runtimeMode = state.capabilities.fileProtocol ? "file" : "browser";',
             "handleStateChange() {",
             "if (!state.booted || !state.cv) {",
@@ -189,13 +209,26 @@ class IndexHtmlTest(unittest.TestCase):
             "app.handleStateChange();",
             "ui.toolbar.addEventListener(\"click\"",
             "event.target.closest(\"[data-section]\")",
+            "event.target.closest(\"[data-template]\")",
+            "event.target.closest(\"[data-modal]\")",
+            "ui.modal.addEventListener(\"click\"",
+            "event.target.closest(\"[data-close-modal]\")",
             "document.body.dataset.appReady = \"true\";",
             "La app ha arrancado en local con estado inicial en memoria y sin dependencias externas.",
+            'text: "Editando la seccion " + button.textContent + "."',
+            'text: "Plantilla activa: " + templateButton.textContent + "."',
+            'text: "Consulta rapida de plantillas abierta."',
+            'text: "Modal cerrado. Puedes seguir editando el CV."',
+            'data-template=\\"',
+            'data-modal=\\"template-help\\"',
+            "ui.modal.showModal();",
+            "ui.modal.close();",
             'basics.fullName || "Nombre pendiente"',
             'experience.role || "Sin experiencia anadida"',
             'education.course || "Sin formacion anadida"',
             'experience.summary || "Anade tu primera experiencia para completar esta vista previa."',
-            '{ id: "schema", label: "Esquema JSON" }',
+            'state.ui.template',
+            '<p class=\\"preview-template\\">',
             'id=\\"cv-schema-output\\"',
             'aria-label=\\"Esquema JSON del curriculum\\"',
             "ui.formatJson(config.cvSchema)",
@@ -211,13 +244,34 @@ class IndexHtmlTest(unittest.TestCase):
         expected_snippets = [
             "app.subscribeToState();",
             "const persistedState = state.read();",
+            "const persistedUi = persistedState && persistedState.ui",
             "state.update({ capabilities: app.detectCapabilities() });",
             "state.update({",
             "cv: persistedState && persistedState.cv ? persistedState.cv : app.cloneInitialCV(),",
-            'activeSection: persistedState && persistedState.activeSection ? persistedState.activeSection : "basics",',
+            'activeSection: persistedState && persistedState.activeSection ? persistedState.activeSection : config.uiDefaults.activeSection,',
+            'template: persistedState && persistedState.cv && persistedState.cv.template ? persistedState.cv.template : config.uiDefaults.template,',
+            "ui: persistedUi,",
             "booted: true,",
-            "state.update({ activeSection: button.dataset.section });",
             "app.syncDom();",
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_manages_additional_ui_state_for_template_message_and_modal(self):
+        expected_snippets = [
+            '<dialog class="app-modal" id="app-modal" aria-labelledby="app-modal-title"></dialog>',
+            '.editor-note[data-tone="success"] {',
+            '.editor-note[data-tone="muted"] {',
+            '.preview-template {',
+            ".app-modal {",
+            ".modal-card {",
+            'kind: modalButton.dataset.modal,',
+            "open: true,",
+            'kind: null,',
+            "open: false,",
+            'data-close-modal=\\"true\\"',
+            "Plantillas disponibles",
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):

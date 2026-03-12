@@ -176,6 +176,12 @@
       color: var(--accent);
     }
 
+    .toolbar-divider {
+      width: 1px;
+      align-self: stretch;
+      background: var(--border);
+    }
+
     .editor-canvas {
       display: grid;
       align-content: start;
@@ -210,6 +216,15 @@
       background: var(--accent-soft);
       color: var(--text);
       line-height: 1.5;
+    }
+
+    .editor-note[data-tone="success"] {
+      background: #e3f3e6;
+    }
+
+    .editor-note[data-tone="muted"] {
+      background: #f1eadf;
+      color: var(--muted);
     }
 
     .editor-schema {
@@ -261,6 +276,42 @@
     .preview-meta {
       color: var(--muted);
       font-size: 0.95rem;
+    }
+
+    .preview-template {
+      display: inline-flex;
+      margin-top: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .app-modal {
+      width: min(480px, calc(100vw - 32px));
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .app-modal::backdrop {
+      background: rgba(31, 26, 20, 0.35);
+    }
+
+    .modal-card {
+      padding: 24px;
+      display: grid;
+      gap: 16px;
+      background: var(--surface-strong);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
     }
 
     /* CSS Section: Responsive */
@@ -323,6 +374,7 @@
       </section>
     </main>
   </div>
+  <dialog class="app-modal" id="app-modal" aria-labelledby="app-modal-title"></dialog>
 
   <script>
     // JS Section: Namespace
@@ -344,6 +396,22 @@
           { id: "education", label: "Formacion" },
           { id: "schema", label: "Esquema JSON" },
         ],
+        templates: [
+          { id: "classic", label: "Classic" },
+          { id: "compact", label: "Compact" },
+        ],
+        uiDefaults: {
+          activeSection: "basics",
+          template: "classic",
+          message: {
+            tone: "info",
+            text: "La app ha arrancado en local con estado inicial en memoria y sin dependencias externas.",
+          },
+          modal: {
+            kind: null,
+            open: false,
+          },
+        },
         cvSchema: {
           $id: "cv-studio/schema/cv",
           $comment: "Compatible con JSON Schema Draft 2020-12.",
@@ -418,7 +486,6 @@
           skills: [],
           languages: [],
           certifications: [],
-          template: "classic",
           theme: {
             fontScale: 1,
             accent: "#1f4b99",
@@ -434,18 +501,53 @@
       // JS Module: state
       const state = {
         booted: false,
-        activeSection: "basics",
         capabilities: {
           storage: false,
           fileProtocol: false,
         },
         cv: null,
+        ui: {
+          activeSection: config.uiDefaults.activeSection,
+          template: config.uiDefaults.template,
+          message: { ...config.uiDefaults.message },
+          modal: { ...config.uiDefaults.modal },
+        },
         listeners: [],
         hasOwn(value, key) {
           return Object.prototype.hasOwnProperty.call(value, key);
         },
         isValidSection(sectionId) {
           return config.sections.some((section) => section.id === sectionId);
+        },
+        isValidTemplate(templateId) {
+          return config.templates.some((template) => template.id === templateId);
+        },
+        sanitizeUi(uiPatch) {
+          const nextUi = {
+            activeSection: state.ui.activeSection,
+            template: state.ui.template,
+            message: { ...state.ui.message },
+            modal: { ...state.ui.modal },
+          };
+          if (state.hasOwn(uiPatch, "activeSection") && state.isValidSection(uiPatch.activeSection)) {
+            nextUi.activeSection = uiPatch.activeSection;
+          }
+          if (state.hasOwn(uiPatch, "template") && state.isValidTemplate(uiPatch.template)) {
+            nextUi.template = uiPatch.template;
+          }
+          if (state.hasOwn(uiPatch, "message") && uiPatch.message && typeof uiPatch.message === "object") {
+            nextUi.message = {
+              tone: typeof uiPatch.message.tone === "string" ? uiPatch.message.tone : nextUi.message.tone,
+              text: typeof uiPatch.message.text === "string" ? uiPatch.message.text : nextUi.message.text,
+            };
+          }
+          if (state.hasOwn(uiPatch, "modal") && uiPatch.modal && typeof uiPatch.modal === "object") {
+            nextUi.modal = {
+              kind: typeof uiPatch.modal.kind === "string" ? uiPatch.modal.kind : null,
+              open: Boolean(uiPatch.modal.open),
+            };
+          }
+          return nextUi;
         },
         subscribe(listener) {
           if (typeof listener !== "function") {
@@ -464,19 +566,16 @@
         update(patch) {
           const nextState = {
             booted: state.hasOwn(patch, "booted") ? patch.booted : state.booted,
-            activeSection: state.activeSection,
             capabilities: state.hasOwn(patch, "capabilities")
               ? { ...state.capabilities, ...patch.capabilities }
               : state.capabilities,
             cv: state.hasOwn(patch, "cv") ? patch.cv : state.cv,
+            ui: state.hasOwn(patch, "ui") ? state.sanitizeUi(patch.ui) : state.ui,
           };
-          if (state.hasOwn(patch, "activeSection") && state.isValidSection(patch.activeSection)) {
-            nextState.activeSection = patch.activeSection;
-          }
           state.booted = nextState.booted;
-          state.activeSection = nextState.activeSection;
           state.capabilities = nextState.capabilities;
           state.cv = nextState.cv;
+          state.ui = nextState.ui;
           state.notify();
         },
         read() {
@@ -502,7 +601,7 @@
             return;
           }
           const snapshot = {
-            activeSection: state.activeSection,
+            ui: state.ui,
             cv: state.cv,
           };
           window.localStorage.setItem(config.storageKey, JSON.stringify(snapshot));
@@ -515,6 +614,7 @@
         toolbar: document.getElementById("editor-toolbar"),
         editorCanvas: document.getElementById("editor-canvas"),
         previewContent: document.getElementById("preview-content"),
+        modal: document.getElementById("app-modal"),
         escapeHtml(value) {
           return String(value)
             .replaceAll("&", "&amp;")
@@ -527,9 +627,9 @@
           return ui.escapeHtml(JSON.stringify(value, null, 2));
         },
         renderToolbar() {
-          ui.toolbar.innerHTML = config.sections
+          const sectionButtons = config.sections
             .map((section) => {
-              const active = section.id === state.activeSection;
+              const active = section.id === state.ui.activeSection;
               return "<button"
                 + " type=\"button\""
                 + " class=\"toolbar-pill toolbar-button\""
@@ -539,6 +639,22 @@
                 + "</button>";
             })
             .join("");
+          const templateButtons = config.templates
+            .map((template) => {
+              const active = template.id === state.ui.template;
+              return "<button"
+                + " type=\"button\""
+                + " class=\"toolbar-pill toolbar-button\""
+                + " data-template=\"" + template.id + "\""
+                + " aria-pressed=\"" + String(active) + "\">"
+                + ui.escapeHtml(template.label)
+                + "</button>";
+            })
+            .join("");
+          ui.toolbar.innerHTML = sectionButtons
+            + "<span class=\"toolbar-divider\" aria-hidden=\"true\"></span>"
+            + templateButtons
+            + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-modal=\"template-help\" aria-pressed=\"false\">Ayuda plantilla</button>";
         },
         renderEditor() {
           const basics = state.cv.basics;
@@ -553,6 +669,7 @@
             school: "",
             period: "",
           };
+          const activeSection = state.ui.activeSection;
           const sections = {
             basics: ""
               + "<div class=\"editor-group\">"
@@ -605,10 +722,10 @@
               + "</pre>",
           };
           ui.editorCanvas.innerHTML = ""
-            + "<div class=\"editor-note\">"
-            + "La app ha arrancado en local con estado inicial en memoria y sin dependencias externas."
+            + "<div class=\"editor-note\" data-tone=\"" + ui.escapeHtml(state.ui.message.tone) + "\">"
+            + ui.escapeHtml(state.ui.message.text)
             + "</div>"
-            + sections[state.activeSection];
+            + sections[activeSection];
         },
         renderPreview() {
           const basics = state.cv.basics;
@@ -630,6 +747,7 @@
             + "<p>" + ui.escapeHtml(basics.fullName || "Nombre pendiente") + "</p>"
             + "<p class=\"preview-meta\">" + ui.escapeHtml(basics.headline || "Titular profesional pendiente") + "</p>"
             + "<p>" + ui.escapeHtml(basics.summary || "Completa tu perfil para ver aqui el resumen profesional.") + "</p>"
+            + "<p class=\"preview-template\">" + ui.escapeHtml(state.ui.template) + "</p>"
             + "</article>"
             + "<article class=\"preview-card\">"
             + "<h3>Experiencia</h3>"
@@ -648,6 +766,26 @@
             + "<p class=\"preview-meta\">" + ui.escapeHtml(config.cvSchema.$comment) + "</p>"
             + "<p>Secciones obligatorias: " + ui.escapeHtml(requiredSections) + "</p>"
             + "</article>";
+        },
+        renderModal() {
+          if (state.ui.modal.open && state.ui.modal.kind === "template-help") {
+            ui.modal.innerHTML = ""
+              + "<div class=\"modal-card\">"
+              + "<h2 id=\"app-modal-title\">Plantillas disponibles</h2>"
+              + "<p>Classic prioriza una lectura editorial. Compact reduce densidad visual para perfiles con mucho contenido.</p>"
+              + "<div class=\"modal-actions\">"
+              + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-close-modal=\"true\" aria-pressed=\"false\">Cerrar</button>"
+              + "</div>"
+              + "</div>";
+            if (!ui.modal.open) {
+              ui.modal.showModal();
+            }
+            return;
+          }
+          ui.modal.innerHTML = "";
+          if (ui.modal.open) {
+            ui.modal.close();
+          }
         },
       };
 
@@ -675,9 +813,12 @@
           ui.renderToolbar();
           ui.renderEditor();
           ui.renderPreview();
+          ui.renderModal();
         },
         syncDom() {
-          document.body.dataset.activeSection = state.activeSection;
+          document.body.dataset.activeSection = state.ui.activeSection;
+          document.body.dataset.activeTemplate = state.ui.template;
+          document.body.dataset.modalOpen = String(state.ui.modal.open);
           document.body.dataset.runtimeMode = state.capabilities.fileProtocol ? "file" : "browser";
         },
         handleStateChange() {
@@ -697,10 +838,65 @@
         bindEvents() {
           ui.toolbar.addEventListener("click", (event) => {
             const button = event.target.closest("[data-section]");
-            if (!button) {
+            if (button) {
+              state.update({
+                ui: {
+                  activeSection: button.dataset.section,
+                  message: {
+                    tone: "info",
+                    text: "Editando la seccion " + button.textContent + ".",
+                  },
+                },
+              });
               return;
             }
-            state.update({ activeSection: button.dataset.section });
+            const templateButton = event.target.closest("[data-template]");
+            if (templateButton) {
+              state.update({
+                ui: {
+                  template: templateButton.dataset.template,
+                  message: {
+                    tone: "success",
+                    text: "Plantilla activa: " + templateButton.textContent + ".",
+                  },
+                },
+              });
+              return;
+            }
+            const modalButton = event.target.closest("[data-modal]");
+            if (!modalButton) {
+              return;
+            }
+            state.update({
+              ui: {
+                modal: {
+                  kind: modalButton.dataset.modal,
+                  open: true,
+                },
+                message: {
+                  tone: "muted",
+                  text: "Consulta rapida de plantillas abierta.",
+                },
+              },
+            });
+          });
+          ui.modal.addEventListener("click", (event) => {
+            const closeButton = event.target.closest("[data-close-modal]");
+            if (!closeButton) {
+              return;
+            }
+            state.update({
+              ui: {
+                modal: {
+                  kind: null,
+                  open: false,
+                },
+                message: {
+                  tone: "info",
+                  text: "Modal cerrado. Puedes seguir editando el CV.",
+                },
+              },
+            });
           });
         },
         updateStatus() {
@@ -714,9 +910,17 @@
           app.subscribeToState();
           state.update({ capabilities: app.detectCapabilities() });
           const persistedState = state.read();
+          const persistedUi = persistedState && persistedState.ui
+            ? persistedState.ui
+            : {
+              activeSection: persistedState && persistedState.activeSection ? persistedState.activeSection : config.uiDefaults.activeSection,
+              template: persistedState && persistedState.cv && persistedState.cv.template ? persistedState.cv.template : config.uiDefaults.template,
+              message: config.uiDefaults.message,
+              modal: config.uiDefaults.modal,
+            };
           state.update({
             cv: persistedState && persistedState.cv ? persistedState.cv : app.cloneInitialCV(),
-            activeSection: persistedState && persistedState.activeSection ? persistedState.activeSection : "basics",
+            ui: persistedUi,
             booted: true,
           });
           app.bindEvents();
