@@ -76,9 +76,10 @@
             width: 100%;
             max-width: var(--a4-width);
             min-height: var(--a4-height);
+
             /* aspect-ratio: 210 / 297;  <- Comentado para permitir que crezca si el contenido excede una página */
             padding: 20mm;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 20px rgb(0 0 0 / 10%);
             margin: 0 auto;
             position: relative;
         }
@@ -288,95 +289,152 @@
         }
 
         /* Estilos de la Vista Previa (CV) */
+        .cv-header {
+            margin-bottom: 2rem;
+            border-bottom: 4px solid var(--primary);
+            padding-bottom: 1rem;
+        }
+
         .cv-header h1 {
             font-size: 2.5rem;
             color: var(--text-main);
             margin-bottom: 0.25rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            font-weight: 300;
+        }
+
+        .cv-header h1 strong {
+            font-weight: 800;
         }
 
         .cv-title {
             font-size: 1.25rem;
-            color: var(--primary);
-            font-weight: 600;
-            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .cv-contact {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            margin-bottom: 1.5rem;
+        .cv-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
         }
 
         .cv-section {
-            margin-top: 1.5rem;
-            line-height: 1.6;
-            color: var(--text-main);
+            margin-bottom: 1.5rem;
         }
 
         .cv-section-title {
             font-size: 1.1rem;
-            font-weight: 700;
+            font-weight: 800;
             color: var(--primary);
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 0.25rem;
             margin-bottom: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .cv-section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
         }
 
         .cv-item {
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
         }
 
         .cv-item-header {
             display: flex;
             justify-content: space-between;
             align-items: baseline;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.15rem;
         }
 
         .cv-item-title {
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 1.05rem;
+            color: var(--text-main);
         }
 
         .cv-item-subtitle {
             font-weight: 600;
-            color: var(--text-main);
+            color: var(--primary);
+            font-size: 0.95rem;
+            margin-bottom: 0.4rem;
         }
 
         .cv-item-date {
             color: var(--text-muted);
             font-size: 0.85rem;
-            text-align: right;
-            min-width: 120px;
+            font-weight: 600;
+            white-space: nowrap;
         }
 
         .cv-item-description {
             font-size: 0.9rem;
+            line-height: 1.5;
+            color: var(--text-main);
             white-space: pre-line;
         }
 
         .cv-summary {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-main);
             white-space: pre-line;
+            text-align: justify;
+        }
+
+        .cv-contact-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .cv-contact-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.6rem;
+            font-size: 0.85rem;
+            color: var(--text-main);
+        }
+
+        .cv-contact-icon {
+            font-size: 1rem;
+            width: 1.25rem;
+            text-align: center;
         }
 
         .cv-skills {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
+            gap: 0.4rem;
         }
 
         .cv-skill-tag {
-            background-color: var(--bg-editor);
-            padding: 0.2rem 0.6rem;
+            background-color: #f1f5f9;
+            padding: 0.25rem 0.6rem;
             border-radius: 4px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--text-main);
+            font-weight: 600;
             border: 1px solid #e2e8f0;
+        }
+
+        @media print {
+            .cv-grid {
+                gap: 1.5rem;
+            }
+            
+            .cv-header {
+                border-bottom-width: 3px;
+            }
         }
     </style>
 </head>
@@ -888,15 +946,10 @@
                                 ${experience.map(exp => `
                                     <div class="cv-item">
                                         <div class="cv-item-header">
-                                            <div>
-                                                <span class="cv-item-title">${exp.position || 'Puesto'}</span>
-                                                ${exp.company ? ` | <span class="cv-item-subtitle">${exp.company}</span>` : ''}
-                                                ${exp.location ? ` | <span class="cv-item-location">${exp.location}</span>` : ''}
-                                            </div>
-                                            <div class="cv-item-date">
-                                                ${exp.startDate || ''} ${exp.startDate || (exp.endDate || exp.current) ? '-' : ''} ${exp.current ? 'Actual' : (exp.endDate || '')}
-                                            </div>
+                                            <span class="cv-item-title">${exp.position || 'Puesto'}</span>
+                                            <span class="cv-item-date">${exp.startDate || ''} ${exp.startDate && (exp.endDate || exp.current) ? '—' : ''} ${exp.current ? 'Actual' : (exp.endDate || '')}</span>
                                         </div>
+                                        <div class="cv-item-subtitle">${exp.company || ''}${exp.company && exp.location ? ' | ' : ''}${exp.location || ''}</div>
                                         ${exp.description ? `<p class="cv-item-description">${exp.description}</p>` : ''}
                                     </div>
                                 `).join('')}
@@ -908,19 +961,14 @@
                     if (education && education.length > 0) {
                         educationHtml = `
                             <div class="cv-section">
-                                <h2 class="cv-section-title">Educación / Formación</h2>
+                                <h2 class="cv-section-title">Educación</h2>
                                 ${education.map(edu => `
                                     <div class="cv-item">
                                         <div class="cv-item-header">
-                                            <div>
-                                                <span class="cv-item-title">${edu.degree || 'Titulación'}</span>
-                                                ${edu.institution ? ` | <span class="cv-item-subtitle">${edu.institution}</span>` : ''}
-                                                ${edu.location ? ` | <span class="cv-item-location">${edu.location}</span>` : ''}
-                                            </div>
-                                            <div class="cv-item-date">
-                                                ${edu.startDate || ''} ${edu.startDate || (edu.endDate || edu.current) ? '-' : ''} ${edu.current ? 'Actual' : (edu.endDate || '')}
-                                            </div>
+                                            <span class="cv-item-title">${edu.degree || 'Titulación'}</span>
+                                            <span class="cv-item-date">${edu.startDate || ''} ${edu.startDate && (edu.endDate || edu.current) ? '—' : ''} ${edu.current ? 'Actual' : (edu.endDate || '')}</span>
                                         </div>
+                                        <div class="cv-item-subtitle">${edu.institution || ''}${edu.institution && edu.location ? ' | ' : ''}${edu.location || ''}</div>
                                         ${edu.description ? `<p class="cv-item-description">${edu.description}</p>` : ''}
                                     </div>
                                 `).join('')}
@@ -929,51 +977,58 @@
                     }
 
                     let skillsHtml = '';
-                    if (skills && typeof skills === 'string' && skills.trim().length > 0) {
-                        const skillList = skills.split(',').map(s => s.trim()).filter(s => s.length > 0);
-                        if (skillList.length > 0) {
-                            skillsHtml = `
-                                <div class="cv-section">
-                                    <h2 class="cv-section-title">Habilidades</h2>
-                                    <div class="cv-skills">
-                                        ${skillList.map(skill => `<span class="cv-skill-tag">${skill}</span>`).join('')}
-                                    </div>
-                                </div>
-                            `;
-                        }
-                    } else if (Array.isArray(skills) && skills.length > 0) {
-                        // Support for legacy array format if exists
+                    const skillList = Array.isArray(skills) ? skills : (typeof skills === 'string' ? skills.split(',').map(s => s.trim()).filter(s => s.length > 0) : []);
+                    if (skillList.length > 0) {
                         skillsHtml = `
                             <div class="cv-section">
                                 <h2 class="cv-section-title">Habilidades</h2>
                                 <div class="cv-skills">
-                                    ${skills.map(skill => `<span class="cv-skill-tag">${skill}</span>`).join('')}
+                                    ${skillList.map(skill => `<span class="cv-skill-tag">${skill}</span>`).join('')}
                                 </div>
                             </div>
                         `;
                     }
 
-                    // Renderizado básico para validar reactividad
+                    const contactItems = [
+                        { icon: '📧', value: personalData.email },
+                        { icon: '📱', value: personalData.phone },
+                        { icon: '📍', value: personalData.location },
+                        { icon: '🔗', value: personalData.linkedin },
+                        { icon: '💻', value: personalData.github },
+                        { icon: '🌐', value: personalData.website }
+                    ].filter(item => item.value);
+
                     this.preview.innerHTML = `
-                        <div class="cv-header">
-                            <h1>${personalData.firstName || 'Tu Nombre'} ${personalData.lastName || ''}</h1>
+                        <header class="cv-header">
+                            <h1>${personalData.firstName || 'Tu'} <strong>${personalData.lastName || 'Nombre'}</strong></h1>
                             <p class="cv-title">${personalData.title || 'Tu Profesión'}</p>
-                            <div class="cv-contact">
-                                ${personalData.email ? `<span>${personalData.email}</span>` : ''}
-                                ${personalData.phone ? `<span> | ${personalData.phone}</span>` : ''}
-                                ${personalData.location ? `<span> | ${personalData.location}</span>` : ''}
-                                ${personalData.linkedin ? `<span> | ${personalData.linkedin}</span>` : ''}
-                                ${personalData.github ? `<span> | ${personalData.github}</span>` : ''}
-                                ${personalData.website ? `<span> | ${personalData.website}</span>` : ''}
+                        </header>
+                        
+                        <div class="cv-grid">
+                            <div class="cv-main-col">
+                                <div class="cv-section">
+                                    <h2 class="cv-section-title">Perfil Profesional</h2>
+                                    <p class="cv-summary">${summary || 'Breve descripción de tu perfil profesional, objetivos y logros principales...'}</p>
+                                </div>
+                                ${experienceHtml}
+                                ${educationHtml}
                             </div>
+                            
+                            <aside class="cv-sidebar">
+                                <div class="cv-section">
+                                    <h2 class="cv-section-title">Contacto</h2>
+                                    <ul class="cv-contact-list">
+                                        ${contactItems.map(item => `
+                                            <li>
+                                                <span class="cv-contact-icon">${item.icon}</span>
+                                                <span class="cv-contact-value">${item.value}</span>
+                                            </li>
+                                        `).join('')}
+                                    </ul>
+                                </div>
+                                ${skillsHtml}
+                            </aside>
                         </div>
-                        <div class="cv-section">
-                            <h2 class="cv-section-title">Perfil Profesional</h2>
-                            <p class="cv-summary">${summary || 'Breve descripción de tu perfil profesional, objetivos y logros principales...'}</p>
-                        </div>
-                        ${skillsHtml}
-                        ${experienceHtml}
-                        ${educationHtml}
                     `;
                 },
 

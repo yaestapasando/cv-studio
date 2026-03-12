@@ -20,7 +20,7 @@ test('A4 Paper Layout', (t) => {
         assert.ok(htmlContent.includes('background: var(--white);') || htmlContent.includes('background-color: var(--white);'), 'Missing white background for cv-paper');
         
         // Check for shadow
-        assert.ok(htmlContent.includes('box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);'), 'Missing box-shadow for cv-paper');
+        assert.ok(htmlContent.includes('box-shadow: 0 0 20px rgb(0 0 0 / 10%);') || htmlContent.includes('box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);'), 'Missing box-shadow for cv-paper');
         
         // Check for A4 dimensions
         assert.ok(htmlContent.includes('max-width: var(--a4-width);'), 'Missing max-width: var(--a4-width)');
