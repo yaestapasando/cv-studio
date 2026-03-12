@@ -441,7 +441,10 @@
 <body>
     <div id="app">
         <aside class="editor-panel">
-            <h1>Configuración de CV</h1>
+            <div class="flex-between mb-1">
+                <h1 class="mb-0">Configuración de CV</h1>
+                <button type="button" id="export-data" class="btn btn-primary btn-sm">Exportar Datos</button>
+            </div>
             <div class="form-section">
                 <h2>Datos Personales</h2>
                 <div class="form-group">
@@ -571,11 +574,19 @@
                     this.addExperienceBtn = document.getElementById('add-experience');
                     this.educationListContainer = document.getElementById('education-list');
                     this.addEducationBtn = document.getElementById('add-education');
+                    this.exportBtn = document.getElementById('export-data');
                 },
 
                 bindEvents: function() {
                     const self = this;
                     
+                    // Botón exportar datos
+                    if (this.exportBtn) {
+                        this.exportBtn.addEventListener('click', () => {
+                            self.exportData();
+                        });
+                    }
+
                     // Escuchar cambios en los inputs del editor (input para tiempo real, change para asegurar captura)
                     const handleInput = (e) => {
                         const path = e.target.getAttribute('data-path');
@@ -1051,6 +1062,22 @@
                     dataScript.type = 'application/json';
                     dataScript.textContent = JSON.stringify(this.state);
                     this.preview.appendChild(dataScript);
+                },
+
+                exportData: function() {
+                    console.info('CV Studio: Exportando datos...');
+                    const dataStr = JSON.stringify(this.state, null, 2);
+                    const blob = new Blob([dataStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `cv-data-${Date.now()}.json`;
+                    document.body.appendChild(link);
+                    link.click();
+                    
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
                 },
 
                 // Persistencia
