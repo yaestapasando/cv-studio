@@ -211,6 +211,44 @@ class IndexHtmlTest(unittest.TestCase):
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
 
+    def test_experience_section_lists_existing_entries(self):
+        expected_snippets = [
+            ".entry-list {",
+            ".entry-card {",
+            ".entry-card-header {",
+            ".entry-card-title {",
+            ".entry-card-index {",
+            'const experienceEntries = state.cv.experience.length',
+            '<div class=\\"editor-note\\" data-tone=\\"muted\\">Listado de experiencias existentes en el documento.</div>',
+            '<div class=\\"entry-list\\">',
+            '<article class=\\"entry-card\\">',
+            '<div class=\\"entry-card-header\\">',
+            '<h3 class=\\"entry-card-title\\">',
+            '<span class=\\"entry-card-index\\">Experiencia ',
+            'ui.escapeHtml(entry.role || "Puesto pendiente")',
+            'ui.escapeHtml(entry.company || "Empresa pendiente")',
+            'ui.escapeHtml(entry.summary || "Todavia no hay contenido en esta experiencia.")',
+            '<div class=\\"editor-note\\" data-tone=\\"muted\\">Todavia no hay experiencias guardadas en el CV.</div>',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_preview_section_renders_all_experience_entries(self):
+        expected_snippets = [
+            'const experiencePreview = state.cv.experience.length',
+            'state.cv.experience.map((entry) => ""',
+            '<div class=\\"preview-card\\">',
+            'ui.escapeHtml(entry.role || "Puesto pendiente")',
+            'ui.escapeHtml(entry.period || "Pendiente")',
+            'ui.escapeHtml(entry.summary || "Resumen pendiente")',
+            '<p>Anade tu primera experiencia para completar esta vista previa.</p>',
+            '+ experiencePreview',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
     def test_bootstrap_defines_initial_state_and_capabilities(self):
         expected_snippets = [
             'storageKey: "cv-studio-document"',
@@ -416,9 +454,16 @@ class IndexHtmlTest(unittest.TestCase):
             'basics.email || "Email pendiente"',
             'basics.phone || "Telefono pendiente"',
             'basics.location || "Ubicacion pendiente"',
-            'experience.role || "Sin experiencia anadida"',
+            'const experienceEntries = state.cv.experience.length',
+            'const experiencePreview = state.cv.experience.length',
             'education.course || "Sin formacion anadida"',
-            'experience.summary || "Anade tu primera experiencia para completar esta vista previa."',
+            'state.cv.experience.map((entry, index) => ""',
+            'state.cv.experience.map((entry) => ""',
+            'entry.role || "Puesto pendiente"',
+            'entry.company || "Empresa pendiente"',
+            'entry.summary || "Resumen pendiente"',
+            'Todavia no hay experiencias guardadas en el CV.',
+            'Anade tu primera experiencia para completar esta vista previa.',
             'state.ui.template',
             '<p class=\\"preview-template\\">',
             'id=\\"cv-schema-output\\"',
