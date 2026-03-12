@@ -32,11 +32,11 @@ Lógica pura de JavaScript para manejar la información del CV y su persistencia
 Interfaz de usuario para introducir y modificar los datos del currículum.
 
 - [x] Crear campos para **Datos Personales** (Nombre, email, teléfono, ubicación, enlaces/LinkedIn).
-- [ ] Crear área de texto para el **Extracto/Perfil Profesional**.
-- [ ] Crear sección dinámica de **Experiencia Laboral**:
-  - [ ] Botón para "Añadir nueva experiencia".
-  - [ ] Campos para puesto, empresa, fechas y descripción.
-  - [ ] Botones para eliminar o reordenar cada ítem.
+- [x] Crear área de texto para el **Extracto/Perfil Profesional**.
+- [x] Crear sección dinámica de **Experiencia Laboral**:
+  - [x] Botón para "Añadir nueva experiencia".
+  - [x] Campos para puesto, empresa, fechas y descripción.
+  - [x] Botones para eliminar o reordenar cada ítem.
 - [ ] Crear sección dinámica de **Educación** (titulación, institución, fechas).
 - [ ] Crear sección de **Habilidades** (input de texto simple o sistema de etiquetas/tags).
 - [ ] Conectar todos los eventos `oninput`/`onchange` de los formularios al gestor del estado.

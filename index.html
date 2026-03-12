@@ -636,6 +636,10 @@
                                     <input type="text" data-path="experience.${index}.position" value="${exp.position}" placeholder="Ej. Senior Developer">
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <label>Ubicación</label>
+                                <input type="text" data-path="experience.${index}.location" value="${exp.location || ''}" placeholder="Ej. Madrid, España">
+                            </div>
                             <div class="grid-2">
                                 <div class="form-group">
                                     <label>Fecha Inicio</label>
@@ -718,6 +722,7 @@
                                             <div>
                                                 <span class="cv-item-title">${exp.position || 'Puesto'}</span>
                                                 ${exp.company ? ` | <span class="cv-item-subtitle">${exp.company}</span>` : ''}
+                                                ${exp.location ? ` | <span class="cv-item-location">${exp.location}</span>` : ''}
                                             </div>
                                             <div class="cv-item-date">
                                                 ${exp.startDate || ''} ${exp.startDate || (exp.endDate || exp.current) ? '-' : ''} ${exp.current ? 'Actual' : (exp.endDate || '')}

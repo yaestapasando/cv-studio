@@ -45,9 +45,15 @@ test('Experience logic in script', (t) => {
     t.test('should have renderExperienceEditor function', () => {
         assert.ok(htmlContent.includes('renderExperienceEditor: function'), 'Missing renderExperienceEditor function');
     });
+
+    t.test('should have location field in experience editor', () => {
+        assert.ok(htmlContent.includes('experience.${index}.location'), 'Missing location data-path in experience editor');
+        assert.ok(htmlContent.includes('Ubicación'), 'Missing location label in experience editor');
+    });
     
     t.test('should include experience in render preview', () => {
         assert.ok(htmlContent.includes('const { personalData, summary, experience } = this.state;'), 'render should extract experience from state');
         assert.ok(htmlContent.includes('experience.map'), 'render should map through experience array');
+        assert.ok(htmlContent.includes('exp.location'), 'render should include exp.location in preview');
     });
 });
