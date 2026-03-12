@@ -1,0 +1,33 @@
+{
+  "name": "cv-studio",
+  "version": "1.0.0",
+  "description": "Este es un proyecto base que sirve como punto de partida para el desarrollo de una aplicación web destinada a la creación y gestión de CVs (Currículum Vitae).",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test test.js",
+    "lint": "eslint . && stylelint \"**/*.html\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yaestapasando/cv-studio.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/yaestapasando/cv-studio/issues"
+  },
+  "homepage": "https://github.com/yaestapasando/cv-studio#readme",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.0.3",
+    "eslint-plugin-html": "^8.1.4",
+    "globals": "^17.4.0",
+    "html-validate": "^10.11.1",
+    "postcss-html": "^1.8.1",
+    "stylelint": "^17.4.0",
+    "stylelint-config-html": "^1.1.0",
+    "stylelint-config-standard": "^40.0.0"
+  }
+}

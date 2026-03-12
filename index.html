@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV Studio - Generador de CV</title>
+    <style>
+        /* Variables y Estilos Base */
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --bg-editor: #f8fafc;
+            --bg-preview: #e2e8f0;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --white: #fff;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -2px rgb(0 0 0 / 10%);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Inter, system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-preview);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #app {
+            display: flex;
+            height: 100%;
+            width: 100%;
+        }
+
+        /* Marcadores para futuras secciones */
+        .editor-panel {
+            flex: 1;
+            background: var(--bg-editor);
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .preview-panel {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            overflow-y: auto;
+            padding: 2rem;
+            background: var(--bg-preview);
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <aside class="editor-panel">
+            <h1>Configuración de CV</h1>
+            <!-- Contenido del formulario en Feature 3 -->
+        </aside>
+        <main class="preview-panel">
+            <div id="cv-paper">
+                <!-- Vista previa en Feature 4 -->
+            </div>
+        </main>
+    </div>
+
+    <script>
+        /**
+         * CV Studio - Script Principal
+         * Aplicación Single-File para generación de CVs.
+         */
+        (function() {
+            'use strict';
+
+            const CVStudio = {
+                init: function() {
+                    console.info('CV Studio: Inicializando aplicación...');
+                    this.cacheDOM();
+                    this.bindEvents();
+                    this.loadInitialData();
+                },
+
+                cacheDOM: function() {
+                    this.app = document.getElementById('app');
+                    this.preview = document.getElementById('cv-paper');
+                },
+
+                bindEvents: function() {
+                    // Futuros manejadores de eventos
+                },
+
+                loadInitialData: function() {
+                    // Futura carga de datos
+                }
+            };
+
+            // Iniciar aplicación al cargar el DOM
+            document.addEventListener('DOMContentLoaded', () => {
+                CVStudio.init();
+            });
+        })();
+    </script>
+</body>
+</html>
