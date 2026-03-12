@@ -885,8 +885,12 @@
                 + "<div class=\"entry-card-actions\">"
                 + "<span class=\"entry-card-index\">Experiencia " + String(index + 1) + "</span>"
                 + "<div class=\"entry-card-action-group\">"
-                + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"move-experience-entry-up\" data-experience-index=\"" + String(index) + "\" aria-pressed=\"false\">Subir</button>"
-                + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"move-experience-entry-down\" data-experience-index=\"" + String(index) + "\" aria-pressed=\"false\">Bajar</button>"
+                + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"move-experience-entry-up\" data-experience-index=\"" + String(index) + "\" aria-pressed=\"false\""
+                + (index === 0 ? " disabled" : "")
+                + ">Subir</button>"
+                + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"move-experience-entry-down\" data-experience-index=\"" + String(index) + "\" aria-pressed=\"false\""
+                + (index === state.cv.experience.length - 1 ? " disabled" : "")
+                + ">Bajar</button>"
                 + "</div>"
                 + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"remove-experience-entry\" data-experience-index=\"" + String(index) + "\" aria-pressed=\"false\">Eliminar</button>"
                 + "</div>"
@@ -1012,8 +1016,12 @@
                 + "<div class=\"entry-card-actions\">"
                 + "<span class=\"entry-card-index\">Formacion " + String(index + 1) + "</span>"
                 + "<div class=\"entry-card-action-group\">"
-                + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"move-education-entry-up\" data-education-index=\"" + String(index) + "\" aria-pressed=\"false\">Subir</button>"
-                + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"move-education-entry-down\" data-education-index=\"" + String(index) + "\" aria-pressed=\"false\">Bajar</button>"
+                + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"move-education-entry-up\" data-education-index=\"" + String(index) + "\" aria-pressed=\"false\""
+                + (index === 0 ? " disabled" : "")
+                + ">Subir</button>"
+                + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"move-education-entry-down\" data-education-index=\"" + String(index) + "\" aria-pressed=\"false\""
+                + (index === state.cv.education.length - 1 ? " disabled" : "")
+                + ">Bajar</button>"
                 + "</div>"
                 + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"remove-education-entry\" data-education-index=\"" + String(index) + "\" aria-pressed=\"false\">Eliminar</button>"
                 + "</div>"

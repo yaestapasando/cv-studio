@@ -1,5 +1,7 @@
 from html.parser import HTMLParser
+import json
 from pathlib import Path
+import subprocess
 import unittest
 
 
@@ -43,6 +45,72 @@ class IndexHtmlTest(unittest.TestCase):
         cls.content = INDEX_HTML.read_text(encoding="utf-8")
         cls.parser = StructureParser()
         cls.parser.feed(cls.content)
+        cls.script_content = cls.content.split("<script>", 1)[1].split("</script>", 1)[0].replace("CVStudio.app.boot();", "")
+
+    def run_js_scenario(self, scenario):
+        node_program = f"""
+const vm = require("node:vm");
+const scriptContent = {json.dumps(self.script_content)};
+const scenario = {json.dumps(scenario)};
+
+function createElement() {{
+  return {{
+    innerHTML: "",
+    textContent: "",
+    dataset: {{}},
+    open: false,
+    addEventListener() {{}},
+    showModal() {{ this.open = true; }},
+    close() {{ this.open = false; }},
+  }};
+}}
+
+const elements = new Map();
+const document = {{
+  body: {{ dataset: {{}} }},
+  getElementById(id) {{
+    if (!elements.has(id)) {{
+      elements.set(id, createElement());
+    }}
+    return elements.get(id);
+  }},
+}};
+const localStorage = {{
+  store: new Map(),
+  getItem(key) {{
+    return this.store.has(key) ? this.store.get(key) : null;
+  }},
+  setItem(key, value) {{
+    this.store.set(key, String(value));
+  }},
+  removeItem(key) {{
+    this.store.delete(key);
+  }},
+}};
+const sandbox = {{
+  console,
+  document,
+  window: {{
+    document,
+    localStorage,
+    location: {{ protocol: "file:" }},
+  }},
+  URL,
+}};
+
+vm.runInNewContext(scriptContent, sandbox);
+const result = vm.runInNewContext(scenario, sandbox);
+process.stdout.write(JSON.stringify(result));
+"""
+        completed = subprocess.run(
+            ["node"],
+            input=node_program,
+            text=True,
+            capture_output=True,
+            check=True,
+            cwd=ROOT,
+        )
+        return json.loads(completed.stdout)
 
     def test_file_exists(self):
         self.assertTrue(INDEX_HTML.exists())
@@ -382,10 +450,50 @@ class IndexHtmlTest(unittest.TestCase):
             "nextExperience[index] = nextExperience[targetIndex];",
             "nextExperience[targetIndex] = movedEntry;",
             'text: "Experiencia " + String(index + 1) + " movida a la posicion " + String(targetIndex + 1) + ".",',
+            '(index === 0 ? " disabled" : "")',
+            '(index === state.cv.experience.length - 1 ? " disabled" : "")',
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
+
+    def test_app_reorders_experience_entries_functionally(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+cv.experience = [
+  { role: "Primera", company: "A", location: "Madrid", startDate: "2024-01", isCurrent: false, endDate: "2024-06", summary: "Uno", achievements: [] },
+  { role: "Segunda", company: "B", location: "Berlin", startDate: "2024-07", isCurrent: true, endDate: "", summary: "Dos", achievements: [] },
+];
+CVStudio.state.update({ cv, ui: { activeSection: "experience" } });
+CVStudio.app.moveExperienceEntry(0, "down");
+({
+  roles: CVStudio.state.cv.experience.map((entry) => entry.role),
+  message: CVStudio.state.ui.message.text,
+});
+"""
+        )
+        self.assertEqual(result["roles"], ["Segunda", "Primera"])
+        self.assertEqual(result["message"], "Experiencia 1 movida a la posicion 2.")
+
+    def test_app_ignores_invalid_experience_reorder_direction(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+cv.experience = [
+  { role: "Primera", company: "A", location: "Madrid", startDate: "2024-01", isCurrent: false, endDate: "2024-06", summary: "Uno", achievements: [] },
+  { role: "Segunda", company: "B", location: "Berlin", startDate: "2024-07", isCurrent: true, endDate: "", summary: "Dos", achievements: [] },
+];
+CVStudio.state.update({ cv, ui: { activeSection: "experience" } });
+CVStudio.app.moveExperienceEntry(0, "up");
+({
+  roles: CVStudio.state.cv.experience.map((entry) => entry.role),
+  message: CVStudio.state.ui.message.text,
+});
+"""
+        )
+        self.assertEqual(result["roles"], ["Primera", "Segunda"])
+        self.assertNotEqual(result["message"], "Experiencia 1 movida a la posicion 0.")
 
     def test_toolbar_click_handler_triggers_add_experience_action(self):
         expected_snippets = [
@@ -520,10 +628,31 @@ class IndexHtmlTest(unittest.TestCase):
             "nextEducation[index] = nextEducation[targetIndex];",
             "nextEducation[targetIndex] = movedEntry;",
             'text: "Formacion " + String(index + 1) + " movida a la posicion " + String(targetIndex + 1) + ".",',
+            '(index === 0 ? " disabled" : "")',
+            '(index === state.cv.education.length - 1 ? " disabled" : "")',
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
+
+    def test_app_reorders_education_entries_functionally(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+cv.education = [
+  { title: "Primera", center: "A", dates: "2018 - 2020", details: "" },
+  { title: "Segunda", center: "B", dates: "2020 - 2022", details: "" },
+];
+CVStudio.state.update({ cv, ui: { activeSection: "education" } });
+CVStudio.app.moveEducationEntry(1, "up");
+({
+  titles: CVStudio.state.cv.education.map((entry) => entry.title),
+  message: CVStudio.state.ui.message.text,
+});
+"""
+        )
+        self.assertEqual(result["titles"], ["Segunda", "Primera"])
+        self.assertEqual(result["message"], "Formacion 2 movida a la posicion 1.")
 
     def test_education_inputs_and_actions_sync_with_global_state(self):
         expected_snippets = [
