@@ -463,7 +463,51 @@
   </div><!-- /app -->
 
   <script>
-    // JavaScript will be added in a subsequent task
+    (function () {
+      'use strict';
+
+      // ── Tab navigation ────────────────────────────────────────────────────────
+
+      function activateTab(name) {
+        var tabs   = document.querySelectorAll('#editor-tabs [role="tab"]');
+        var panels = document.querySelectorAll('#editor-content [role="tabpanel"]');
+
+        tabs.forEach(function (t) { t.setAttribute('aria-selected', 'false'); });
+        panels.forEach(function (p) { p.setAttribute('hidden', ''); });
+
+        var tab   = document.getElementById('tab-'     + name);
+        var panel = document.getElementById('section-' + name);
+        if (tab)   tab.setAttribute('aria-selected', 'true');
+        if (panel) panel.removeAttribute('hidden');
+      }
+
+      function initTabs() {
+        var tablist = document.getElementById('editor-tabs');
+        if (!tablist) return;
+
+        tablist.addEventListener('click', function (e) {
+          var tab = e.target.closest('[role="tab"]');
+          if (!tab) return;
+          activateTab(tab.id.replace('tab-', ''));
+        });
+      }
+
+      // ── Bootstrap ─────────────────────────────────────────────────────────────
+
+      function init() {
+        initTabs();
+      }
+
+      // Expose minimal public API (used by tests and future modules)
+      window.CVStudio = { activateTab: activateTab, init: init };
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+
+    })();
   </script>
 
 </body>
