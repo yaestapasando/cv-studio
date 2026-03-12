@@ -252,6 +252,14 @@ class IndexHtmlTest(unittest.TestCase):
             'id=\\"experience-end-date-',
             'name=\\"endDate\\"',
             'data-experience-field=\\"endDate\\"',
+            'id=\\"experience-current-',
+            'name=\\"isCurrent\\"',
+            'data-experience-field=\\"isCurrent\\"',
+            'type=\\"checkbox\\"',
+            'experience-current-help-',
+            'Marca esta opcion si sigues trabajando en este puesto.',
+            '(entry.isCurrent ? " checked" : "")',
+            '(entry.isCurrent ? " disabled" : "")',
             'id=\\"experience-summary-',
             'name=\\"summary\\"',
             'data-experience-field=\\"summary\\"',
@@ -296,6 +304,7 @@ class IndexHtmlTest(unittest.TestCase):
             'company: "",',
             'location: "",',
             'startDate: "",',
+            'isCurrent: false,',
             'endDate: "",',
             'summary: "",',
             'achievements: "",',
@@ -423,6 +432,7 @@ class IndexHtmlTest(unittest.TestCase):
             'url: "Introduce una URL valida, por ejemplo tuweb.com o tuweb.com/ruta.",',
             "experienceFieldLabels: {",
             'startDate: "Fecha de inicio"',
+            'isCurrent: "Experiencia actual"',
             'endDate: "Fecha de fin"',
             'summary: "Descripcion"',
             'achievements: "Logros"',
@@ -446,10 +456,11 @@ class IndexHtmlTest(unittest.TestCase):
             'web: { type: "string", format: "uri-reference" },',
             'linkedin: { type: "string", format: "uri-reference" },',
             'github: { type: "string", format: "uri-reference" },',
-            'required: ["role", "company", "location", "startDate", "endDate", "summary"],',
+            'required: ["role", "company", "location", "startDate", "summary"],',
             'location: { type: "string", minLength: 1 },',
             'startDate: { type: "string", minLength: 1 },',
-            'endDate: { type: "string", minLength: 1 },',
+            'isCurrent: { type: "boolean" },',
+            'endDate: { type: "string" },',
             'achievements: { type: "string" },',
         ]
         for snippet in expected_snippets:
@@ -503,14 +514,33 @@ class IndexHtmlTest(unittest.TestCase):
             'updateExperienceField(index, fieldName, fieldValue) {',
             '!state.cv || !Array.isArray(state.cv.experience) || !state.hasOwn(config.experienceFieldLabels, fieldName)',
             "const currentEntry = state.cv.experience[index];",
+            'const normalizedFieldValue = fieldName === "isCurrent" ? Boolean(fieldValue) : fieldValue;',
             "const nextExperience = state.cv.experience.map((entry, entryIndex) => entryIndex === index",
+            '[fieldName]: normalizedFieldValue,',
+            'endDate: fieldName === "isCurrent" && normalizedFieldValue ? "" : entry.endDate,',
             'text: config.experienceFieldLabels[fieldName] + " actualizado en experiencia " + String(index + 1) + ".",',
             'state.ui.activeSection === "basics" && state.hasOwn(config.basicsFieldLabels, fieldName)',
             'state.ui.activeSection !== "experience" || !state.hasOwn(config.experienceFieldLabels, fieldName)',
             'const experienceForm = input.closest("[data-experience-index]");',
             "const experienceIndex = experienceForm ? Number(experienceForm.dataset.experienceIndex) : -1;",
-            "app.updateExperienceField(experienceIndex, fieldName, input.value);",
+            'const fieldValue = input.type === "checkbox" ? input.checked : input.value;',
+            "app.updateExperienceField(experienceIndex, fieldName, fieldValue);",
+            'isCurrent: Boolean(entry && entry.isCurrent),',
             'achievements: entry && typeof entry.achievements === "string" ? entry.achievements : "",',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_experience_section_supports_current_role_toggle(self):
+        expected_snippets = [
+            'const isCurrent = Boolean(entry && entry.isCurrent);',
+            'if (startDate && isCurrent) {',
+            'return startDate + " - Actualidad";',
+            '<label for=\\"experience-current-',
+            'name=\\"isCurrent\\"',
+            'data-experience-field=\\"isCurrent\\"',
+            'type=\\"checkbox\\"',
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
@@ -595,7 +625,8 @@ class IndexHtmlTest(unittest.TestCase):
             "ui.editorCanvas.addEventListener(\"input\"",
             "event.target.closest(\"[name]\")",
             "app.updateBasicsField(fieldName, input.value);",
-            "app.updateExperienceField(experienceIndex, fieldName, input.value);",
+            'const fieldValue = input.type === "checkbox" ? input.checked : input.value;',
+            "app.updateExperienceField(experienceIndex, fieldName, fieldValue);",
             "updatedAt: new Date().toISOString(),",
             "event.target.closest(\"[data-section]\")",
             "event.target.closest(\"[data-template]\")",

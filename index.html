@@ -504,6 +504,7 @@
           company: "Empresa",
           location: "Ubicacion",
           startDate: "Fecha de inicio",
+          isCurrent: "Experiencia actual",
           endDate: "Fecha de fin",
           summary: "Descripcion",
           achievements: "Logros",
@@ -549,13 +550,14 @@
             experienceEntry: {
               type: "object",
               additionalProperties: false,
-              required: ["role", "company", "location", "startDate", "endDate", "summary"],
+              required: ["role", "company", "location", "startDate", "summary"],
               properties: {
                 role: { type: "string", minLength: 1 },
                 company: { type: "string", minLength: 1 },
                 location: { type: "string", minLength: 1 },
                 startDate: { type: "string", minLength: 1 },
-                endDate: { type: "string", minLength: 1 },
+                isCurrent: { type: "boolean" },
+                endDate: { type: "string" },
                 summary: { type: "string", minLength: 1 },
                 achievements: { type: "string" },
               },
@@ -768,8 +770,12 @@
         },
         formatExperiencePeriod(entry) {
           const startDate = entry && typeof entry.startDate === "string" ? entry.startDate.trim() : "";
+          const isCurrent = Boolean(entry && entry.isCurrent);
           const endDate = entry && typeof entry.endDate === "string" ? entry.endDate.trim() : "";
           const legacyPeriod = entry && typeof entry.period === "string" ? entry.period.trim() : "";
+          if (startDate && isCurrent) {
+            return startDate + " - Actualidad";
+          }
           if (startDate && endDate) {
             return startDate + " - " + endDate;
           }
@@ -889,6 +895,19 @@
                 + " value=\"" + ui.escapeHtml(entry.startDate || "") + "\">"
                 + "</div>"
                 + "<div class=\"editor-group\">"
+                + "<label for=\"experience-current-" + String(index) + "\"><span>Experiencia actual</span></label>"
+                + "<input"
+                + " id=\"experience-current-" + String(index) + "\""
+                + " name=\"isCurrent\""
+                + " data-experience-field=\"isCurrent\""
+                + " class=\"editor-input\""
+                + " type=\"checkbox\""
+                + " aria-describedby=\"experience-current-help-" + String(index) + "\""
+                + (entry.isCurrent ? " checked" : "")
+                + ">"
+                + "<p class=\"editor-help\" id=\"experience-current-help-" + String(index) + "\">Marca esta opcion si sigues trabajando en este puesto.</p>"
+                + "</div>"
+                + "<div class=\"editor-group\">"
                 + "<label for=\"experience-end-date-" + String(index) + "\"><span>Fecha de fin</span></label>"
                 + "<input"
                 + " id=\"experience-end-date-" + String(index) + "\""
@@ -896,6 +915,7 @@
                 + " data-experience-field=\"endDate\""
                 + " class=\"editor-field editor-input\""
                 + " type=\"month\""
+                + (entry.isCurrent ? " disabled" : "")
                 + " value=\"" + ui.escapeHtml(entry.endDate || "") + "\">"
                 + "</div>"
                 + "<div class=\"editor-group\">"
@@ -1190,6 +1210,7 @@
                 company: entry && typeof entry.company === "string" ? entry.company : "",
                 location: entry && typeof entry.location === "string" ? entry.location : "",
                 startDate: entry && typeof entry.startDate === "string" ? entry.startDate : "",
+                isCurrent: Boolean(entry && entry.isCurrent),
                 endDate: entry && typeof entry.endDate === "string" ? entry.endDate : "",
                 summary: entry && typeof entry.summary === "string" ? entry.summary : "",
                 achievements: entry && typeof entry.achievements === "string" ? entry.achievements : "",
@@ -1327,10 +1348,12 @@
           if (!currentEntry) {
             return;
           }
+          const normalizedFieldValue = fieldName === "isCurrent" ? Boolean(fieldValue) : fieldValue;
           const nextExperience = state.cv.experience.map((entry, entryIndex) => entryIndex === index
             ? {
               ...entry,
-              [fieldName]: fieldValue,
+              [fieldName]: normalizedFieldValue,
+              endDate: fieldName === "isCurrent" && normalizedFieldValue ? "" : entry.endDate,
             }
             : entry);
           state.update({
@@ -1359,6 +1382,7 @@
             company: "",
             location: "",
             startDate: "",
+            isCurrent: false,
             endDate: "",
             summary: "",
             achievements: "",
@@ -1511,7 +1535,8 @@
             if (!Number.isInteger(experienceIndex) || experienceIndex < 0) {
               return;
             }
-            app.updateExperienceField(experienceIndex, fieldName, input.value);
+            const fieldValue = input.type === "checkbox" ? input.checked : input.value;
+            app.updateExperienceField(experienceIndex, fieldName, fieldValue);
           });
           ui.editorCanvas.addEventListener("click", (event) => {
             const actionButton = event.target.closest("[data-action]");
