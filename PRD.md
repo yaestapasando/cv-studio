@@ -23,15 +23,15 @@ Configuración inicial del archivo único y la división de la pantalla entre el
 ### Feature 2: Modelo de Datos y Gestión del Estado
 Lógica pura de JavaScript para manejar la información del CV y su persistencia local.
 
-- [ ] Definir el esquema del objeto de estado (JSON) para el CV (Datos personales, extracto, experiencia, educación, habilidades).
-- [ ] Implementar patrón de estado reactivo (o funciones de actualización simples) que repinte la vista previa al cambiar los datos.
-- [ ] Implementar la función de guardado automático en `localStorage` (debounced para no penalizar rendimiento).
-- [ ] Implementar la función de carga desde `localStorage` al iniciar la aplicación.
+- [x] Definir el esquema del objeto de estado (JSON) para el CV (Datos personales, extracto, experiencia, educación, habilidades).
+- [x] Implementar patrón de estado reactivo (o funciones de actualización simples) que repinte la vista previa al cambiar los datos.
+- [x] Implementar la función de guardado automático en `localStorage` (debounced para no penalizar rendimiento).
+- [x] Implementar la función de carga desde `localStorage` al iniciar la aplicación.
 
 ### Feature 3: Formulario de Edición (Inputs)
 Interfaz de usuario para introducir y modificar los datos del currículum.
 
-- [ ] Crear campos para **Datos Personales** (Nombre, email, teléfono, ubicación, enlaces/LinkedIn).
+- [x] Crear campos para **Datos Personales** (Nombre, email, teléfono, ubicación, enlaces/LinkedIn).
 - [ ] Crear área de texto para el **Extracto/Perfil Profesional**.
 - [ ] Crear sección dinámica de **Experiencia Laboral**:
   - [ ] Botón para "Añadir nueva experiencia".
