@@ -125,7 +125,19 @@ class IndexHtmlTest(unittest.TestCase):
             "event.target.closest(\"[data-section]\")",
             "document.body.dataset.appReady = \"true\";",
             "document.body.dataset.activeSection = state.activeSection;",
+            "document.body.dataset.runtimeMode = state.capabilities.fileProtocol ? \"file\" : \"browser\";",
             "La app ha arrancado en local con estado inicial en memoria y sin dependencias externas.",
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_surfaces_direct_file_open_verification_in_status(self):
+        expected_snippets = [
+            ".app-status[data-runtime-mode=\"file\"] {",
+            "const runtimeMode = state.capabilities.fileProtocol ? \"file\" : \"browser\";",
+            "const protocolLabel = state.capabilities.fileProtocol ? \"verificada al abrir index.html directamente en el navegador\" : \"abierta desde navegador\";",
+            "ui.status.dataset.runtimeMode = runtimeMode;",
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):

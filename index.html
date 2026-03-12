@@ -74,6 +74,12 @@
       white-space: nowrap;
     }
 
+    .app-status[data-runtime-mode="file"] {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
     .workspace {
       display: grid;
       grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.15fr);
@@ -498,7 +504,9 @@
         },
         updateStatus() {
           const storageLabel = state.capabilities.storage ? "persistencia local disponible" : "persistencia local no disponible";
-          const protocolLabel = state.capabilities.fileProtocol ? "abierta desde archivo" : "abierta desde navegador";
+          const runtimeMode = state.capabilities.fileProtocol ? "file" : "browser";
+          const protocolLabel = state.capabilities.fileProtocol ? "verificada al abrir index.html directamente en el navegador" : "abierta desde navegador";
+          ui.status.dataset.runtimeMode = runtimeMode;
           ui.status.textContent = config.appName + " listo: " + storageLabel + ", " + protocolLabel;
         },
         boot() {
@@ -510,6 +518,7 @@
           app.updateStatus();
           document.body.dataset.appReady = "true";
           document.body.dataset.activeSection = state.activeSection;
+          document.body.dataset.runtimeMode = state.capabilities.fileProtocol ? "file" : "browser";
         },
       };
 
