@@ -495,6 +495,7 @@
           { id: "basics", label: "Datos personales" },
           { id: "experience", label: "Experiencia" },
           { id: "skills", label: "Habilidades" },
+          { id: "languages", label: "Idiomas" },
           { id: "projects", label: "Proyectos" },
           { id: "education", label: "Formacion" },
           { id: "schema", label: "Esquema JSON" },
@@ -561,6 +562,10 @@
           items: "Lista simple",
           categories: "Categorias",
         },
+        languageFieldLabels: {
+          name: "Idioma",
+          level: "Nivel",
+        },
         cvSchema: {
           $id: "cv-studio/schema/cv",
           $comment: "Compatible con JSON Schema Draft 2020-12.",
@@ -576,6 +581,10 @@
               items: { $ref: "#/$defs/experienceEntry" },
             },
             skills: { $ref: "#/$defs/skills" },
+            languages: {
+              type: "array",
+              items: { $ref: "#/$defs/languageEntry" },
+            },
             projects: {
               type: "array",
               minItems: 1,
@@ -668,6 +677,15 @@
                   type: "array",
                   items: { type: "string", minLength: 1 },
                 },
+              },
+            },
+            languageEntry: {
+              type: "object",
+              additionalProperties: false,
+              required: ["name", "level"],
+              properties: {
+                name: { type: "string", minLength: 1 },
+                level: { type: "string", minLength: 1 },
               },
             },
             projectEntry: {
@@ -1085,6 +1103,8 @@
             ? "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"add-experience-entry\" aria-pressed=\"false\">Anadir experiencia</button>"
             : state.ui.activeSection === "projects"
               ? "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"add-project-entry\" aria-pressed=\"false\">Anadir proyecto</button>"
+            : state.ui.activeSection === "languages"
+              ? "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"add-language-entry\" aria-pressed=\"false\">Anadir idioma</button>"
             : state.ui.activeSection === "education"
               ? "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"add-education-entry\" aria-pressed=\"false\">Anadir formacion</button>"
               : "";
@@ -1468,6 +1488,57 @@
             : "<div class=\"editor-note\" data-tone=\"muted\">Todavia no hay proyectos guardados en el CV.</div>";
           const skillsItemsValue = ui.escapeHtml(ui.getSkillItems(skills.items).join("\n"));
           const skillsCategoriesValue = ui.escapeHtml(ui.serializeSkillCategories(ui.getSkillCategories(skills.categories)));
+          const languageEntries = state.cv.languages.length
+            ? "<div class=\"entry-list\">"
+              + state.cv.languages.map((entry, index) => ""
+                + "<article class=\"entry-card\">"
+                + "<div class=\"entry-card-header\">"
+                + "<div>"
+                + "<h3 class=\"entry-card-title\">" + ui.escapeHtml(entry.name || "Idioma pendiente") + "</h3>"
+                + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.level || "Nivel pendiente") + "</p>"
+                + "</div>"
+                + "<div class=\"entry-card-actions\">"
+                + "<span class=\"entry-card-index\">Idioma " + String(index + 1) + "</span>"
+                + "<div class=\"entry-card-action-group\">"
+                + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"move-language-entry-up\" data-language-index=\"" + String(index) + "\" aria-pressed=\"false\""
+                + (index === 0 ? " disabled" : "")
+                + ">Subir</button>"
+                + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"move-language-entry-down\" data-language-index=\"" + String(index) + "\" aria-pressed=\"false\""
+                + (index === state.cv.languages.length - 1 ? " disabled" : "")
+                + ">Bajar</button>"
+                + "</div>"
+                + ui.renderManualReorderControls("language", index, state.cv.languages.length)
+                + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"remove-language-entry\" data-language-index=\"" + String(index) + "\" aria-pressed=\"false\">Eliminar</button>"
+                + "</div>"
+                + "</div>"
+                + "<form class=\"editor-form language-form\" data-language-index=\"" + String(index) + "\">"
+                + "<div class=\"editor-group\">"
+                + "<label for=\"language-name-" + String(index) + "\"><span>Idioma</span></label>"
+                + "<input"
+                + " id=\"language-name-" + String(index) + "\""
+                + " name=\"name\""
+                + " data-language-field=\"name\""
+                + " class=\"editor-field editor-input\""
+                + " type=\"text\""
+                + " placeholder=\"Ej. Espanol\""
+                + " value=\"" + ui.escapeHtml(entry.name || "") + "\">"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<label for=\"language-level-" + String(index) + "\"><span>Nivel</span></label>"
+                + "<input"
+                + " id=\"language-level-" + String(index) + "\""
+                + " name=\"level\""
+                + " data-language-field=\"level\""
+                + " class=\"editor-field editor-input\""
+                + " type=\"text\""
+                + " placeholder=\"Ej. Nativo, C1 o Profesional\""
+                + " value=\"" + ui.escapeHtml(entry.level || "") + "\">"
+                + "</div>"
+                + "</form>"
+                + "</article>")
+                .join("")
+              + "</div>"
+            : "<div class=\"editor-note\" data-tone=\"muted\">Todavia no hay idiomas guardados en el CV.</div>";
           const sections = {
             basics: ""
               + "<form class=\"editor-form\" id=\"basics-form\">"
@@ -1642,6 +1713,10 @@
               + "<p class=\"editor-help\" id=\"skills-categories-help\">Escribe una categoria por linea con el formato Categoria: habilidad, habilidad.</p>"
               + "</div>"
               + "</form>",
+            languages: ""
+              + "<div class=\"editor-note\" data-tone=\"muted\">Lista los idiomas que dominas y el nivel que quieres mostrar en el CV.</div>"
+              + languageEntries
+              + "<button type=\"button\" class=\"toolbar-pill toolbar-button\" data-action=\"add-language-entry\" aria-pressed=\"false\">Anadir otro idioma</button>",
             projects: ""
               + "<div class=\"editor-note\" data-tone=\"muted\">Listado de proyectos existentes en el documento.</div>"
               + projectEntries
@@ -1708,6 +1783,14 @@
             : "<p>Anade tu primer proyecto para completar esta vista previa.</p>";
           const normalizedSkillItems = ui.getSkillItems(skills.items);
           const normalizedSkillCategories = ui.getSkillCategories(skills.categories);
+          const languagePreview = state.cv.languages.length
+            ? state.cv.languages.map((entry) => ""
+              + "<div class=\"preview-card\">"
+              + "<p>" + ui.escapeHtml(entry.name || "Idioma pendiente") + "</p>"
+              + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.level || "Nivel pendiente") + "</p>"
+              + "</div>")
+              .join("")
+            : "<p>Anade al menos un idioma para completar esta vista previa.</p>";
           const skillsPreview = skills.mode === "categories"
             ? normalizedSkillCategories.length
               ? "<div class=\"preview-skill-groups\">"
@@ -1744,6 +1827,10 @@
             + "<h3>Habilidades</h3>"
             + "<p class=\"preview-meta\">Formato: " + ui.escapeHtml(skills.mode === "categories" ? "Por categorias" : "Lista simple") + "</p>"
             + skillsPreview
+            + "</article>"
+            + "<article class=\"preview-card\">"
+            + "<h3>Idiomas</h3>"
+            + languagePreview
             + "</article>"
             + "<article class=\"preview-card\">"
             + "<h3>Proyectos</h3>"
@@ -1842,6 +1929,20 @@
             categories: ui.getSkillCategories(value.categories),
           };
         },
+        normalizeLanguageEntry(entry) {
+          return {
+            name: entry && typeof entry.name === "string"
+              ? entry.name
+              : entry && typeof entry.language === "string"
+                ? entry.language
+                : "",
+            level: entry && typeof entry.level === "string"
+              ? entry.level
+              : entry && typeof entry.proficiency === "string"
+                ? entry.proficiency
+                : "",
+          };
+        },
         normalizeEducationEntry(entry) {
           return {
             title: entry && typeof entry.title === "string"
@@ -1907,6 +2008,9 @@
           const projects = Array.isArray(cvDocument.projects)
             ? cvDocument.projects.map((entry) => app.normalizeProjectEntry(entry))
             : [];
+          const languages = Array.isArray(cvDocument.languages)
+            ? cvDocument.languages.map((entry) => app.normalizeLanguageEntry(entry))
+            : [];
           const skills = app.normalizeSkills(cvDocument.skills);
           return {
             ...config.initialCV,
@@ -1917,6 +2021,7 @@
             },
             experience,
             skills,
+            languages,
             projects,
             education,
             meta: {
@@ -2168,6 +2273,37 @@
             },
           });
         },
+        updateLanguageField(index, fieldName, fieldValue) {
+          if (!state.cv || !Array.isArray(state.cv.languages) || !state.hasOwn(config.languageFieldLabels, fieldName)) {
+            return;
+          }
+          const currentEntry = state.cv.languages[index];
+          if (!currentEntry) {
+            return;
+          }
+          const nextLanguages = state.cv.languages.map((entry, entryIndex) => entryIndex === index
+            ? {
+              ...entry,
+              [fieldName]: fieldValue,
+            }
+            : entry);
+          state.update({
+            cv: {
+              ...state.cv,
+              languages: nextLanguages,
+              meta: {
+                ...state.cv.meta,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+            ui: {
+              message: {
+                tone: "success",
+                text: config.languageFieldLabels[fieldName] + " actualizado en idioma " + String(index + 1) + ".",
+              },
+            },
+          });
+        },
         parseSkillsCategories(value) {
           return ui.parseSkillCategories(value);
         },
@@ -2263,6 +2399,32 @@
             },
           });
         },
+        addLanguageEntry() {
+          if (!state.cv || !Array.isArray(state.cv.languages)) {
+            return;
+          }
+          const nextEntry = {
+            name: "",
+            level: "",
+          };
+          const nextLanguages = [...state.cv.languages, nextEntry];
+          state.update({
+            cv: {
+              ...state.cv,
+              languages: nextLanguages,
+              meta: {
+                ...state.cv.meta,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+            ui: {
+              message: {
+                tone: "success",
+                text: "Idioma " + String(nextLanguages.length) + " anadido.",
+              },
+            },
+          });
+        },
         removeExperienceEntry(index) {
           if (!state.cv || !Array.isArray(state.cv.experience)) {
             return;
@@ -2309,6 +2471,31 @@
               message: {
                 tone: "success",
                 text: "Proyecto " + String(index + 1) + " eliminado.",
+              },
+            },
+          });
+        },
+        removeLanguageEntry(index) {
+          if (!state.cv || !Array.isArray(state.cv.languages)) {
+            return;
+          }
+          if (!Number.isInteger(index) || index < 0 || index >= state.cv.languages.length) {
+            return;
+          }
+          const nextLanguages = state.cv.languages.filter((entry, entryIndex) => entryIndex !== index);
+          state.update({
+            cv: {
+              ...state.cv,
+              languages: nextLanguages,
+              meta: {
+                ...state.cv.meta,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+            ui: {
+              message: {
+                tone: "success",
+                text: "Idioma " + String(index + 1) + " eliminado.",
               },
             },
           });
@@ -2396,6 +2583,20 @@
               : -1;
           app.moveListEntry("projects", index, targetIndex, "Proyecto", "movido");
         },
+        moveLanguageEntry(index, direction) {
+          if (!state.cv || !Array.isArray(state.cv.languages)) {
+            return;
+          }
+          if (!Number.isInteger(index) || index < 0 || index >= state.cv.languages.length) {
+            return;
+          }
+          const targetIndex = direction === "up"
+            ? index - 1
+            : direction === "down"
+              ? index + 1
+              : -1;
+          app.moveListEntry("languages", index, targetIndex, "Idioma", "movido");
+        },
         moveEducationEntry(index, direction) {
           if (!state.cv || !Array.isArray(state.cv.education)) {
             return;
@@ -2415,6 +2616,9 @@
         },
         moveProjectEntryToPosition(index, rawTargetPosition) {
           app.moveListEntry("projects", index, Number(rawTargetPosition) - 1, "Proyecto", "movido");
+        },
+        moveLanguageEntryToPosition(index, rawTargetPosition) {
+          app.moveListEntry("languages", index, Number(rawTargetPosition) - 1, "Idioma", "movido");
         },
         moveEducationEntryToPosition(index, rawTargetPosition) {
           app.moveListEntry("education", index, Number(rawTargetPosition) - 1, "Formacion", "movida");
@@ -2456,6 +2660,10 @@
               app.addProjectEntry();
               return;
             }
+            if (actionButton && actionButton.dataset.action === "add-language-entry") {
+              app.addLanguageEntry();
+              return;
+            }
             if (actionButton && actionButton.dataset.action === "add-education-entry") {
               app.addEducationEntry();
               return;
@@ -2490,6 +2698,15 @@
             }
             if (state.ui.activeSection === "skills" && state.hasOwn(config.skillFieldLabels, fieldName)) {
               app.updateSkillsField(fieldName, input.type === "radio" ? input.value : input.value);
+              return;
+            }
+            if (state.ui.activeSection === "languages" && state.hasOwn(config.languageFieldLabels, fieldName)) {
+              const languageForm = input.closest("[data-language-index]");
+              const languageIndex = languageForm ? Number(languageForm.dataset.languageIndex) : -1;
+              if (!Number.isInteger(languageIndex) || languageIndex < 0) {
+                return;
+              }
+              app.updateLanguageField(languageIndex, fieldName, input.value);
               return;
             }
             if (state.ui.activeSection !== "experience" || !state.hasOwn(config.experienceFieldLabels, fieldName)) {
@@ -2560,6 +2777,24 @@
             if (actionButton.dataset.action === "move-project-entry-to-position") {
               const targetInput = ui.editorCanvas.querySelector("[data-projectTargetPosition=\"" + String(projectIndex) + "\"]");
               app.moveProjectEntryToPosition(projectIndex, targetInput ? targetInput.value : "");
+              return;
+            }
+            const languageIndex = Number(actionButton.dataset.languageIndex);
+            if (actionButton.dataset.action === "remove-language-entry") {
+              app.removeLanguageEntry(languageIndex);
+              return;
+            }
+            if (actionButton.dataset.action === "move-language-entry-up") {
+              app.moveLanguageEntry(languageIndex, "up");
+              return;
+            }
+            if (actionButton.dataset.action === "move-language-entry-down") {
+              app.moveLanguageEntry(languageIndex, "down");
+              return;
+            }
+            if (actionButton.dataset.action === "move-language-entry-to-position") {
+              const targetInput = ui.editorCanvas.querySelector("[data-languageTargetPosition=\"" + String(languageIndex) + "\"]");
+              app.moveLanguageEntryToPosition(languageIndex, targetInput ? targetInput.value : "");
               return;
             }
             const educationIndex = Number(actionButton.dataset.educationIndex);

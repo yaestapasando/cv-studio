@@ -396,6 +396,42 @@ process.stdout.write(JSON.stringify(result));
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
 
+    def test_languages_section_supports_language_and_level_entries(self):
+        expected_snippets = [
+            '{ id: "languages", label: "Idiomas" },',
+            "languageFieldLabels: {",
+            'name: "Idioma"',
+            'level: "Nivel"',
+            'languages: {',
+            'items: { $ref: "#/$defs/languageEntry" },',
+            "languageEntry: {",
+            'required: ["name", "level"],',
+            'languages: [],',
+            'const languageEntries = state.cv.languages.length',
+            'languages: ""',
+            'Lista los idiomas que dominas y el nivel que quieres mostrar en el CV.',
+            '<form class=\\"editor-form language-form\\" data-language-index=\\"',
+            'id=\\"language-name-',
+            'name=\\"name\\"',
+            'data-language-field=\\"name\\"',
+            'placeholder=\\"Ej. Espanol\\"',
+            'id=\\"language-level-',
+            'name=\\"level\\"',
+            'data-language-field=\\"level\\"',
+            'placeholder=\\"Ej. Nativo, C1 o Profesional\\"',
+            '<span class=\\"entry-card-index\\">Idioma ',
+            'data-action=\\"move-language-entry-up\\"',
+            'data-action=\\"move-language-entry-down\\"',
+            'data-action=\\"remove-language-entry\\"',
+            'data-language-index=\\"" + String(index) + "\\"',
+            'data-action=\\"add-language-entry\\"',
+            '>Anadir otro idioma</button>',
+            '<div class=\\"editor-note\\" data-tone=\\"muted\\">Todavia no hay idiomas guardados en el CV.</div>',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
     def test_skills_preview_renders_selected_format(self):
         expected_snippets = [
             'const normalizedSkillItems = ui.getSkillItems(skills.items);',
@@ -405,6 +441,18 @@ process.stdout.write(JSON.stringify(result));
             'Formato: " + ui.escapeHtml(skills.mode === "categories" ? "Por categorias" : "Lista simple")',
             'Anade categorias con habilidades para completar esta vista previa.',
             'Anade tus habilidades principales para completar esta vista previa.',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_languages_preview_renders_name_and_level(self):
+        expected_snippets = [
+            'const languagePreview = state.cv.languages.length',
+            '<h3>Idiomas</h3>',
+            'ui.escapeHtml(entry.name || "Idioma pendiente")',
+            'ui.escapeHtml(entry.level || "Nivel pendiente")',
+            'Anade al menos un idioma para completar esta vista previa.',
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
@@ -431,6 +479,41 @@ process.stdout.write(JSON.stringify(result));
             'text: config.skillFieldLabels[fieldName] + " actualizado.",',
             'state.ui.activeSection === "skills" && state.hasOwn(config.skillFieldLabels, fieldName)',
             "app.updateSkillsField(fieldName, input.type === \"radio\" ? input.value : input.value);",
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_app_manages_language_entries(self):
+        expected_snippets = [
+            "normalizeLanguageEntry(entry) {",
+            'name: entry && typeof entry.name === "string"',
+            ': entry && typeof entry.language === "string"',
+            'level: entry && typeof entry.level === "string"',
+            ': entry && typeof entry.proficiency === "string"',
+            "const languages = Array.isArray(cvDocument.languages)",
+            "? cvDocument.languages.map((entry) => app.normalizeLanguageEntry(entry))",
+            "languages,",
+            "updateLanguageField(index, fieldName, fieldValue) {",
+            "!state.cv || !Array.isArray(state.cv.languages) || !state.hasOwn(config.languageFieldLabels, fieldName)",
+            "const currentEntry = state.cv.languages[index];",
+            "const nextLanguages = state.cv.languages.map((entry, entryIndex) => entryIndex === index",
+            "languages: nextLanguages,",
+            'text: config.languageFieldLabels[fieldName] + " actualizado en idioma " + String(index + 1) + ".",',
+            "addLanguageEntry() {",
+            'name: "",',
+            'level: "",',
+            "const nextLanguages = [...state.cv.languages, nextEntry];",
+            'text: "Idioma " + String(nextLanguages.length) + " anadido.",',
+            "removeLanguageEntry(index) {",
+            "!state.cv || !Array.isArray(state.cv.languages)",
+            "!Number.isInteger(index) || index < 0 || index >= state.cv.languages.length",
+            "const nextLanguages = state.cv.languages.filter((entry, entryIndex) => entryIndex !== index);",
+            'text: "Idioma " + String(index + 1) + " eliminado.",',
+            "moveLanguageEntry(index, direction) {",
+            'app.moveListEntry("languages", index, targetIndex, "Idioma", "movido");',
+            "moveLanguageEntryToPosition(index, rawTargetPosition) {",
+            'app.moveListEntry("languages", index, Number(rawTargetPosition) - 1, "Idioma", "movido");',
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
@@ -499,6 +582,76 @@ CVStudio.app.updateSkillsField("categories", "Frontend: HTML, CSS\\nBackend: Nod
             ],
         )
         self.assertEqual(result["message"], "Categorias actualizado.")
+
+    def test_normalize_language_entry_supports_legacy_fields(self):
+        result = self.run_js_scenario(
+            """
+const language = CVStudio.app.normalizeLanguageEntry({
+  language: "English",
+  proficiency: "C1",
+});
+({
+  name: language.name,
+  level: language.level,
+});
+"""
+        )
+        self.assertEqual(result["name"], "English")
+        self.assertEqual(result["level"], "C1")
+
+    def test_update_language_field_supports_name_and_level(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+cv.languages = [
+  { name: "Espanol", level: "Nativo" },
+];
+CVStudio.state.update({ cv, ui: { activeSection: "languages" } });
+CVStudio.app.updateLanguageField(0, "level", "C2");
+CVStudio.app.addLanguageEntry();
+CVStudio.app.updateLanguageField(1, "name", "English");
+CVStudio.app.updateLanguageField(1, "level", "C1");
+({
+  languages: CVStudio.state.cv.languages,
+  message: CVStudio.state.ui.message.text,
+});
+"""
+        )
+        self.assertEqual(
+            result["languages"],
+            [
+                {"name": "Espanol", "level": "C2"},
+                {"name": "English", "level": "C1"},
+            ],
+        )
+        self.assertEqual(result["message"], "Nivel actualizado en idioma 2.")
+
+    def test_app_reorders_language_entries_functionally(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+cv.languages = [
+  { name: "Espanol", level: "Nativo" },
+  { name: "English", level: "C1" },
+  { name: "Italiano", level: "B2" },
+];
+CVStudio.state.update({ cv, ui: { activeSection: "languages" } });
+CVStudio.app.moveLanguageEntryToPosition(2, "1");
+CVStudio.app.removeLanguageEntry(1);
+({
+  languages: CVStudio.state.cv.languages,
+  message: CVStudio.state.ui.message.text,
+});
+"""
+        )
+        self.assertEqual(
+            result["languages"],
+            [
+                {"name": "Italiano", "level": "B2"},
+                {"name": "English", "level": "C1"},
+            ],
+        )
+        self.assertEqual(result["message"], "Idioma 2 eliminado.")
 
     def test_experience_section_removes_entries_from_state(self):
         expected_snippets = [
@@ -767,6 +920,29 @@ CVStudio.app.updateProjectField(0, "highlights", "Uno\\n\\nDos\\n Tres ");
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
 
+    def test_languages_inputs_and_actions_sync_with_global_state(self):
+        expected_snippets = [
+            'actionButton.dataset.action === "add-language-entry"',
+            "app.addLanguageEntry();",
+            'state.ui.activeSection === "languages" && state.hasOwn(config.languageFieldLabels, fieldName)',
+            'const languageForm = input.closest("[data-language-index]");',
+            "const languageIndex = languageForm ? Number(languageForm.dataset.languageIndex) : -1;",
+            "app.updateLanguageField(languageIndex, fieldName, input.value);",
+            'const languageIndex = Number(actionButton.dataset.languageIndex);',
+            'actionButton.dataset.action === "remove-language-entry"',
+            "app.removeLanguageEntry(languageIndex);",
+            'actionButton.dataset.action === "move-language-entry-up"',
+            'app.moveLanguageEntry(languageIndex, "up");',
+            'actionButton.dataset.action === "move-language-entry-down"',
+            'app.moveLanguageEntry(languageIndex, "down");',
+            'actionButton.dataset.action === "move-language-entry-to-position"',
+            'const targetInput = ui.editorCanvas.querySelector("[data-languageTargetPosition=\\"" + String(languageIndex) + "\\"]");',
+            "app.moveLanguageEntryToPosition(languageIndex, targetInput ? targetInput.value : \"\");",
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
     def test_experience_section_exposes_add_action_in_toolbar(self):
         expected_snippets = [
             'const contextualActions = state.ui.activeSection === "experience"',
@@ -775,6 +951,9 @@ CVStudio.app.updateProjectField(0, "highlights", "Uno\\n\\nDos\\n Tres ");
             'state.ui.activeSection === "projects"',
             'data-action=\\"add-project-entry\\"',
             '>Anadir proyecto</button>',
+            'state.ui.activeSection === "languages"',
+            'data-action=\\"add-language-entry\\"',
+            '>Anadir idioma</button>',
             'state.ui.activeSection === "education"',
             'data-action=\\"add-education-entry\\"',
             '>Anadir formacion</button>',
