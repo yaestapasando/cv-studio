@@ -360,6 +360,146 @@ process.stdout.write(JSON.stringify(result));
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
 
+    def test_skills_section_supports_simple_and_categorized_modes(self):
+        expected_snippets = [
+            '{ id: "skills", label: "Habilidades" },',
+            "skillFieldLabels: {",
+            'mode: "Modo de habilidades"',
+            'items: "Lista simple"',
+            'categories: "Categorias"',
+            'skills: {',
+            'mode: "simple",',
+            'items: [],',
+            'categories: [],',
+            'const skills = state.cv.skills;',
+            'const skillsItemsValue = ui.escapeHtml(ui.getSkillItems(skills.items).join("\\n"));',
+            'const skillsCategoriesValue = ui.escapeHtml(ui.serializeSkillCategories(ui.getSkillCategories(skills.categories)));',
+            'skills: ""',
+            'Elige si prefieres mostrar habilidades en una lista simple o agrupadas por categorias.',
+            '<form class=\\"editor-form\\" id=\\"skills-form\\">',
+            'id=\\"skills-mode-simple\\"',
+            'data-skills-field=\\"mode\\"',
+            '> Lista simple</label>',
+            'id=\\"skills-mode-categories\\"',
+            '> Por categorias</label>',
+            'id=\\"skills-items-input\\"',
+            'name=\\"items\\"',
+            'data-skills-field=\\"items\\"',
+            'placeholder=\\"Escribe una habilidad por linea\\"',
+            'id=\\"skills-categories-input\\"',
+            'name=\\"categories\\"',
+            'data-skills-field=\\"categories\\"',
+            'placeholder=\\"Frontend: HTML, CSS, JavaScript\\"',
+            'Escribe una categoria por linea con el formato Categoria: habilidad, habilidad.',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_skills_preview_renders_selected_format(self):
+        expected_snippets = [
+            'const normalizedSkillItems = ui.getSkillItems(skills.items);',
+            'const normalizedSkillCategories = ui.getSkillCategories(skills.categories);',
+            'const skillsPreview = skills.mode === "categories"',
+            '<h3>Habilidades</h3>',
+            'Formato: " + ui.escapeHtml(skills.mode === "categories" ? "Por categorias" : "Lista simple")',
+            'Anade categorias con habilidades para completar esta vista previa.',
+            'Anade tus habilidades principales para completar esta vista previa.',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_app_normalizes_and_updates_skills(self):
+        expected_snippets = [
+            "getSkillItems(value) {",
+            "getSkillCategories(value) {",
+            "serializeSkillCategories(categories) {",
+            "parseSkillCategories(value) {",
+            "normalizeSkills(value) {",
+            'mode: "simple",',
+            'mode: "categories",',
+            "items: ui.getSkillItems(value.items),",
+            "categories: ui.getSkillCategories(value.categories),",
+            "const skills = app.normalizeSkills(cvDocument.skills);",
+            "updateSkillsField(fieldName, fieldValue) {",
+            "!state.cv || !state.cv.skills || !state.hasOwn(config.skillFieldLabels, fieldName)",
+            'fieldName === "mode"',
+            ': fieldName === "items"',
+            ": app.parseSkillsCategories(fieldValue),",
+            "skills: nextSkills,",
+            'text: config.skillFieldLabels[fieldName] + " actualizado.",',
+            'state.ui.activeSection === "skills" && state.hasOwn(config.skillFieldLabels, fieldName)',
+            "app.updateSkillsField(fieldName, input.type === \"radio\" ? input.value : input.value);",
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_normalize_skills_supports_legacy_simple_array(self):
+        result = self.run_js_scenario(
+            """
+const skills = CVStudio.app.normalizeSkills(["HTML", " CSS ", "", "JavaScript"]);
+({
+  mode: skills.mode,
+  items: skills.items,
+  categories: skills.categories,
+});
+"""
+        )
+        self.assertEqual(result["mode"], "simple")
+        self.assertEqual(result["items"], ["HTML", "CSS", "JavaScript"])
+        self.assertEqual(result["categories"], [])
+
+    def test_normalize_skills_supports_categorized_entries(self):
+        result = self.run_js_scenario(
+            """
+const skills = CVStudio.app.normalizeSkills([
+  { category: "Frontend", skills: ["HTML", "CSS"] },
+  { name: "Backend", items: "Node.js\\nAPIs" },
+]);
+({
+  mode: skills.mode,
+  items: skills.items,
+  categories: skills.categories,
+});
+"""
+        )
+        self.assertEqual(result["mode"], "categories")
+        self.assertEqual(result["items"], [])
+        self.assertEqual(
+            result["categories"],
+            [
+                {"name": "Frontend", "items": ["HTML", "CSS"]},
+                {"name": "Backend", "items": ["Node.js", "APIs"]},
+            ],
+        )
+
+    def test_update_skills_field_supports_both_editor_modes(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+CVStudio.state.update({ cv, ui: { activeSection: "skills" } });
+CVStudio.app.updateSkillsField("items", "HTML\\nCSS");
+CVStudio.app.updateSkillsField("mode", "categories");
+CVStudio.app.updateSkillsField("categories", "Frontend: HTML, CSS\\nBackend: Node.js, APIs");
+({
+  skills: CVStudio.state.cv.skills,
+  message: CVStudio.state.ui.message.text,
+});
+"""
+        )
+        self.assertEqual(result["skills"]["mode"], "categories")
+        self.assertEqual(result["skills"]["items"], ["HTML", "CSS"])
+        self.assertEqual(
+            result["skills"]["categories"],
+            [
+                {"name": "Frontend", "items": ["HTML", "CSS"]},
+                {"name": "Backend", "items": ["Node.js", "APIs"]},
+            ],
+        )
+        self.assertEqual(result["message"], "Categorias actualizado.")
+
     def test_experience_section_removes_entries_from_state(self):
         expected_snippets = [
             "removeExperienceEntry(index) {",

@@ -494,6 +494,7 @@
         sections: [
           { id: "basics", label: "Datos personales" },
           { id: "experience", label: "Experiencia" },
+          { id: "skills", label: "Habilidades" },
           { id: "projects", label: "Proyectos" },
           { id: "education", label: "Formacion" },
           { id: "schema", label: "Esquema JSON" },
@@ -555,6 +556,11 @@
           summary: "Descripcion",
           highlights: "Hitos",
         },
+        skillFieldLabels: {
+          mode: "Modo de habilidades",
+          items: "Lista simple",
+          categories: "Categorias",
+        },
         cvSchema: {
           $id: "cv-studio/schema/cv",
           $comment: "Compatible con JSON Schema Draft 2020-12.",
@@ -569,6 +575,7 @@
               minItems: 1,
               items: { $ref: "#/$defs/experienceEntry" },
             },
+            skills: { $ref: "#/$defs/skills" },
             projects: {
               type: "array",
               minItems: 1,
@@ -635,6 +642,34 @@
                 },
               },
             },
+            skills: {
+              type: "object",
+              additionalProperties: false,
+              required: ["mode", "items", "categories"],
+              properties: {
+                mode: { type: "string", enum: ["simple", "categories"] },
+                items: {
+                  type: "array",
+                  items: { type: "string", minLength: 1 },
+                },
+                categories: {
+                  type: "array",
+                  items: { $ref: "#/$defs/skillCategoryEntry" },
+                },
+              },
+            },
+            skillCategoryEntry: {
+              type: "object",
+              additionalProperties: false,
+              required: ["name", "items"],
+              properties: {
+                name: { type: "string", minLength: 1 },
+                items: {
+                  type: "array",
+                  items: { type: "string", minLength: 1 },
+                },
+              },
+            },
             projectEntry: {
               type: "object",
               additionalProperties: false,
@@ -677,7 +712,11 @@
           experience: [],
           education: [],
           projects: [],
-          skills: [],
+          skills: {
+            mode: "simple",
+            items: [],
+            categories: [],
+          },
           languages: [],
           certifications: [],
           theme: {
@@ -868,6 +907,80 @@
           }
           return [];
         },
+        getSkillItems(value) {
+          if (Array.isArray(value)) {
+            return value
+              .filter((item) => typeof item === "string")
+              .map((item) => item.trim())
+              .filter(Boolean);
+          }
+          if (typeof value === "string") {
+            return value
+              .split("\n")
+              .map((item) => item.trim())
+              .filter(Boolean);
+          }
+          return [];
+        },
+        getSkillCategories(value) {
+          if (!Array.isArray(value)) {
+            return [];
+          }
+          return value
+            .map((entry) => {
+              const name = entry && typeof entry.name === "string"
+                ? entry.name.trim()
+                : entry && typeof entry.category === "string"
+                  ? entry.category.trim()
+                  : "";
+              const items = ui.getSkillItems(
+                entry && Array.isArray(entry.items)
+                  ? entry.items
+                  : entry && Array.isArray(entry.skills)
+                    ? entry.skills
+                    : entry && typeof entry.items === "string"
+                      ? entry.items
+                      : entry && typeof entry.skills === "string"
+                        ? entry.skills
+                        : []
+              );
+              if (!name || !items.length) {
+                return null;
+              }
+              return { name, items };
+            })
+            .filter(Boolean);
+        },
+        serializeSkillCategories(categories) {
+          return categories
+            .map((category) => category.name + ": " + category.items.join(", "))
+            .join("\n");
+        },
+        parseSkillCategories(value) {
+          if (typeof value !== "string") {
+            return [];
+          }
+          return value
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .map((line) => {
+              const separatorIndex = line.indexOf(":");
+              if (separatorIndex === -1) {
+                return null;
+              }
+              const name = line.slice(0, separatorIndex).trim();
+              const items = line.slice(separatorIndex + 1)
+                .split(",")
+                .map((item) => item.trim())
+                .filter(Boolean);
+              if (!name || !items.length) {
+                return null;
+              }
+              return { name, items };
+            })
+            .filter(Boolean);
+        },
         formatExperiencePeriod(entry) {
           const startDate = entry && typeof entry.startDate === "string" ? entry.startDate.trim() : "";
           const isCurrent = Boolean(entry && entry.isCurrent);
@@ -983,6 +1096,7 @@
         },
         renderEditor() {
           const basics = state.cv.basics;
+          const skills = state.cv.skills;
           const activeSection = state.ui.activeSection;
           const experienceEntries = state.cv.experience.length
             ? "<div class=\"entry-list\">"
@@ -1352,6 +1466,8 @@
                 .join("")
               + "</div>"
             : "<div class=\"editor-note\" data-tone=\"muted\">Todavia no hay proyectos guardados en el CV.</div>";
+          const skillsItemsValue = ui.escapeHtml(ui.getSkillItems(skills.items).join("\n"));
+          const skillsCategoriesValue = ui.escapeHtml(ui.serializeSkillCategories(ui.getSkillCategories(skills.categories)));
           const sections = {
             basics: ""
               + "<form class=\"editor-form\" id=\"basics-form\">"
@@ -1484,6 +1600,48 @@
             experience: ""
               + "<div class=\"editor-note\" data-tone=\"muted\">Listado de experiencias existentes en el documento.</div>"
               + experienceEntries,
+            skills: ""
+              + "<div class=\"editor-note\" data-tone=\"muted\">Elige si prefieres mostrar habilidades en una lista simple o agrupadas por categorias.</div>"
+              + "<form class=\"editor-form\" id=\"skills-form\">"
+              + "<div class=\"editor-group\">"
+              + "<span>Formato de habilidades</span>"
+              + "<label for=\"skills-mode-simple\"><input id=\"skills-mode-simple\" name=\"mode\" value=\"simple\" data-skills-field=\"mode\" class=\"editor-input\" type=\"radio\""
+              + (skills.mode === "simple" ? " checked" : "")
+              + "> Lista simple</label>"
+              + "<label for=\"skills-mode-categories\"><input id=\"skills-mode-categories\" name=\"mode\" value=\"categories\" data-skills-field=\"mode\" class=\"editor-input\" type=\"radio\""
+              + (skills.mode === "categories" ? " checked" : "")
+              + "> Por categorias</label>"
+              + "<p class=\"editor-help\" id=\"skills-mode-help\">Puedes cambiar el formato sin perder el contenido del otro modo.</p>"
+              + "</div>"
+              + "<div class=\"editor-group\">"
+              + "<label for=\"skills-items-input\"><span>Lista simple</span></label>"
+              + "<textarea"
+              + " id=\"skills-items-input\""
+              + " name=\"items\""
+              + " data-skills-field=\"items\""
+              + " class=\"editor-field editor-input\""
+              + " rows=\"6\""
+              + " aria-describedby=\"skills-items-help\""
+              + " placeholder=\"Escribe una habilidad por linea\">"
+              + skillsItemsValue
+              + "</textarea>"
+              + "<p class=\"editor-help\" id=\"skills-items-help\">Usa este bloque para un listado corto y directo.</p>"
+              + "</div>"
+              + "<div class=\"editor-group\">"
+              + "<label for=\"skills-categories-input\"><span>Categorias</span></label>"
+              + "<textarea"
+              + " id=\"skills-categories-input\""
+              + " name=\"categories\""
+              + " data-skills-field=\"categories\""
+              + " class=\"editor-field editor-input\""
+              + " rows=\"7\""
+              + " aria-describedby=\"skills-categories-help\""
+              + " placeholder=\"Frontend: HTML, CSS, JavaScript\">"
+              + skillsCategoriesValue
+              + "</textarea>"
+              + "<p class=\"editor-help\" id=\"skills-categories-help\">Escribe una categoria por linea con el formato Categoria: habilidad, habilidad.</p>"
+              + "</div>"
+              + "</form>",
             projects: ""
               + "<div class=\"editor-note\" data-tone=\"muted\">Listado de proyectos existentes en el documento.</div>"
               + projectEntries
@@ -1511,6 +1669,7 @@
         },
         renderPreview() {
           const basics = state.cv.basics;
+          const skills = state.cv.skills;
           const requiredSections = config.cvSchema.required.join(", ");
           const experiencePreview = state.cv.experience.length
             ? state.cv.experience.map((entry) => ""
@@ -1547,6 +1706,22 @@
               + "</div>")
               .join("")
             : "<p>Anade tu primer proyecto para completar esta vista previa.</p>";
+          const normalizedSkillItems = ui.getSkillItems(skills.items);
+          const normalizedSkillCategories = ui.getSkillCategories(skills.categories);
+          const skillsPreview = skills.mode === "categories"
+            ? normalizedSkillCategories.length
+              ? "<div class=\"preview-skill-groups\">"
+                + normalizedSkillCategories.map((category) => ""
+                  + "<div class=\"preview-card\">"
+                  + "<p>" + ui.escapeHtml(category.name) + "</p>"
+                  + ui.renderAchievementList(category.items, "Habilidades pendientes")
+                  + "</div>")
+                  .join("")
+                + "</div>"
+              : "<p>Anade categorias con habilidades para completar esta vista previa.</p>"
+            : normalizedSkillItems.length
+              ? ui.renderAchievementList(normalizedSkillItems, "Habilidades pendientes")
+              : "<p>Anade tus habilidades principales para completar esta vista previa.</p>";
           ui.previewContent.innerHTML = ""
             + "<article class=\"preview-card\">"
             + "<h3>Perfil</h3>"
@@ -1564,6 +1739,11 @@
             + "<article class=\"preview-card\">"
             + "<h3>Experiencia</h3>"
             + experiencePreview
+            + "</article>"
+            + "<article class=\"preview-card\">"
+            + "<h3>Habilidades</h3>"
+            + "<p class=\"preview-meta\">Formato: " + ui.escapeHtml(skills.mode === "categories" ? "Por categorias" : "Lista simple") + "</p>"
+            + skillsPreview
             + "</article>"
             + "<article class=\"preview-card\">"
             + "<h3>Proyectos</h3>"
@@ -1637,6 +1817,31 @@
         normalizeProjectHighlights(highlights) {
           return ui.getProjectHighlights({ highlights });
         },
+        normalizeSkills(value) {
+          if (Array.isArray(value)) {
+            if (value.every((entry) => typeof entry === "string")) {
+              return {
+                mode: "simple",
+                items: ui.getSkillItems(value),
+                categories: [],
+              };
+            }
+            return {
+              mode: "categories",
+              items: [],
+              categories: ui.getSkillCategories(value),
+            };
+          }
+          if (!value || typeof value !== "object") {
+            return JSON.parse(JSON.stringify(config.initialCV.skills));
+          }
+          const mode = value.mode === "categories" ? "categories" : "simple";
+          return {
+            mode,
+            items: ui.getSkillItems(value.items),
+            categories: ui.getSkillCategories(value.categories),
+          };
+        },
         normalizeEducationEntry(entry) {
           return {
             title: entry && typeof entry.title === "string"
@@ -1702,6 +1907,7 @@
           const projects = Array.isArray(cvDocument.projects)
             ? cvDocument.projects.map((entry) => app.normalizeProjectEntry(entry))
             : [];
+          const skills = app.normalizeSkills(cvDocument.skills);
           return {
             ...config.initialCV,
             ...cvDocument,
@@ -1710,6 +1916,7 @@
               ...(cvDocument.basics && typeof cvDocument.basics === "object" ? cvDocument.basics : {}),
             },
             experience,
+            skills,
             projects,
             education,
             meta: {
@@ -1929,6 +2136,40 @@
               },
             },
           });
+        },
+        updateSkillsField(fieldName, fieldValue) {
+          if (!state.cv || !state.cv.skills || !state.hasOwn(config.skillFieldLabels, fieldName)) {
+            return;
+          }
+          const nextSkills = {
+            ...state.cv.skills,
+            [fieldName]: fieldName === "mode"
+              ? fieldValue === "categories"
+                ? "categories"
+                : "simple"
+              : fieldName === "items"
+                ? ui.getSkillItems(fieldValue)
+                : app.parseSkillsCategories(fieldValue),
+          };
+          state.update({
+            cv: {
+              ...state.cv,
+              skills: nextSkills,
+              meta: {
+                ...state.cv.meta,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+            ui: {
+              message: {
+                tone: "success",
+                text: config.skillFieldLabels[fieldName] + " actualizado.",
+              },
+            },
+          });
+        },
+        parseSkillsCategories(value) {
+          return ui.parseSkillCategories(value);
         },
         addExperienceEntry() {
           if (!state.cv || !Array.isArray(state.cv.experience)) {
@@ -2245,6 +2486,10 @@
             if (state.ui.activeSection === "basics" && state.hasOwn(config.basicsFieldLabels, fieldName)) {
               app.syncBasicFieldValidation(input);
               app.updateBasicsField(fieldName, input.value);
+              return;
+            }
+            if (state.ui.activeSection === "skills" && state.hasOwn(config.skillFieldLabels, fieldName)) {
+              app.updateSkillsField(fieldName, input.type === "radio" ? input.value : input.value);
               return;
             }
             if (state.ui.activeSection !== "experience" || !state.hasOwn(config.experienceFieldLabels, fieldName)) {
