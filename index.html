@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CV Studio - Generador de CV</title>
     <style>
-        /* Variables y Estilos Base */
         :root {
             --primary: #2563eb;
             --primary-dark: #1e40af;
@@ -15,15 +14,11 @@
             --text-muted: #64748b;
             --white: #fff;
             --shadow: 0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -4px rgb(0 0 0 / 10%);
-            
-            /* Tipografía y Espaciado CV */
             --cv-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
             --cv-font-serif: 'Georgia', serif;
             --cv-spacing-sm: 0.5rem;
             --cv-spacing-md: 1rem;
             --cv-spacing-lg: 1.5rem;
-            
-            /* Dimensiones Hoja A4 */
             --a4-width: 210mm;
             --a4-height: 297mm;
         }
@@ -49,7 +44,6 @@
             width: 100%;
         }
 
-        /* Paneles Principales */
         .editor-panel {
             flex: 0 0 40%;
             background: var(--bg-editor);
@@ -70,21 +64,17 @@
             scroll-behavior: smooth;
         }
 
-        /* Hoja de CV */
         #cv-paper {
             background: var(--white);
             width: 100%;
             max-width: var(--a4-width);
             min-height: var(--a4-height);
-
-            /* aspect-ratio: 210 / 297;  <- Comentado para permitir que crezca si el contenido excede una página */
             padding: 20mm;
             box-shadow: 0 10px 25px -5px rgb(0 0 0 / 10%), 0 8px 10px -6px rgb(0 0 0 / 10%);
             margin: 0 auto;
             position: relative;
         }
 
-        /* Diseño Responsive */
         @media (width <= 1024px) {
             #app {
                 flex-direction: column;
@@ -114,17 +104,18 @@
             }
         }
 
-        /* Estilos para impresión */
         @media print {
             @page {
                 size: a4;
                 margin: 0;
             }
 
-            body, #app {
-                height: auto;
-                overflow: visible;
+            html, body, #app {
+                height: auto !important;
+                overflow: visible !important;
                 background: white;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
 
             .editor-panel {
@@ -144,15 +135,15 @@
                 margin: 0 auto;
                 width: 100%;
                 max-width: none;
-                padding: 15mm;
+                padding: 20mm;
             }
 
             .cv-grid {
-                gap: 1.5rem;
+                gap: 2rem;
             }
             
             .cv-header {
-                border-bottom-width: 3px;
+                border-bottom-width: 4px;
             }
 
             .cv-item {
@@ -160,7 +151,6 @@
             }
         }
 
-        /* Estilos del Editor */
         .editor-panel h1 {
             font-size: 1.5rem;
             margin-bottom: 2rem;
@@ -242,7 +232,6 @@
             border-color: var(--primary);
         }
 
-        /* Botones y Acciones */
         .btn {
             display: inline-flex;
             align-items: center;
@@ -310,7 +299,6 @@
             }
         }
 
-        /* Estilos de la Vista Previa (CV) */
         .cv-header {
             margin-bottom: 2rem;
             border-bottom: 4px solid var(--primary);
@@ -521,7 +509,6 @@
                     <button type="button" id="add-experience" class="btn btn-primary btn-sm">+ Añadir</button>
                 </div>
                 <div id="experience-list">
-                    <!-- Dinámico -->
                 </div>
             </div>
             <div class="form-section">
@@ -530,22 +517,16 @@
                     <button type="button" id="add-education" class="btn btn-primary btn-sm">+ Añadir</button>
                 </div>
                 <div id="education-list">
-                    <!-- Dinámico -->
                 </div>
             </div>
         </aside>
         <main class="preview-panel">
             <div id="cv-paper">
-                <!-- Vista previa en Feature 4 -->
             </div>
         </main>
     </div>
 
     <script>
-        /**
-         * CV Studio - Script Principal
-         * Aplicación Single-File para generación de CVs.
-         */
         (function() {
             'use strict';
 
@@ -553,7 +534,6 @@
 
             const CVStudio = {
                 init: function() {
-                    console.info('CV Studio: Inicializando aplicación...');
                     this.cacheDOM();
                     
                     const initialState = {
@@ -600,35 +580,30 @@
                 bindEvents: function() {
                     const self = this;
                     
-                    // Botón exportar datos
                     if (this.exportBtn) {
                         this.exportBtn.addEventListener('click', () => {
                             self.exportData();
                         });
                     }
 
-                    // Botón exportar PDF
                     if (this.exportPdfBtn) {
                         this.exportPdfBtn.addEventListener('click', () => {
                             self.exportPDF();
                         });
                     }
 
-                    // Botón importar datos
                     if (this.importBtn) {
                         this.importBtn.addEventListener('click', () => {
                             self.importData();
                         });
                     }
 
-                    // Escuchar cambios en los inputs del editor (input para tiempo real, change para asegurar captura)
                     const handleInput = (e) => {
                         const path = e.target.getAttribute('data-path');
                         if (path) {
                             const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
                             self.updateStateByPath(path, value);
 
-                            // Si cambió 'current', necesitamos refrescar el editor para habilitar/deshabilitar el campo fecha fin
                             if (path.includes('experience') && path.endsWith('.current')) {
                                 self.renderExperienceEditor();
                             }
@@ -641,21 +616,18 @@
                     this.editor.addEventListener('input', handleInput);
                     this.editor.addEventListener('change', handleInput);
 
-                    // Botón añadir experiencia
                     if (this.addExperienceBtn) {
                         this.addExperienceBtn.addEventListener('click', () => {
                             self.addExperience();
                         });
                     }
 
-                    // Botón añadir educación
                     if (this.addEducationBtn) {
                         this.addEducationBtn.addEventListener('click', () => {
                             self.addEducation();
                         });
                     }
 
-                    // Botones en el editor (remover, reordenar) - Experiencia
                     if (this.experienceListContainer) {
                         this.experienceListContainer.addEventListener('click', (e) => {
                             const btn = e.target.closest('button');
@@ -674,7 +646,6 @@
                         });
                     }
 
-                    // Botones en el editor (remover, reordenar) - Educación
                     if (this.educationListContainer) {
                         this.educationListContainer.addEventListener('click', (e) => {
                             const btn = e.target.closest('button');
@@ -694,15 +665,10 @@
                     }
                 },
 
-                /**
-                 * Sincroniza los campos del editor con el estado cargado
-                 */
                 syncEditorWithState: function() {
                     const inputs = this.editor.querySelectorAll('[data-path]');
                     inputs.forEach(input => {
                         const path = input.getAttribute('data-path');
-                        // No sincronizamos automáticamente campos de listas dinámicas aquí, 
-                        // ya que se renderizan bajo demanda
                         if (path.startsWith('experience') || path.startsWith('education')) return;
                         
                         let value = this.getValueByPath(path);
@@ -722,22 +688,15 @@
                     this.renderEducationEditor();
                 },
 
-                /**
-                 * Obtiene un valor del estado basándose en una cadena de ruta
-                 */
                 getValueByPath: function(path) {
                     return path.split('.').reduce((obj, key) => (obj && typeof obj[key] !== 'undefined') ? obj[key] : undefined, this.state);
                 },
 
-                /**
-                 * Actualiza una propiedad del estado basándose en una cadena de ruta (ej: 'personalData.firstName')
-                 */
                 updateStateByPath: function(path, value) {
                     const keys = path.split('.');
                     let current = this.state;
                     
                     for (let i = 0; i < keys.length - 1; i++) {
-                        // Si la siguiente clave es un índice de array (número), nos aseguramos de que el actual sea el array
                         current = current[keys[i]];
                     }
                     
@@ -782,7 +741,6 @@
                     const [movedItem] = items.splice(index, 1);
                     items.splice(newIndex, 0, movedItem);
                     
-                    // Reemplazamos el array completo para disparar la reactividad adecuadamente
                     this.state.experience = items;
                     this.renderExperienceEditor();
                 },
@@ -876,7 +834,6 @@
                     const [movedItem] = items.splice(index, 1);
                     items.splice(newIndex, 0, movedItem);
                     
-                    // Reemplazamos el array completo para disparar la reactividad adecuadamente
                     this.state.education = items;
                     this.renderEducationEditor();
                 },
@@ -889,7 +846,7 @@
 
                     this.state.education.forEach((edu, index) => {
                         const itemDiv = document.createElement('div');
-                        itemDiv.className = 'experience-item'; // Reuse styles
+                        itemDiv.className = 'experience-item';
                         itemDiv.innerHTML = `
                             <div class="experience-item-header">
                                 <div class="experience-item-controls">
@@ -978,7 +935,6 @@
                 },
 
                 render: function() {
-                    console.debug('CV Studio: Renderizando vista previa...');
                     if (!this.preview) return;
                     
                     const { personalData, summary, experience, education, skills } = this.state;
@@ -1099,7 +1055,6 @@
                 },
 
                 exportData: function() {
-                    console.info('CV Studio: Exportando datos...');
                     const dataStr = JSON.stringify(this.state, null, 2);
                     const blob = new Blob([dataStr], { type: 'application/json' });
                     const url = URL.createObjectURL(blob);
@@ -1115,7 +1070,6 @@
                 },
 
                 exportPDF: function() {
-                    console.info('CV Studio: Exportando a PDF...');
                     window.print();
                 },
 
@@ -1148,11 +1102,9 @@
                                 } else {
                                     alert(`Error en la estructura del archivo: ${validation.error}`);
                                 }
-                            } catch (error) {
-                                console.error('Error al importar datos:', error);
+                            } catch {
                                 alert('Error al procesar el archivo. Asegúrate de que sea un JSON válido.');
                             }
-                            // Resetear para permitir re-selección del mismo archivo
                             self.importInput.value = '';
                         };
                         reader.readAsText(file);
@@ -1192,13 +1144,11 @@
                     return { valid: true };
                 },
 
-                // Persistencia
                 saveToLocalStorage: function() {
                     try {
                         localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
-                        console.debug('CV Studio: Estado guardado en localStorage');
-                    } catch (error) {
-                        console.error('CV Studio: Error al guardar en localStorage', error);
+                    } catch {
+                        /* Ignore */
                     }
                 },
 
@@ -1206,8 +1156,7 @@
                     try {
                         const saved = localStorage.getItem(STORAGE_KEY);
                         return saved ? JSON.parse(saved) : null;
-                    } catch (error) {
-                        console.error('CV Studio: Error al cargar de localStorage', error);
+                    } catch {
                         return null;
                     }
                 },
@@ -1253,10 +1202,8 @@
                 }
             };
 
-            // Inicializar el guardado con debounce (500ms)
             CVStudio.debouncedSave = CVStudio.debounce(CVStudio.saveToLocalStorage.bind(CVStudio), 500);
 
-            // Iniciar aplicación al cargar el DOM
             document.addEventListener('DOMContentLoaded', () => {
                 CVStudio.init();
             });
