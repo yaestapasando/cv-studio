@@ -241,6 +241,7 @@ process.stdout.write(JSON.stringify(result));
             ".editor-form {",
             ".editor-help {",
             ".editor-input {",
+            '<section class=\\"editor-section\\" data-editor-section=\\"',
             '<form class=\\"editor-form\\" id=\\"basics-form\\">',
             '<label for=\\"full-name-input\\"><span>Nombre completo</span></label>',
             'id=\\"full-name-input\\"',
@@ -255,6 +256,45 @@ process.stdout.write(JSON.stringify(result));
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
+
+    def test_editor_input_uses_dom_section_context_to_keep_preview_in_sync(self):
+        result = self.run_js_scenario("""
+(() => {
+  CVStudio.state.update({
+    cv: CVStudio.app.cloneInitialCV(),
+    ui: {
+      activeSection: "skills",
+      message: { tone: "info", text: "Listo" },
+    },
+    booted: true,
+  });
+  const input = {
+    name: "fullName",
+    value: "Ada Lovelace",
+    type: "text",
+    setCustomValidity() {},
+    reportValidity() { return true; },
+    closest(selector) {
+      if (selector === "[data-editor-section]") {
+        return { dataset: { editorSection: "basics" } };
+      }
+      return null;
+    },
+  };
+  CVStudio.app.handleEditorInput(input);
+  CVStudio.ui.renderPreview();
+  return {
+    activeSection: CVStudio.state.ui.activeSection,
+    fullName: CVStudio.state.cv.basics.fullName,
+    previewContainsName: CVStudio.ui.previewContent.innerHTML.includes("Ada Lovelace"),
+    editorSection: CVStudio.app.getEditorSectionFromInput(input),
+  };
+})()
+""")
+        self.assertEqual(result["activeSection"], "skills")
+        self.assertEqual(result["fullName"], "Ada Lovelace")
+        self.assertTrue(result["previewContainsName"])
+        self.assertEqual(result["editorSection"], "basics")
 
     def test_basics_section_renders_professional_headline_form(self):
         expected_snippets = [
@@ -601,8 +641,8 @@ process.stdout.write(JSON.stringify(result));
             ": app.parseSkillsCategories(fieldValue),",
             "skills: nextSkills,",
             'text: config.skillFieldLabels[fieldName] + " actualizado.",',
-            'state.ui.activeSection === "skills" && state.hasOwn(config.skillFieldLabels, fieldName)',
-            "app.updateSkillsField(fieldName, input.type === \"radio\" ? input.value : input.value);",
+            'if (editorSection === "skills" && state.hasOwn(config.skillFieldLabels, fieldName)) {',
+            "app.updateSkillsField(fieldName, input.value);",
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
@@ -1131,7 +1171,7 @@ CVStudio.app.updateProjectField(0, "highlights", "Uno\\n\\nDos\\n Tres ");
         expected_snippets = [
             'actionButton.dataset.action === "add-project-entry"',
             "app.addProjectEntry();",
-            'state.ui.activeSection === "projects" && state.hasOwn(config.projectFieldLabels, fieldName)',
+            'if (editorSection === "projects" && state.hasOwn(config.projectFieldLabels, fieldName)) {',
             'const projectForm = input.closest("[data-project-index]");',
             "const projectIndex = projectForm ? Number(projectForm.dataset.projectIndex) : -1;",
             "app.updateProjectField(projectIndex, fieldName, input.value);",
@@ -1154,7 +1194,7 @@ CVStudio.app.updateProjectField(0, "highlights", "Uno\\n\\nDos\\n Tres ");
         expected_snippets = [
             'actionButton.dataset.action === "add-language-entry"',
             "app.addLanguageEntry();",
-            'state.ui.activeSection === "languages" && state.hasOwn(config.languageFieldLabels, fieldName)',
+            'if (editorSection === "languages" && state.hasOwn(config.languageFieldLabels, fieldName)) {',
             'const languageForm = input.closest("[data-language-index]");',
             "const languageIndex = languageForm ? Number(languageForm.dataset.languageIndex) : -1;",
             "app.updateLanguageField(languageIndex, fieldName, input.value);",
@@ -1587,7 +1627,7 @@ CVStudio.app.moveEducationEntryToPosition(0, "2");
         expected_snippets = [
             'actionButton.dataset.action === "add-education-entry"',
             "app.addEducationEntry();",
-            'state.ui.activeSection !== "education" || !state.hasOwn(config.educationFieldLabels, fieldName)',
+            'if (editorSection !== "education" || !state.hasOwn(config.educationFieldLabels, fieldName)) {',
             'const educationForm = input.closest("[data-education-index]");',
             "const educationIndex = educationForm ? Number(educationForm.dataset.educationIndex) : -1;",
             "app.updateEducationField(educationIndex, fieldName, input.value);",
@@ -1785,6 +1825,7 @@ CVStudio.app.moveEducationEntryToPosition(0, "2");
             "input.reportValidity();",
             "app.syncBasicFieldValidation(input);",
             "app.syncBasicFieldValidation(input, { report: true });",
+            "handleEditorBlur(input) {",
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
@@ -1798,8 +1839,8 @@ CVStudio.app.moveEducationEntryToPosition(0, "2");
             'text: config.basicsFieldLabels[fieldName] + " actualizado.",',
             'const input = event.target.closest("[name]");',
             'const fieldName = input ? input.name : "";',
-            'state.ui.activeSection !== "basics"',
-            '!state.hasOwn(config.basicsFieldLabels, fieldName)',
+            "getEditorSectionFromInput(input) {",
+            'if (editorSection === "basics" && state.hasOwn(config.basicsFieldLabels, fieldName)) {',
             'app.updateBasicsField(fieldName, input.value);',
             'ui.escapeHtml(basics.web || "Web pendiente")',
             'ui.escapeHtml(basics.linkedin || "LinkedIn pendiente")',
@@ -1825,8 +1866,8 @@ CVStudio.app.moveEducationEntryToPosition(0, "2");
             '[fieldName]: normalizedFieldValue,',
             'endDate: fieldName === "isCurrent" && normalizedFieldValue ? "" : entry.endDate,',
             'text: config.experienceFieldLabels[fieldName] + " actualizado en experiencia " + String(index + 1) + ".",',
-            'state.ui.activeSection === "basics" && state.hasOwn(config.basicsFieldLabels, fieldName)',
-            'state.ui.activeSection !== "experience" || !state.hasOwn(config.experienceFieldLabels, fieldName)',
+            "const editorSection = app.getEditorSectionFromInput(input);",
+            'if (editorSection !== "experience" || !state.hasOwn(config.experienceFieldLabels, fieldName)) {',
             'const experienceForm = input.closest("[data-experience-index]");',
             "const experienceIndex = experienceForm ? Number(experienceForm.dataset.experienceIndex) : -1;",
             'const fieldValue = input.type === "checkbox" ? input.checked : input.value;',
@@ -1971,6 +2012,7 @@ CVStudio.state.update({ cv: CVStudio.app.normalizeCvDocument(cv), ui: { activeSe
             'document.body.dataset.activeTemplate = state.ui.template;',
             'document.body.dataset.modalOpen = String(state.ui.modal.open);',
             'document.body.dataset.runtimeMode = state.capabilities.fileProtocol ? "file" : "browser";',
+            'ui.editorCanvas.dataset.editorSection = state.ui.activeSection;',
             "handleStateChange() {",
             "if (!state.booted || !state.cv) {",
             "app.render();",
@@ -1982,6 +2024,8 @@ CVStudio.state.update({ cv: CVStudio.app.normalizeCvDocument(cv), ui: { activeSe
             "ui.toolbar.addEventListener(\"click\"",
             "ui.editorCanvas.addEventListener(\"input\"",
             "event.target.closest(\"[name]\")",
+            "app.handleEditorInput(input);",
+            "app.handleEditorBlur(input);",
             "app.updateBasicsField(fieldName, input.value);",
             'const fieldValue = input.type === "checkbox" ? input.checked : input.value;',
             "app.updateExperienceField(experienceIndex, fieldName, fieldValue);",

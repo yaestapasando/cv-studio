@@ -1969,7 +1969,9 @@
             + "<div class=\"editor-note\" data-tone=\"" + ui.escapeHtml(state.ui.message.tone) + "\">"
             + ui.escapeHtml(state.ui.message.text)
             + "</div>"
-            + sections[activeSection];
+            + "<section class=\"editor-section\" data-editor-section=\"" + ui.escapeHtml(activeSection) + "\">"
+            + sections[activeSection]
+            + "</section>";
         },
         renderPreview() {
           const basics = state.cv.basics;
@@ -2548,11 +2550,95 @@
           }
           return validationMessage === "";
         },
+        getEditorSectionFromInput(input) {
+          if (!input) {
+            return state.ui.activeSection;
+          }
+          const editorSection = typeof input.closest === "function"
+            ? input.closest("[data-editor-section]")
+            : null;
+          if (editorSection && editorSection.dataset && state.isValidSection(editorSection.dataset.editorSection)) {
+            return editorSection.dataset.editorSection;
+          }
+          if (ui.editorCanvas.dataset && state.isValidSection(ui.editorCanvas.dataset.editorSection)) {
+            return ui.editorCanvas.dataset.editorSection;
+          }
+          return state.ui.activeSection;
+        },
+        handleEditorInput(input) {
+          const fieldName = input ? input.name : "";
+          const editorSection = app.getEditorSectionFromInput(input);
+          if (!input) {
+            return;
+          }
+          if (editorSection === "basics" && state.hasOwn(config.basicsFieldLabels, fieldName)) {
+            app.syncBasicFieldValidation(input);
+            app.updateBasicsField(fieldName, input.value);
+            return;
+          }
+          if (editorSection === "skills" && state.hasOwn(config.skillFieldLabels, fieldName)) {
+            app.updateSkillsField(fieldName, input.value);
+            return;
+          }
+          if (editorSection === "languages" && state.hasOwn(config.languageFieldLabels, fieldName)) {
+            const languageForm = input.closest("[data-language-index]");
+            const languageIndex = languageForm ? Number(languageForm.dataset.languageIndex) : -1;
+            if (!Number.isInteger(languageIndex) || languageIndex < 0) {
+              return;
+            }
+            app.updateLanguageField(languageIndex, fieldName, input.value);
+            return;
+          }
+          if (editorSection === "certifications" && state.hasOwn(config.certificationFieldLabels, fieldName)) {
+            const certificationForm = input.closest("[data-certification-index]");
+            const certificationIndex = certificationForm ? Number(certificationForm.dataset.certificationIndex) : -1;
+            if (!Number.isInteger(certificationIndex) || certificationIndex < 0) {
+              return;
+            }
+            app.updateCertificationField(certificationIndex, fieldName, input.value);
+            return;
+          }
+          if (editorSection !== "experience" || !state.hasOwn(config.experienceFieldLabels, fieldName)) {
+            if (editorSection === "projects" && state.hasOwn(config.projectFieldLabels, fieldName)) {
+              const projectForm = input.closest("[data-project-index]");
+              const projectIndex = projectForm ? Number(projectForm.dataset.projectIndex) : -1;
+              if (!Number.isInteger(projectIndex) || projectIndex < 0) {
+                return;
+              }
+              app.updateProjectField(projectIndex, fieldName, input.value);
+              return;
+            }
+            if (editorSection !== "education" || !state.hasOwn(config.educationFieldLabels, fieldName)) {
+              return;
+            }
+            const educationForm = input.closest("[data-education-index]");
+            const educationIndex = educationForm ? Number(educationForm.dataset.educationIndex) : -1;
+            if (!Number.isInteger(educationIndex) || educationIndex < 0) {
+              return;
+            }
+            app.updateEducationField(educationIndex, fieldName, input.value);
+            return;
+          }
+          const experienceForm = input.closest("[data-experience-index]");
+          const experienceIndex = experienceForm ? Number(experienceForm.dataset.experienceIndex) : -1;
+          if (!Number.isInteger(experienceIndex) || experienceIndex < 0) {
+            return;
+          }
+          const fieldValue = input.type === "checkbox" ? input.checked : input.value;
+          app.updateExperienceField(experienceIndex, fieldName, fieldValue);
+        },
+        handleEditorBlur(input) {
+          if (!input || app.getEditorSectionFromInput(input) !== "basics") {
+            return;
+          }
+          app.syncBasicFieldValidation(input, { report: true });
+        },
         syncDom() {
           document.body.dataset.activeSection = state.ui.activeSection;
           document.body.dataset.activeTemplate = state.ui.template;
           document.body.dataset.modalOpen = String(state.ui.modal.open);
           document.body.dataset.runtimeMode = state.capabilities.fileProtocol ? "file" : "browser";
+          ui.editorCanvas.dataset.editorSection = state.ui.activeSection;
         },
         handleStateChange() {
           if (!state.booted || !state.cv) {
@@ -3320,65 +3406,7 @@
           });
           ui.editorCanvas.addEventListener("input", (event) => {
             const input = event.target.closest("[name]");
-            const fieldName = input ? input.name : "";
-            if (!input) {
-              return;
-            }
-            if (state.ui.activeSection === "basics" && state.hasOwn(config.basicsFieldLabels, fieldName)) {
-              app.syncBasicFieldValidation(input);
-              app.updateBasicsField(fieldName, input.value);
-              return;
-            }
-            if (state.ui.activeSection === "skills" && state.hasOwn(config.skillFieldLabels, fieldName)) {
-              app.updateSkillsField(fieldName, input.type === "radio" ? input.value : input.value);
-              return;
-            }
-            if (state.ui.activeSection === "languages" && state.hasOwn(config.languageFieldLabels, fieldName)) {
-              const languageForm = input.closest("[data-language-index]");
-              const languageIndex = languageForm ? Number(languageForm.dataset.languageIndex) : -1;
-              if (!Number.isInteger(languageIndex) || languageIndex < 0) {
-                return;
-              }
-              app.updateLanguageField(languageIndex, fieldName, input.value);
-              return;
-            }
-            if (state.ui.activeSection === "certifications" && state.hasOwn(config.certificationFieldLabels, fieldName)) {
-              const certificationForm = input.closest("[data-certification-index]");
-              const certificationIndex = certificationForm ? Number(certificationForm.dataset.certificationIndex) : -1;
-              if (!Number.isInteger(certificationIndex) || certificationIndex < 0) {
-                return;
-              }
-              app.updateCertificationField(certificationIndex, fieldName, input.value);
-              return;
-            }
-            if (state.ui.activeSection !== "experience" || !state.hasOwn(config.experienceFieldLabels, fieldName)) {
-              if (state.ui.activeSection === "projects" && state.hasOwn(config.projectFieldLabels, fieldName)) {
-                const projectForm = input.closest("[data-project-index]");
-                const projectIndex = projectForm ? Number(projectForm.dataset.projectIndex) : -1;
-                if (!Number.isInteger(projectIndex) || projectIndex < 0) {
-                  return;
-                }
-                app.updateProjectField(projectIndex, fieldName, input.value);
-                return;
-              }
-              if (state.ui.activeSection !== "education" || !state.hasOwn(config.educationFieldLabels, fieldName)) {
-                return;
-              }
-              const educationForm = input.closest("[data-education-index]");
-              const educationIndex = educationForm ? Number(educationForm.dataset.educationIndex) : -1;
-              if (!Number.isInteger(educationIndex) || educationIndex < 0) {
-                return;
-              }
-              app.updateEducationField(educationIndex, fieldName, input.value);
-              return;
-            }
-            const experienceForm = input.closest("[data-experience-index]");
-            const experienceIndex = experienceForm ? Number(experienceForm.dataset.experienceIndex) : -1;
-            if (!Number.isInteger(experienceIndex) || experienceIndex < 0) {
-              return;
-            }
-            const fieldValue = input.type === "checkbox" ? input.checked : input.value;
-            app.updateExperienceField(experienceIndex, fieldName, fieldValue);
+            app.handleEditorInput(input);
           });
           ui.editorCanvas.addEventListener("click", (event) => {
             const actionButton = event.target.closest("[data-action]");
@@ -3497,10 +3525,7 @@
           });
           ui.editorCanvas.addEventListener("blur", (event) => {
             const input = event.target.closest("[name]");
-            if (!input || state.ui.activeSection !== "basics") {
-              return;
-            }
-            app.syncBasicFieldValidation(input, { report: true });
+            app.handleEditorBlur(input);
           }, true);
           ui.modal.addEventListener("click", (event) => {
             const closeButton = event.target.closest("[data-close-modal]");
