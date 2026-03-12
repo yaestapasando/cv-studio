@@ -1105,7 +1105,9 @@
                         reader.onload = (event) => {
                             try {
                                 const importedData = JSON.parse(event.target.result);
-                                if (importedData && typeof importedData === 'object') {
+                                const validation = self.validateData(importedData);
+
+                                if (validation.valid) {
                                     // Mezclamos con el estado inicial para asegurar estructura
                                     // Para simplificar, actualizamos las propiedades principales directamente
                                     Object.keys(importedData).forEach(key => {
@@ -1117,6 +1119,8 @@
                                     self.syncEditorWithState();
                                     self.render();
                                     alert('Datos importados correctamente.');
+                                } else {
+                                    alert(`Error en la estructura del archivo: ${validation.error}`);
                                 }
                             } catch (error) {
                                 console.error('Error al importar datos:', error);
@@ -1129,6 +1133,37 @@
                     };
 
                     this.importInput.click();
+                },
+
+                validateData: function(data) {
+                    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+                        return { valid: false, error: 'Los datos deben ser un objeto JSON.' };
+                    }
+
+                    const requiredSections = ['personalData', 'summary', 'experience', 'education', 'skills'];
+                    for (const section of requiredSections) {
+                        if (!(section in data)) {
+                            return { valid: false, error: `Falta la sección obligatoria: ${section}` };
+                        }
+                    }
+
+                    if (!this.isObject(data.personalData)) {
+                        return { valid: false, error: 'La sección personalData debe ser un objeto.' };
+                    }
+
+                    if (!Array.isArray(data.experience)) {
+                        return { valid: false, error: 'La sección experience debe ser un array.' };
+                    }
+
+                    if (!Array.isArray(data.education)) {
+                        return { valid: false, error: 'La sección education debe ser un array.' };
+                    }
+
+                    if (!Array.isArray(data.skills)) {
+                        return { valid: false, error: 'La sección skills debe ser un array.' };
+                    }
+
+                    return { valid: true };
                 },
 
                 // Persistencia

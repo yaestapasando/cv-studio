@@ -23,6 +23,14 @@ test('Import Data feature', (t) => {
         assert.ok(htmlContent.includes('importData: function'), 'Missing importData function in CVStudio');
     });
 
+    t.test('should have validateData function in CVStudio', () => {
+        assert.ok(htmlContent.includes('validateData: function'), 'Missing validateData function in CVStudio');
+    });
+
+    t.test('should use validateData in importData', () => {
+        assert.ok(htmlContent.includes('self.validateData(importedData)'), 'Missing validateData call in importData');
+    });
+
     t.test('should use FileReader for importing data', () => {
         assert.ok(htmlContent.includes('new FileReader'), 'Missing FileReader usage in importData');
     });
