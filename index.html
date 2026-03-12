@@ -195,6 +195,11 @@
       gap: 8px;
     }
 
+    .editor-form {
+      display: grid;
+      gap: 14px;
+    }
+
     .editor-group span {
       font-size: 0.82rem;
       letter-spacing: 0.08em;
@@ -208,6 +213,12 @@
       border: 1px solid var(--border);
       border-radius: 14px;
       background: #fff;
+    }
+
+    .editor-input {
+      width: 100%;
+      font: inherit;
+      color: var(--text);
     }
 
     .editor-note {
@@ -709,10 +720,19 @@
           const activeSection = state.ui.activeSection;
           const sections = {
             basics: ""
+              + "<form class=\"editor-form\" id=\"basics-form\">"
               + "<div class=\"editor-group\">"
-              + "<span>Nombre completo</span>"
-              + "<div class=\"editor-field\">" + ui.escapeHtml(basics.fullName) + "</div>"
+              + "<label for=\"full-name-input\"><span>Nombre completo</span></label>"
+              + "<input"
+              + " id=\"full-name-input\""
+              + " name=\"fullName\""
+              + " class=\"editor-field editor-input\""
+              + " type=\"text\""
+              + " autocomplete=\"name\""
+              + " placeholder=\"Escribe tu nombre completo\""
+              + " value=\"" + ui.escapeHtml(basics.fullName) + "\">"
               + "</div>"
+              + "</form>"
               + "<div class=\"editor-group\">"
               + "<span>Titular profesional</span>"
               + "<div class=\"editor-field\">" + ui.escapeHtml(basics.headline) + "</div>"
@@ -915,6 +935,31 @@
                 message: {
                   tone: "muted",
                   text: "Consulta rapida de plantillas abierta.",
+                },
+              },
+            });
+          });
+          ui.editorCanvas.addEventListener("input", (event) => {
+            const fullNameInput = event.target.closest("[name=\"fullName\"]");
+            if (!fullNameInput || state.ui.activeSection !== "basics") {
+              return;
+            }
+            state.update({
+              cv: {
+                ...state.cv,
+                basics: {
+                  ...state.cv.basics,
+                  fullName: fullNameInput.value,
+                },
+                meta: {
+                  ...state.cv.meta,
+                  updatedAt: new Date().toISOString(),
+                },
+              },
+              ui: {
+                message: {
+                  tone: "success",
+                  text: "Nombre completo actualizado.",
                 },
               },
             });

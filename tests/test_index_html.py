@@ -97,6 +97,23 @@ class IndexHtmlTest(unittest.TestCase):
         self.assertIn("Acciones del editor", self.parser.aria_labels)
         self.assertIn("Vista previa del curriculum", self.parser.aria_labels)
 
+    def test_basics_section_renders_full_name_form(self):
+        expected_snippets = [
+            ".editor-form {",
+            ".editor-input {",
+            '<form class=\\"editor-form\\" id=\\"basics-form\\">',
+            '<label for=\\"full-name-input\\"><span>Nombre completo</span></label>',
+            'id=\\"full-name-input\\"',
+            'name=\\"fullName\\"',
+            'class=\\"editor-field editor-input\\"',
+            'type=\\"text\\"',
+            'autocomplete=\\"name\\"',
+            'placeholder=\\"Escribe tu nombre completo\\"',
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
     def test_bootstrap_defines_initial_state_and_capabilities(self):
         expected_snippets = [
             'storageKey: "cv-studio-document"',
@@ -223,6 +240,11 @@ class IndexHtmlTest(unittest.TestCase):
             "state.subscribe(() => {",
             "app.handleStateChange();",
             "ui.toolbar.addEventListener(\"click\"",
+            "ui.editorCanvas.addEventListener(\"input\"",
+            "event.target.closest(\"[name=\\\"fullName\\\"]\")",
+            'text: "Nombre completo actualizado."',
+            "fullName: fullNameInput.value,",
+            "updatedAt: new Date().toISOString(),",
             "event.target.closest(\"[data-section]\")",
             "event.target.closest(\"[data-template]\")",
             "event.target.closest(\"[data-modal]\")",
