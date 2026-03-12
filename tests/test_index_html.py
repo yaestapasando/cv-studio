@@ -557,6 +557,104 @@ process.stdout.write(JSON.stringify(result));
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
 
+    def test_preview_auto_hides_empty_optional_sections(self):
+        result = self.run_js_scenario(
+            """
+(() => {
+  CVStudio.state.update({
+    cv: CVStudio.app.cloneInitialCV(),
+    ui: {
+      template: "classic",
+      sectionVisibility: {
+        basics: true,
+        experience: true,
+        skills: true,
+        languages: true,
+        certifications: true,
+        projects: true,
+        education: true,
+      },
+    },
+    booted: true,
+  });
+  CVStudio.ui.renderPreview();
+  const html = CVStudio.ui.previewContent.innerHTML;
+  return {
+    hasProfile: html.includes("<h3>Perfil</h3>"),
+    hasExperience: html.includes("<h3>Experiencia</h3>"),
+    hasSkills: html.includes("<h3>Habilidades</h3>"),
+    hasLanguages: html.includes("<h3>Idiomas</h3>"),
+    hasCertifications: html.includes("<h3>Certificaciones</h3>"),
+    hasProjects: html.includes("<h3>Proyectos</h3>"),
+    hasEducation: html.includes("<h3>Formacion</h3>"),
+    hasSchema: html.includes("<h3>Esquema JSON</h3>"),
+  };
+})()
+"""
+        )
+        self.assertTrue(result["hasProfile"])
+        self.assertFalse(result["hasExperience"])
+        self.assertFalse(result["hasSkills"])
+        self.assertFalse(result["hasLanguages"])
+        self.assertFalse(result["hasCertifications"])
+        self.assertFalse(result["hasProjects"])
+        self.assertFalse(result["hasEducation"])
+        self.assertTrue(result["hasSchema"])
+
+    def test_preview_shows_optional_section_with_content_and_respects_manual_visibility(self):
+        result = self.run_js_scenario(
+            """
+(() => {
+  const cv = CVStudio.app.cloneInitialCV();
+  cv.skills = {
+    mode: "simple",
+    items: ["HTML", "CSS"],
+    categories: [],
+  };
+  CVStudio.state.update({
+    cv,
+    ui: {
+      template: "compact",
+      sectionVisibility: {
+        basics: true,
+        experience: true,
+        skills: true,
+        languages: true,
+        certifications: true,
+        projects: true,
+        education: true,
+      },
+    },
+    booted: true,
+  });
+  CVStudio.ui.renderPreview();
+  const visibleHtml = CVStudio.ui.previewContent.innerHTML;
+  CVStudio.state.update({
+    ui: {
+      template: "compact",
+      sectionVisibility: {
+        basics: true,
+        experience: true,
+        skills: false,
+        languages: true,
+        certifications: true,
+        projects: true,
+        education: true,
+      },
+    },
+  });
+  CVStudio.ui.renderPreview();
+  const hiddenHtml = CVStudio.ui.previewContent.innerHTML;
+  return {
+    autoVisible: visibleHtml.includes("<h3>Habilidades</h3>") && visibleHtml.includes("HTML"),
+    manuallyHidden: !hiddenHtml.includes("<h3>Habilidades</h3>"),
+  };
+})()
+"""
+        )
+        self.assertTrue(result["autoVisible"])
+        self.assertTrue(result["manuallyHidden"])
+
     def test_languages_preview_renders_name_and_level(self):
         expected_snippets = [
             'const languagePreview = state.cv.languages.length',
@@ -2068,12 +2166,12 @@ CVStudio.state.update({ cv: CVStudio.app.normalizeCvDocument(cv), ui: { activeSe
             'const certificationPreview = state.cv.certifications.length',
             'const educationEntries = state.cv.education.length',
             'const educationPreview = state.cv.education.length',
-            'const showExperience = app.isSectionVisible("experience");',
-            'const showSkills = app.isSectionVisible("skills");',
-            'const showLanguages = app.isSectionVisible("languages");',
-            'const showCertifications = app.isSectionVisible("certifications");',
-            'const showProjects = app.isSectionVisible("projects");',
-            'const showEducation = app.isSectionVisible("education");',
+            'const showExperience = app.isSectionVisible("experience") && app.hasRenderableSectionContent("experience");',
+            'const showSkills = app.isSectionVisible("skills") && app.hasRenderableSectionContent("skills");',
+            'const showLanguages = app.isSectionVisible("languages") && app.hasRenderableSectionContent("languages");',
+            'const showCertifications = app.isSectionVisible("certifications") && app.hasRenderableSectionContent("certifications");',
+            'const showProjects = app.isSectionVisible("projects") && app.hasRenderableSectionContent("projects");',
+            'const showEducation = app.isSectionVisible("education") && app.hasRenderableSectionContent("education");',
             'state.cv.experience.map((entry, index) => ""',
             'state.cv.experience.map((entry) => ""',
             'state.cv.projects.map((entry, index) => ""',

@@ -1978,12 +1978,12 @@
           const skills = state.cv.skills;
           const requiredSections = config.cvSchema.required.join(", ");
           const orderedSectionIds = app.normalizeSectionOrder(state.ui.sectionOrder);
-          const showExperience = app.isSectionVisible("experience");
-          const showSkills = app.isSectionVisible("skills");
-          const showLanguages = app.isSectionVisible("languages");
-          const showCertifications = app.isSectionVisible("certifications");
-          const showProjects = app.isSectionVisible("projects");
-          const showEducation = app.isSectionVisible("education");
+          const showExperience = app.isSectionVisible("experience") && app.hasRenderableSectionContent("experience");
+          const showSkills = app.isSectionVisible("skills") && app.hasRenderableSectionContent("skills");
+          const showLanguages = app.isSectionVisible("languages") && app.hasRenderableSectionContent("languages");
+          const showCertifications = app.isSectionVisible("certifications") && app.hasRenderableSectionContent("certifications");
+          const showProjects = app.isSectionVisible("projects") && app.hasRenderableSectionContent("projects");
+          const showEducation = app.isSectionVisible("education") && app.hasRenderableSectionContent("education");
           const experiencePreview = state.cv.experience.length
             ? state.cv.experience.map((entry) => ""
               + "<div class=\"preview-card\">"
@@ -2303,6 +2303,67 @@
             return true;
           }
           return Boolean(state.ui.sectionVisibility[sectionId]);
+        },
+        hasTextContent(value) {
+          return typeof value === "string" && Boolean(value.trim());
+        },
+        hasExperienceContent() {
+          return state.cv.experience.some((entry) => app.hasTextContent(entry.role)
+            || app.hasTextContent(entry.company)
+            || app.hasTextContent(entry.location)
+            || app.hasTextContent(entry.startDate)
+            || app.hasTextContent(entry.endDate)
+            || app.hasTextContent(entry.summary)
+            || Boolean(entry.isCurrent)
+            || ui.getExperienceAchievements(entry).length
+            || ui.getEntryNotes(entry).length);
+        },
+        hasSkillsContent() {
+          return ui.getSkillItems(state.cv.skills.items).length || ui.getSkillCategories(state.cv.skills.categories).length;
+        },
+        hasLanguagesContent() {
+          return state.cv.languages.some((entry) => app.hasTextContent(entry.name) || app.hasTextContent(entry.level));
+        },
+        hasCertificationsContent() {
+          return state.cv.certifications.some((entry) => app.hasTextContent(entry.title)
+            || app.hasTextContent(entry.issuer)
+            || app.hasTextContent(entry.date));
+        },
+        hasProjectsContent() {
+          return state.cv.projects.some((entry) => app.hasTextContent(entry.name)
+            || app.hasTextContent(entry.role)
+            || app.hasTextContent(entry.url)
+            || app.hasTextContent(entry.stack)
+            || app.hasTextContent(entry.summary)
+            || ui.getProjectHighlights(entry).length);
+        },
+        hasEducationContent() {
+          return state.cv.education.some((entry) => app.hasTextContent(entry.title)
+            || app.hasTextContent(entry.center)
+            || app.hasTextContent(entry.dates)
+            || app.hasTextContent(entry.details)
+            || ui.getEntryNotes(entry).length);
+        },
+        hasRenderableSectionContent(sectionId) {
+          if (sectionId === "experience") {
+            return app.hasExperienceContent();
+          }
+          if (sectionId === "skills") {
+            return app.hasSkillsContent();
+          }
+          if (sectionId === "languages") {
+            return app.hasLanguagesContent();
+          }
+          if (sectionId === "certifications") {
+            return app.hasCertificationsContent();
+          }
+          if (sectionId === "projects") {
+            return app.hasProjectsContent();
+          }
+          if (sectionId === "education") {
+            return app.hasEducationContent();
+          }
+          return true;
         },
         normalizeExperienceAchievements(achievements) {
           if (Array.isArray(achievements)) {
