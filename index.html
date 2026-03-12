@@ -519,12 +519,14 @@
           endDate: "Fecha de fin",
           summary: "Descripcion",
           achievements: "Logros",
+          notes: "Notas opcionales",
         },
         educationFieldLabels: {
           title: "Titulo",
           center: "Centro",
           dates: "Fechas",
           details: "Detalles",
+          notes: "Menciones",
         },
         cvSchema: {
           $id: "cv-studio/schema/cv",
@@ -580,6 +582,10 @@
                   type: "array",
                   items: { type: "string", minLength: 1 },
                 },
+                notes: {
+                  type: "array",
+                  items: { type: "string", minLength: 1 },
+                },
               },
             },
             educationEntry: {
@@ -591,6 +597,10 @@
                 center: { type: "string", minLength: 1 },
                 dates: { type: "string", minLength: 1 },
                 details: { type: "string" },
+                notes: {
+                  type: "array",
+                  items: { type: "string", minLength: 1 },
+                },
               },
             },
             meta: {
@@ -826,6 +836,21 @@
           }
           return [];
         },
+        getEntryNotes(entry) {
+          if (entry && Array.isArray(entry.notes)) {
+            return entry.notes
+              .filter((note) => typeof note === "string")
+              .map((note) => note.trim())
+              .filter(Boolean);
+          }
+          if (entry && typeof entry.notes === "string") {
+            return entry.notes
+              .split("\n")
+              .map((note) => note.trim())
+              .filter(Boolean);
+          }
+          return [];
+        },
         renderAchievementList(achievements, emptyMessage) {
           if (!achievements.length) {
             return "<p class=\"achievement-list\" data-tone=\"muted\">" + ui.escapeHtml(emptyMessage) + "</p>";
@@ -987,6 +1012,18 @@
                 + ui.escapeHtml(ui.getExperienceAchievements(entry).join("\n"))
                 + "</textarea>"
                 + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<label for=\"experience-notes-" + String(index) + "\"><span>Notas opcionales</span></label>"
+                + "<textarea"
+                + " id=\"experience-notes-" + String(index) + "\""
+                + " name=\"notes\""
+                + " data-experience-field=\"notes\""
+                + " class=\"editor-field editor-input\""
+                + " rows=\"4\""
+                + " placeholder=\"Escribe notas opcionales, contexto o menciones, una por linea\">"
+                + ui.escapeHtml(ui.getEntryNotes(entry).join("\n"))
+                + "</textarea>"
+                + "</div>"
                 + "</form>"
                 + "<div class=\"editor-group\">"
                 + "<span>Fechas</span>"
@@ -999,6 +1036,10 @@
                 + "<div class=\"editor-group\">"
                 + "<span>Logros actuales</span>"
                 + "<div class=\"editor-field\">" + ui.renderAchievementList(ui.getExperienceAchievements(entry), "Todavia no hay logros definidos para esta experiencia.") + "</div>"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<span>Notas actuales</span>"
+                + "<div class=\"editor-field\">" + ui.renderAchievementList(ui.getEntryNotes(entry), "Todavia no hay notas opcionales definidas para esta experiencia.") + "</div>"
                 + "</div>"
                 + "</article>")
                 .join("")
@@ -1072,6 +1113,18 @@
                 + ui.escapeHtml(entry.details || "")
                 + "</textarea>"
                 + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<label for=\"education-notes-" + String(index) + "\"><span>Menciones</span></label>"
+                + "<textarea"
+                + " id=\"education-notes-" + String(index) + "\""
+                + " name=\"notes\""
+                + " data-education-field=\"notes\""
+                + " class=\"editor-field editor-input\""
+                + " rows=\"4\""
+                + " placeholder=\"Escribe menciones, logros o notas opcionales, una por linea\">"
+                + ui.escapeHtml(ui.getEntryNotes(entry).join("\n"))
+                + "</textarea>"
+                + "</div>"
                 + "</form>"
                 + "<div class=\"editor-group\">"
                 + "<span>Titulo actual</span>"
@@ -1088,6 +1141,10 @@
                 + "<div class=\"editor-group\">"
                 + "<span>Detalles actuales</span>"
                 + "<div class=\"editor-field\">" + ui.escapeHtml(entry.details || "Sin detalles anadidos") + "</div>"
+                + "</div>"
+                + "<div class=\"editor-group\">"
+                + "<span>Menciones actuales</span>"
+                + "<div class=\"editor-field\">" + ui.renderAchievementList(ui.getEntryNotes(entry), "Todavia no hay menciones definidas para esta formacion.") + "</div>"
                 + "</div>"
                 + "</article>")
                 .join("")
@@ -1257,6 +1314,7 @@
               + "<p class=\"preview-meta\">" + ui.escapeHtml(ui.formatExperiencePeriod(entry)) + "</p>"
               + "<p>" + ui.escapeHtml(entry.summary || "Resumen pendiente") + "</p>"
               + ui.renderAchievementList(ui.getExperienceAchievements(entry), "Logros pendientes")
+              + ui.renderAchievementList(ui.getEntryNotes(entry), "Notas opcionales pendientes")
               + "</div>")
               .join("")
             : "<p>Anade tu primera experiencia para completar esta vista previa.</p>";
@@ -1267,6 +1325,7 @@
               + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.center || "Centro pendiente") + "</p>"
               + "<p class=\"preview-meta\">" + ui.escapeHtml(entry.dates || "Fechas pendientes") + "</p>"
               + "<p>" + ui.escapeHtml(entry.details || "Detalles pendientes") + "</p>"
+              + ui.renderAchievementList(ui.getEntryNotes(entry), "Menciones pendientes")
               + "</div>")
               .join("")
             : "<p>Anade tu primera formacion para completar esta vista previa.</p>";
@@ -1338,6 +1397,21 @@
           }
           return [];
         },
+        normalizeEntryNotes(notes) {
+          if (Array.isArray(notes)) {
+            return notes
+              .filter((note) => typeof note === "string")
+              .map((note) => note.trim())
+              .filter(Boolean);
+          }
+          if (typeof notes === "string") {
+            return notes
+              .split("\n")
+              .map((note) => note.trim())
+              .filter(Boolean);
+          }
+          return [];
+        },
         normalizeEducationEntry(entry) {
           return {
             title: entry && typeof entry.title === "string"
@@ -1356,6 +1430,7 @@
                 ? entry.period
                 : "",
             details: entry && typeof entry.details === "string" ? entry.details : "",
+            notes: app.normalizeEntryNotes(entry ? entry.notes : []),
           };
         },
         cloneInitialCV() {
@@ -1378,6 +1453,7 @@
                 endDate: entry && typeof entry.endDate === "string" ? entry.endDate : "",
                 summary: entry && typeof entry.summary === "string" ? entry.summary : "",
                 achievements: app.normalizeExperienceAchievements(entry ? entry.achievements : []),
+                notes: app.normalizeEntryNotes(entry ? entry.notes : []),
               };
             })
             : [];
@@ -1519,6 +1595,8 @@
             ? Boolean(fieldValue)
             : fieldName === "achievements"
               ? app.normalizeExperienceAchievements(fieldValue)
+              : fieldName === "notes"
+                ? app.normalizeEntryNotes(fieldValue)
               : fieldValue;
           const nextExperience = state.cv.experience.map((entry, entryIndex) => entryIndex === index
             ? {
@@ -1588,6 +1666,7 @@
             endDate: "",
             summary: "",
             achievements: [],
+            notes: [],
           };
           const nextExperience = [...state.cv.experience, nextEntry];
           state.update({
@@ -1616,6 +1695,7 @@
             center: "",
             dates: "",
             details: "",
+            notes: [],
           };
           const nextEducation = [...state.cv.education, nextEntry];
           state.update({

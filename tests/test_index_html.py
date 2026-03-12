@@ -340,6 +340,12 @@ process.stdout.write(JSON.stringify(result));
             'rows=\\"6\\"',
             'placeholder=\\"Escribe un logro por linea para crear multiples bullets\\"',
             'ui.escapeHtml(ui.getExperienceAchievements(entry).join("\\n"))',
+            'id=\\"experience-notes-',
+            'name=\\"notes\\"',
+            'data-experience-field=\\"notes\\"',
+            'rows=\\"4\\"',
+            'placeholder=\\"Escribe notas opcionales, contexto o menciones, una por linea\\"',
+            'ui.escapeHtml(ui.getEntryNotes(entry).join("\\n"))',
             'ui.escapeHtml(entry.location || "")',
             'ui.escapeHtml(ui.formatExperiencePeriod(entry))',
             '<span class=\\"entry-card-index\\">Experiencia ',
@@ -347,6 +353,7 @@ process.stdout.write(JSON.stringify(result));
             'ui.escapeHtml(entry.company || "Empresa pendiente")',
             'ui.escapeHtml(entry.summary || "Todavia no hay contenido en esta experiencia.")',
             'ui.renderAchievementList(ui.getExperienceAchievements(entry), "Todavia no hay logros definidos para esta experiencia.")',
+            'ui.renderAchievementList(ui.getEntryNotes(entry), "Todavia no hay notas opcionales definidas para esta experiencia.")',
             '<div class=\\"editor-note\\" data-tone=\\"muted\\">Todavia no hay experiencias guardadas en el CV.</div>',
         ]
         for snippet in expected_snippets:
@@ -417,6 +424,7 @@ process.stdout.write(JSON.stringify(result));
             'endDate: "",',
             'summary: "",',
             'achievements: [],',
+            'notes: [],',
             "const nextExperience = [...state.cv.experience, nextEntry];",
             "experience: nextExperience,",
             'text: "Experiencia " + String(nextExperience.length) + " anadida.",',
@@ -531,6 +539,7 @@ CVStudio.app.moveExperienceEntry(0, "up");
             'ui.escapeHtml(ui.formatExperiencePeriod(entry))',
             'ui.escapeHtml(entry.summary || "Resumen pendiente")',
             'ui.renderAchievementList(ui.getExperienceAchievements(entry), "Logros pendientes")',
+            'ui.renderAchievementList(ui.getEntryNotes(entry), "Notas opcionales pendientes")',
             '<p>Anade tu primera experiencia para completar esta vista previa.</p>',
             '+ experiencePreview',
         ]
@@ -545,6 +554,7 @@ CVStudio.app.moveExperienceEntry(0, "up");
             'center: "Centro"',
             'dates: "Fechas"',
             'details: "Detalles"',
+            'notes: "Menciones"',
             'const educationEntries = state.cv.education.length',
             '<div class=\\"editor-note\\" data-tone=\\"muted\\">Listado de formacion existente en el documento.</div>',
             '<article class=\\"entry-card\\">',
@@ -574,10 +584,16 @@ CVStudio.app.moveExperienceEntry(0, "up");
             'rows=\\"4\\"',
             'placeholder=\\"Contexto relevante, menciones, especializacion o logros academicos\\"',
             'ui.escapeHtml(entry.details || "")',
+            'id=\\"education-notes-',
+            'name=\\"notes\\"',
+            'data-education-field=\\"notes\\"',
+            'placeholder=\\"Escribe menciones, logros o notas opcionales, una por linea\\"',
+            'ui.escapeHtml(ui.getEntryNotes(entry).join("\\n"))',
             'ui.escapeHtml(entry.title || "Titulo pendiente")',
             'ui.escapeHtml(entry.center || "Centro pendiente")',
             'ui.escapeHtml(entry.dates || "Pendiente")',
             'ui.escapeHtml(entry.details || "Sin detalles anadidos")',
+            'ui.renderAchievementList(ui.getEntryNotes(entry), "Todavia no hay menciones definidas para esta formacion.")',
             '<div class=\\"editor-note\\" data-tone=\\"muted\\">Todavia no hay formacion guardada en el CV.</div>',
             'data-action=\\"add-education-entry\\"',
             '>Anadir otra formacion</button>',
@@ -602,6 +618,7 @@ CVStudio.app.moveExperienceEntry(0, "up");
             ': entry && typeof entry.period === "string"',
             '? entry.period',
             'details: entry && typeof entry.details === "string" ? entry.details : "",',
+            'notes: app.normalizeEntryNotes(entry ? entry.notes : []),',
             'const education = Array.isArray(cvDocument.education)',
             '? cvDocument.education.map((entry) => app.normalizeEducationEntry(entry))',
             "updateEducationField(index, fieldName, fieldValue) {",
@@ -615,6 +632,7 @@ CVStudio.app.moveExperienceEntry(0, "up");
             'center: "",',
             'dates: "",',
             'details: "",',
+            'notes: [],',
             "const nextEducation = [...state.cv.education, nextEntry];",
             'text: "Formacion " + String(nextEducation.length) + " anadida.",',
             "removeEducationEntry(index) {",
@@ -694,6 +712,7 @@ CVStudio.app.moveEducationEntry(1, "up");
             'ui.escapeHtml(entry.center || "Centro pendiente")',
             'ui.escapeHtml(entry.dates || "Fechas pendientes")',
             'ui.escapeHtml(entry.details || "Detalles pendientes")',
+            'ui.renderAchievementList(ui.getEntryNotes(entry), "Menciones pendientes")',
             'Anade tu primera formacion para completar esta vista previa.',
             "+ educationPreview",
         ]
@@ -748,11 +767,13 @@ CVStudio.app.moveEducationEntry(1, "up");
             'endDate: "Fecha de fin"',
             'summary: "Descripcion"',
             'achievements: "Logros"',
+            'notes: "Notas opcionales"',
             "educationFieldLabels: {",
             'title: "Titulo"',
             'center: "Centro"',
             'dates: "Fechas"',
             'details: "Detalles"',
+            'notes: "Menciones"',
             "cv: null,",
             "ui: {",
             "message: { ...config.uiDefaults.message },",
@@ -781,6 +802,7 @@ CVStudio.app.moveEducationEntry(1, "up");
             'achievements: {',
             'type: "array",',
             'items: { type: "string", minLength: 1 },',
+            'notes: {',
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
@@ -837,6 +859,8 @@ CVStudio.app.moveEducationEntry(1, "up");
             '? Boolean(fieldValue)',
             ': fieldName === "achievements"',
             '? app.normalizeExperienceAchievements(fieldValue)',
+            ': fieldName === "notes"',
+            '? app.normalizeEntryNotes(fieldValue)',
             ': fieldValue;',
             "const nextExperience = state.cv.experience.map((entry, entryIndex) => entryIndex === index",
             '[fieldName]: normalizedFieldValue,',
@@ -850,6 +874,7 @@ CVStudio.app.moveEducationEntry(1, "up");
             "app.updateExperienceField(experienceIndex, fieldName, fieldValue);",
             'isCurrent: Boolean(entry && entry.isCurrent),',
             'achievements: app.normalizeExperienceAchievements(entry ? entry.achievements : []),',
+            'notes: app.normalizeEntryNotes(entry ? entry.notes : []),',
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
@@ -861,6 +886,8 @@ CVStudio.app.moveEducationEntry(1, "up");
             '.achievement-list[data-tone="muted"] {',
             "getExperienceAchievements(entry) {",
             "if (entry && Array.isArray(entry.achievements)) {",
+            "getEntryNotes(entry) {",
+            "if (entry && Array.isArray(entry.notes)) {",
             '.split("\\n")',
             "renderAchievementList(achievements, emptyMessage) {",
             'return "<p class=\\"achievement-list\\" data-tone=\\"muted\\">" + ui.escapeHtml(emptyMessage) + "</p>";',
@@ -869,10 +896,33 @@ CVStudio.app.moveEducationEntry(1, "up");
             "normalizeExperienceAchievements(achievements) {",
             "if (Array.isArray(achievements)) {",
             "if (typeof achievements === \"string\") {",
+            "normalizeEntryNotes(notes) {",
+            "if (Array.isArray(notes)) {",
+            "if (typeof notes === \"string\") {",
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
+
+    def test_notes_fields_normalize_into_arrays(self):
+        result = self.run_js_scenario(
+            """
+const cv = CVStudio.app.cloneInitialCV();
+cv.experience = [
+  { role: "Lead", company: "Acme", location: "Madrid", startDate: "2024-01", isCurrent: false, endDate: "2024-12", summary: "Resumen", achievements: [], notes: "Remoto\\nMentoria" },
+];
+cv.education = [
+  { title: "Master", center: "UAM", dates: "2020 - 2021", details: "", notes: "Matricula\\nPremio final" },
+];
+CVStudio.state.update({ cv: CVStudio.app.normalizeCvDocument(cv), ui: { activeSection: "experience" } });
+({
+  experienceNotes: CVStudio.state.cv.experience[0].notes,
+  educationNotes: CVStudio.state.cv.education[0].notes,
+});
+"""
+        )
+        self.assertEqual(result["experienceNotes"], ["Remoto", "Mentoria"])
+        self.assertEqual(result["educationNotes"], ["Matricula", "Premio final"])
 
     def test_experience_section_supports_current_role_toggle(self):
         expected_snippets = [
