@@ -135,13 +135,111 @@
                 overflow: visible;
             }
         }
+
+        /* Estilos del Editor */
+        .editor-panel h1 {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            color: var(--primary);
+        }
+
+        .form-section {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .form-section h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--text-main);
+            border-bottom: 2px solid var(--bg-editor);
+            padding-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            color: var(--text-muted);
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.625rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Estilos de la Vista Previa (CV) */
+        .cv-header h1 {
+            font-size: 2.5rem;
+            color: var(--text-main);
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .cv-title {
+            font-size: 1.25rem;
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .cv-section {
+            margin-top: 1.5rem;
+            line-height: 1.6;
+            color: var(--text-main);
+        }
     </style>
 </head>
 <body>
     <div id="app">
         <aside class="editor-panel">
             <h1>Configuración de CV</h1>
-            <!-- Contenido del formulario en Feature 3 -->
+            <div class="form-section">
+                <h2>Datos Personales</h2>
+                <div class="form-group">
+                    <label for="firstName">Nombre</label>
+                    <input type="text" id="firstName" data-path="personalData.firstName" placeholder="Ej. Juan">
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Apellido</label>
+                    <input type="text" id="lastName" data-path="personalData.lastName" placeholder="Ej. Pérez">
+                </div>
+                <div class="form-group">
+                    <label for="title">Profesión</label>
+                    <input type="text" id="title" data-path="personalData.title" placeholder="Ej. Desarrollador Fullstack">
+                </div>
+            </div>
+            <div class="form-section">
+                <h2>Resumen Profesional</h2>
+                <div class="form-group">
+                    <textarea id="summary" data-path="summary" placeholder="Cuéntanos sobre ti..."></textarea>
+                </div>
+            </div>
         </aside>
         <main class="preview-panel">
             <div id="cv-paper">
@@ -162,7 +260,6 @@
                 init: function() {
                     console.info('CV Studio: Inicializando aplicación...');
                     this.cacheDOM();
-                    this.bindEvents();
                     this.state = this.createReactiveState({
                         personalData: {
                             firstName: '',
@@ -180,48 +277,96 @@
                         education: [],  // Array of objects: { id: string, institution: string, degree: string, field: string, location: string, startDate: string, endDate: string, current: boolean, description: string }
                         skills: []      // Array of strings: ['JavaScript', 'HTML', 'CSS']
                     });
+                    this.bindEvents();
                     this.render();
                 },
 
                 cacheDOM: function() {
                     this.app = document.getElementById('app');
                     this.preview = document.getElementById('cv-paper');
+                    this.editor = document.querySelector('.editor-panel');
                 },
 
                 bindEvents: function() {
-                    // Futuros manejadores de eventos
+                    const self = this;
+                    
+                    // Escuchar cambios en los inputs del editor
+                    this.editor.addEventListener('input', (e) => {
+                        const path = e.target.getAttribute('data-path');
+                        if (path) {
+                            self.updateStateByPath(path, e.target.value);
+                        }
+                    });
+                },
+
+                /**
+                 * Actualiza una propiedad del estado basándose en una cadena de ruta (ej: 'personalData.firstName')
+                 */
+                updateStateByPath: function(path, value) {
+                    const keys = path.split('.');
+                    let current = this.state;
+                    
+                    for (let i = 0; i < keys.length - 1; i++) {
+                        current = current[keys[i]];
+                    }
+                    
+                    current[keys[keys.length - 1]] = value;
                 },
 
                 createReactiveState: function(initialState) {
                     const self = this;
-                    const handler = {
-                        get(target, key) {
-                            const value = target[key];
-                            if (typeof value === 'object' && value !== null) {
-                                return new Proxy(value, handler);
-                            }
-                            return value;
-                        },
-                        set(target, key, value) {
-                            target[key] = value;
-                            self.render();
-                            return true;
+                    const proxiedObjects = new WeakMap();
+
+                    const createProxy = (obj) => {
+                        if (proxiedObjects.has(obj)) {
+                            return proxiedObjects.get(obj);
                         }
+
+                        const handler = {
+                            get(target, key) {
+                                const value = target[key];
+                                if (typeof value === 'object' && value !== null) {
+                                    return createProxy(value);
+                                }
+                                return value;
+                            },
+                            set(target, key, value) {
+                                if (target[key] === value) return true;
+                                target[key] = value;
+                                self.render();
+                                return true;
+                            },
+                            deleteProperty(target, key) {
+                                const deleted = delete target[key];
+                                if (deleted) {
+                                    self.render();
+                                }
+                                return deleted;
+                            }
+                        };
+
+                        const proxy = new Proxy(obj, handler);
+                        proxiedObjects.set(obj, proxy);
+                        return proxy;
                     };
-                    return new Proxy(initialState, handler);
+
+                    return createProxy(initialState);
                 },
 
                 render: function() {
                     console.debug('CV Studio: Renderizando vista previa...');
                     if (!this.preview) return;
                     
-                    const { personalData } = this.state;
+                    const { personalData, summary } = this.state;
                     
                     // Renderizado básico para validar reactividad
                     this.preview.innerHTML = `
                         <div class="cv-header">
-                            <h2>${personalData.firstName || 'Tu Nombre'} ${personalData.lastName || ''}</h2>
-                            <p>${personalData.title || 'Tu Profesión'}</p>
+                            <h1>${personalData.firstName || 'Tu Nombre'} ${personalData.lastName || ''}</h1>
+                            <p class="cv-title">${personalData.title || 'Tu Profesión'}</p>
+                        </div>
+                        <div class="cv-section">
+                            <p>${summary || 'Escribe aquí tu resumen profesional...'}</p>
                         </div>
                     `;
                 },
