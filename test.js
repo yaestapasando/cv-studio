@@ -167,6 +167,14 @@ test('Auto-save functionality', (t) => {
         assert.ok(htmlContent.includes('this.loadFromLocalStorage()'), 'Missing loadFromLocalStorage call on init');
     });
 
+    t.test('should use mergeDeep to combine initial and saved state', () => {
+        assert.ok(htmlContent.includes('this.mergeDeep(initialState, savedState)'), 'Missing mergeDeep call in init');
+    });
+
+    t.test('should call syncEditorWithState on init', () => {
+        assert.ok(htmlContent.includes('this.syncEditorWithState()'), 'Missing syncEditorWithState call on init');
+    });
+
     t.test('should have syncEditorWithState function', () => {
         assert.ok(htmlContent.includes('syncEditorWithState: function'), 'Missing syncEditorWithState function');
     });

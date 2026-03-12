@@ -326,7 +326,7 @@
                  * Obtiene un valor del estado basándose en una cadena de ruta
                  */
                 getValueByPath: function(path) {
-                    return path.split('.').reduce((obj, key) => (obj && obj[key] !== 'undefined') ? obj[key] : undefined, this.state);
+                    return path.split('.').reduce((obj, key) => (obj && typeof obj[key] !== 'undefined') ? obj[key] : undefined, this.state);
                 },
 
                 /**
@@ -441,20 +441,21 @@
                  * Utilidad para mezclar objetos de forma profunda
                  */
                 mergeDeep: function(target, source) {
-                    const output = Object.assign({}, target);
-                    if (this.isObject(target) && this.isObject(source)) {
-                        Object.keys(source).forEach(key => {
-                            if (this.isObject(source[key])) {
-                                if (!(key in target)) {
-                                    Object.assign(output, { [key]: source[key] });
-                                } else {
-                                    output[key] = this.mergeDeep(target[key], source[key]);
-                                }
-                            } else {
-                                Object.assign(output, { [key]: source[key] });
-                            }
-                        });
+                    if (!this.isObject(target) || !this.isObject(source)) {
+                        return source;
                     }
+
+                    const output = Object.assign({}, target);
+                    Object.keys(source).forEach(key => {
+                        const targetValue = target[key];
+                        const sourceValue = source[key];
+
+                        if (this.isObject(targetValue) && this.isObject(sourceValue)) {
+                            output[key] = this.mergeDeep(targetValue, sourceValue);
+                        } else {
+                            output[key] = sourceValue;
+                        }
+                    });
                     return output;
                 },
 
