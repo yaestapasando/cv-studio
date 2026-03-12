@@ -429,6 +429,17 @@
             open: false,
           },
         },
+        basicsFieldLabels: {
+          fullName: "Nombre completo",
+          headline: "Titular profesional",
+          email: "Email",
+          phone: "Telefono",
+          location: "Ubicacion",
+          web: "Web",
+          linkedin: "LinkedIn",
+          github: "GitHub",
+          summary: "Resumen profesional",
+        },
         cvSchema: {
           $id: "cv-studio/schema/cv",
           $comment: "Compatible con JSON Schema Draft 2020-12.",
@@ -997,6 +1008,30 @@
             app.handleStateChange();
           });
         },
+        updateBasicsField(fieldName, fieldValue) {
+          if (!state.cv || !state.cv.basics || !state.hasOwn(config.basicsFieldLabels, fieldName)) {
+            return;
+          }
+          state.update({
+            cv: {
+              ...state.cv,
+              basics: {
+                ...state.cv.basics,
+                [fieldName]: fieldValue,
+              },
+              meta: {
+                ...state.cv.meta,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+            ui: {
+              message: {
+                tone: "success",
+                text: config.basicsFieldLabels[fieldName] + " actualizado.",
+              },
+            },
+          });
+        },
         bindEvents() {
           ui.toolbar.addEventListener("click", (event) => {
             const button = event.target.closest("[data-section]");
@@ -1043,62 +1078,12 @@
             });
           });
           ui.editorCanvas.addEventListener("input", (event) => {
-            const fullNameInput = event.target.closest("[name=\"fullName\"]");
-            const headlineInput = event.target.closest("[name=\"headline\"]");
-            const emailInput = event.target.closest("[name=\"email\"]");
-            const phoneInput = event.target.closest("[name=\"phone\"]");
-            const locationInput = event.target.closest("[name=\"location\"]");
-            const webInput = event.target.closest("[name=\"web\"]");
-            const linkedinInput = event.target.closest("[name=\"linkedin\"]");
-            const githubInput = event.target.closest("[name=\"github\"]");
-            const summaryInput = event.target.closest("[name=\"summary\"]");
-            if ((!fullNameInput && !headlineInput && !emailInput && !phoneInput && !locationInput && !webInput && !linkedinInput && !githubInput && !summaryInput) || state.ui.activeSection !== "basics") {
+            const input = event.target.closest("[name]");
+            const fieldName = input ? input.name : "";
+            if (!input || state.ui.activeSection !== "basics" || !state.hasOwn(config.basicsFieldLabels, fieldName)) {
               return;
             }
-            const messageText = fullNameInput
-              ? "Nombre completo actualizado."
-              : headlineInput
-                ? "Titular profesional actualizado."
-                : emailInput
-                  ? "Email actualizado."
-                  : phoneInput
-                    ? "Telefono actualizado."
-                    : locationInput
-                      ? "Ubicacion actualizada."
-                      : webInput
-                        ? "Web actualizada."
-                        : linkedinInput
-                          ? "LinkedIn actualizado."
-                          : githubInput
-                            ? "GitHub actualizado."
-                            : "Resumen profesional actualizado.";
-            state.update({
-              cv: {
-                ...state.cv,
-                basics: {
-                  ...state.cv.basics,
-                  fullName: fullNameInput ? fullNameInput.value : state.cv.basics.fullName,
-                  headline: headlineInput ? headlineInput.value : state.cv.basics.headline,
-                  email: emailInput ? emailInput.value : state.cv.basics.email,
-                  phone: phoneInput ? phoneInput.value : state.cv.basics.phone,
-                  location: locationInput ? locationInput.value : state.cv.basics.location,
-                  web: webInput ? webInput.value : state.cv.basics.web,
-                  linkedin: linkedinInput ? linkedinInput.value : state.cv.basics.linkedin,
-                  github: githubInput ? githubInput.value : state.cv.basics.github,
-                  summary: summaryInput ? summaryInput.value : state.cv.basics.summary,
-                },
-                meta: {
-                  ...state.cv.meta,
-                  updatedAt: new Date().toISOString(),
-                },
-              },
-              ui: {
-                message: {
-                  tone: "success",
-                  text: messageText,
-                },
-              },
-            });
+            app.updateBasicsField(fieldName, input.value);
           });
           ui.modal.addEventListener("click", (event) => {
             const closeButton = event.target.closest("[data-close-modal]");
