@@ -212,6 +212,18 @@
       line-height: 1.5;
     }
 
+    .editor-schema {
+      margin: 0;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #f6f1e8;
+      color: var(--text);
+      font-size: 0.9rem;
+      line-height: 1.55;
+      overflow: auto;
+    }
+
     .preview-layout {
       min-height: 100%;
       border: 1px solid var(--border);
@@ -330,7 +342,64 @@
           { id: "basics", label: "Datos personales" },
           { id: "experience", label: "Experiencia" },
           { id: "education", label: "Formacion" },
+          { id: "schema", label: "Esquema JSON" },
         ],
+        cvSchema: {
+          $id: "cv-studio/schema/cv",
+          $comment: "Compatible con JSON Schema Draft 2020-12.",
+          title: "Curriculum Vitae",
+          type: "object",
+          additionalProperties: false,
+          required: ["basics", "experience", "education"],
+          properties: {
+            basics: { $ref: "#/$defs/basics" },
+            experience: {
+              type: "array",
+              minItems: 1,
+              items: { $ref: "#/$defs/experienceEntry" },
+            },
+            education: {
+              type: "array",
+              minItems: 1,
+              items: { $ref: "#/$defs/educationEntry" },
+            },
+          },
+          $defs: {
+            basics: {
+              type: "object",
+              additionalProperties: false,
+              required: ["fullName", "headline", "summary", "email", "location"],
+              properties: {
+                fullName: { type: "string", minLength: 1 },
+                headline: { type: "string", minLength: 1 },
+                summary: { type: "string", minLength: 1 },
+                email: { type: "string", format: "email" },
+                location: { type: "string", minLength: 1 },
+              },
+            },
+            experienceEntry: {
+              type: "object",
+              additionalProperties: false,
+              required: ["role", "company", "period", "summary"],
+              properties: {
+                role: { type: "string", minLength: 1 },
+                company: { type: "string", minLength: 1 },
+                period: { type: "string", minLength: 1 },
+                summary: { type: "string", minLength: 1 },
+              },
+            },
+            educationEntry: {
+              type: "object",
+              additionalProperties: false,
+              required: ["course", "school", "period"],
+              properties: {
+                course: { type: "string", minLength: 1 },
+                school: { type: "string", minLength: 1 },
+                period: { type: "string", minLength: 1 },
+              },
+            },
+          },
+        },
         initialCV: {
           basics: {
             fullName: "Ada Lovelace",
@@ -381,6 +450,9 @@
             .replaceAll(">", "&gt;")
             .replaceAll("\"", "&quot;")
             .replaceAll("'", "&#39;");
+        },
+        formatJson(value) {
+          return ui.escapeHtml(JSON.stringify(value, null, 2));
         },
         renderToolbar() {
           ui.toolbar.innerHTML = config.sections
@@ -440,6 +512,16 @@
               + "<span>Periodo</span>"
               + "<div class=\"editor-field\">" + ui.escapeHtml(education.period) + "</div>"
               + "</div>",
+            schema: ""
+              + "<div class=\"editor-group\">"
+              + "<span>Esquema publicado</span>"
+              + "<div class=\"editor-note\">"
+              + "El currículum se define con JSON Schema Draft 2020-12 y restringe propiedades extra fuera de la estructura soportada."
+              + "</div>"
+              + "</div>"
+              + "<pre class=\"editor-schema\" id=\"cv-schema-output\" aria-label=\"Esquema JSON del curriculum\">"
+              + ui.formatJson(config.cvSchema)
+              + "</pre>",
           };
           ui.editorCanvas.innerHTML = ""
             + "<div class=\"editor-note\">"
@@ -451,6 +533,7 @@
           const basics = state.cv.basics;
           const experience = state.cv.experience[0];
           const education = state.cv.education[0];
+          const requiredSections = config.cvSchema.required.join(", ");
           ui.previewContent.innerHTML = ""
             + "<article class=\"preview-card\">"
             + "<h3>Perfil</h3>"
@@ -468,6 +551,12 @@
             + "<h3>Formacion</h3>"
             + "<p>" + ui.escapeHtml(education.course) + "</p>"
             + "<p class=\"preview-meta\">" + ui.escapeHtml(education.school) + " - " + ui.escapeHtml(education.period) + "</p>"
+            + "</article>"
+            + "<article class=\"preview-card\">"
+            + "<h3>Esquema JSON</h3>"
+            + "<p>" + ui.escapeHtml(config.cvSchema.title) + "</p>"
+            + "<p class=\"preview-meta\">" + ui.escapeHtml(config.cvSchema.$comment) + "</p>"
+            + "<p>Secciones obligatorias: " + ui.escapeHtml(requiredSections) + "</p>"
             + "</article>";
         },
       };

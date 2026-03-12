@@ -98,6 +98,12 @@ class IndexHtmlTest(unittest.TestCase):
     def test_bootstrap_defines_initial_state_and_capabilities(self):
         expected_snippets = [
             'storageKey: "cv-studio-document"',
+            "cvSchema: {",
+            '$comment: "Compatible con JSON Schema Draft 2020-12."',
+            '$id: "cv-studio/schema/cv"',
+            'title: "Curriculum Vitae"',
+            'required: ["basics", "experience", "education"]',
+            "additionalProperties: false,",
             "initialCV: {",
             'fullName: "Ada Lovelace"',
             'headline: "Analista y autora de algoritmos"',
@@ -108,6 +114,8 @@ class IndexHtmlTest(unittest.TestCase):
             'fileProtocol: window.location.protocol === "file:",',
             "cloneInitialCV() {",
             "JSON.parse(JSON.stringify(config.initialCV))",
+            "formatJson(value) {",
+            "JSON.stringify(value, null, 2)",
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
@@ -127,6 +135,13 @@ class IndexHtmlTest(unittest.TestCase):
             "document.body.dataset.activeSection = state.activeSection;",
             "document.body.dataset.runtimeMode = state.capabilities.fileProtocol ? \"file\" : \"browser\";",
             "La app ha arrancado en local con estado inicial en memoria y sin dependencias externas.",
+            '{ id: "schema", label: "Esquema JSON" }',
+            'id=\\"cv-schema-output\\"',
+            'aria-label=\\"Esquema JSON del curriculum\\"',
+            "ui.formatJson(config.cvSchema)",
+            'config.cvSchema.required.join(", ")',
+            "<h3>Esquema JSON</h3>",
+            "config.cvSchema.$comment",
         ]
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
