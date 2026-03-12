@@ -15,10 +15,10 @@ Aplicación web tipo SPA (Single Page Application) que permite a los usuarios cr
 ### Feature 1: Estructura Base y Maquetación (Layout)
 Configuración inicial del archivo único y la división de la pantalla entre el área de edición y el área de vista previa.
 
-- [ ] Crear el archivo base `index.html` con las etiquetas `<style>` y `<script>` preparadas.
-- [ ] Implementar un layout CSS Grid/Flexbox de dos columnas (Pantalla dividida: Formulario a la izquierda, Vista Previa a la derecha).
-- [ ] Implementar diseño responsive (en móviles, las columnas se apilan o se usa un sistema de pestañas Edición/Vista Previa).
-- [ ] Definir variables CSS (Custom Properties) para colores, tipografías y espaciados base del editor y del CV.
+- [x] Crear el archivo base `index.html` con las etiquetas `<style>` y `<script>` preparadas.
+- [x] Implementar un layout CSS Grid/Flexbox de dos columnas (Pantalla dividida: Formulario a la izquierda, Vista Previa a la derecha).
+- [x] Implementar diseño responsive (en móviles, las columnas se apilan o se usa un sistema de pestañas Edición/Vista Previa).
+- [x] Definir variables CSS (Custom Properties) para colores, tipografías y espaciados base del editor y del CV.
 
 ### Feature 2: Modelo de Datos y Gestión del Estado
 Lógica pura de JavaScript para manejar la información del CV y su persistencia local.

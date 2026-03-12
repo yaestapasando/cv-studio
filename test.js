@@ -11,6 +11,10 @@ test('index.html structure', (t) => {
         assert.ok(htmlContent.includes('<!DOCTYPE html>'), 'Missing DOCTYPE');
     });
 
+    t.test('should have a title', () => {
+        assert.ok(htmlContent.includes('<title>CV Studio - Generador de CV</title>'), 'Missing or incorrect title');
+    });
+
     t.test('should have an html tag with lang="es"', () => {
         assert.ok(htmlContent.includes('<html lang="es">'), 'Missing lang="es"');
     });
