@@ -67,3 +67,35 @@ test('index.html structure', (t) => {
         assert.ok(htmlContent.includes('@media print'), 'Missing @media print query');
     });
 });
+
+test('CV state structure', (t) => {
+    const htmlPath = path.join(__dirname, 'index.html');
+    const htmlContent = fs.readFileSync(htmlPath, 'utf8');
+
+    t.test('should have a state object with personalData', () => {
+        assert.ok(htmlContent.includes('personalData: {'), 'Missing personalData in state');
+        assert.ok(htmlContent.includes('firstName:'), 'Missing firstName in personalData');
+        assert.ok(htmlContent.includes('lastName:'), 'Missing lastName in personalData');
+        assert.ok(htmlContent.includes('email:'), 'Missing email in personalData');
+        assert.ok(htmlContent.includes('phone:'), 'Missing phone in personalData');
+        assert.ok(htmlContent.includes('website:'), 'Missing website in personalData');
+        assert.ok(htmlContent.includes('location:'), 'Missing location in personalData');
+        assert.ok(htmlContent.includes('title:'), 'Missing title in personalData');
+    });
+
+    t.test('should have a summary field', () => {
+        assert.ok(htmlContent.includes('summary:'), 'Missing summary in state');
+    });
+
+    t.test('should have an experience array', () => {
+        assert.ok(htmlContent.includes('experience: []'), 'Missing experience in state');
+    });
+
+    t.test('should have an education array', () => {
+        assert.ok(htmlContent.includes('education: []'), 'Missing education in state');
+    });
+
+    t.test('should have a skills array', () => {
+        assert.ok(htmlContent.includes('skills: []'), 'Missing skills in state');
+    });
+});

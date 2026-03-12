@@ -181,7 +181,19 @@
 
                 // Feature 2: Gestión del Estado
                 state: {
-                    // Aquí residirá el objeto JSON del CV
+                    personalData: {
+                        firstName: '',
+                        lastName: '',
+                        email: '',
+                        phone: '',
+                        website: '',
+                        location: '',
+                        title: ''
+                    },
+                    summary: '',
+                    experience: [], // { id, company, position, startDate, endDate, current, description }
+                    education: [],  // { id, institution, degree, startDate, endDate, description }
+                    skills: []      // strings[]
                 }
             };
 
