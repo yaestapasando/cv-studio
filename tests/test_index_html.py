@@ -894,8 +894,12 @@ CVStudio.app.moveEducationEntry(1, "up");
             '$comment: "Compatible con JSON Schema Draft 2020-12."',
             '$id: "cv-studio/schema/cv"',
             'title: "Curriculum Vitae"',
-            'required: ["basics", "experience", "education", "meta"]',
+            'required: ["basics", "experience", "projects", "education", "meta"]',
             "additionalProperties: false,",
+            'projects: {',
+            'items: { $ref: "#/$defs/projectEntry" },',
+            "projectEntry: {",
+            'required: ["name", "role", "summary"],',
             'meta: { $ref: "#/$defs/meta" },',
             'required: ["version", "updatedAt"],',
             'version: { type: "integer", const: 1 },',
@@ -1233,6 +1237,22 @@ CVStudio.state.update({ cv: CVStudio.app.normalizeCvDocument(cv), ui: { activeSe
         for snippet in expected_snippets:
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, self.content)
+
+    def test_cv_schema_includes_projects_collection(self):
+        result = self.run_js_scenario(
+            """
+({
+  required: CVStudio.config.cvSchema.required,
+  hasProjectsProperty: Object.prototype.hasOwnProperty.call(CVStudio.config.cvSchema.properties, "projects"),
+  projectItemsRef: CVStudio.config.cvSchema.properties.projects.items.$ref,
+  projectEntryRequired: CVStudio.config.cvSchema.$defs.projectEntry.required,
+});
+"""
+        )
+        self.assertEqual(result["required"], ["basics", "experience", "projects", "education", "meta"])
+        self.assertTrue(result["hasProjectsProperty"])
+        self.assertEqual(result["projectItemsRef"], "#/$defs/projectEntry")
+        self.assertEqual(result["projectEntryRequired"], ["name", "role", "summary"])
 
     def test_boot_uses_persisted_state_when_available(self):
         expected_snippets = [
