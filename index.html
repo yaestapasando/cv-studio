@@ -335,7 +335,8 @@
       color: var(--color-text-muted);
     }
 
-    .field-group input[type="text"] {
+    .field-group input[type="text"],
+    .field-group input[type="email"] {
       padding: var(--space-2) var(--space-3);
       background: var(--color-bg);
       color: var(--color-text);
@@ -346,10 +347,21 @@
       transition: border-color 0.15s, box-shadow 0.15s;
     }
 
-    .field-group input[type="text"]:focus {
+    .field-group input[type="text"]:focus,
+    .field-group input[type="email"]:focus {
       outline: none;
       border-color: var(--color-accent);
       box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent);
+    }
+
+    .field-group input.field-invalid {
+      border-color: var(--color-danger);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger) 20%, transparent);
+    }
+
+    .field-error {
+      font-size: 0.75rem;
+      color: var(--color-danger);
     }
 
     #form-personal {
@@ -453,6 +465,11 @@
               <div class="field-group">
                 <label for="field-jobTitle">Título profesional / Puesto objetivo</label>
                 <input type="text" id="field-jobTitle" name="jobTitle" autocomplete="organization-title" maxlength="120" />
+              </div>
+              <div class="field-group">
+                <label for="field-email">Correo electrónico</label>
+                <input type="email" id="field-email" name="email" autocomplete="email" maxlength="254" />
+                <span id="field-email-error" class="field-error" aria-live="polite" hidden></span>
               </div>
             </form>
           </section>
@@ -856,17 +873,27 @@
 
       var EventBus = createEventBus();
 
+      // ── Email validation ──────────────────────────────────────────────────────
+
+      function isValidEmail(value) {
+        if (!value) return true; // empty is allowed; field is optional
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+      }
+
       // ── Personal form bindings ────────────────────────────────────────────────
 
       function initPersonalFields() {
-        var inputFullName = document.getElementById('field-fullName');
-        var inputJobTitle = document.getElementById('field-jobTitle');
+        var inputFullName  = document.getElementById('field-fullName');
+        var inputJobTitle  = document.getElementById('field-jobTitle');
+        var inputEmail     = document.getElementById('field-email');
+        var emailError     = document.getElementById('field-email-error');
 
         // Store → fields (initial + reactive)
         function syncFromStore(state) {
           var p = state.personal || {};
           if (inputFullName && inputFullName.value !== (p.fullName || '')) inputFullName.value = p.fullName || '';
           if (inputJobTitle && inputJobTitle.value !== (p.jobTitle || '')) inputJobTitle.value = p.jobTitle || '';
+          if (inputEmail    && inputEmail.value    !== (p.email    || '')) inputEmail.value    = p.email    || '';
         }
         syncFromStore(CVStore.getState());
         CVStore.subscribe(syncFromStore);
@@ -887,6 +914,22 @@
             });
           });
         }
+
+        if (inputEmail) {
+          inputEmail.addEventListener('input', function () {
+            var valid = isValidEmail(inputEmail.value);
+            if (valid) {
+              inputEmail.classList.remove('field-invalid');
+              if (emailError) { emailError.hidden = true; emailError.textContent = ''; }
+            } else {
+              inputEmail.classList.add('field-invalid');
+              if (emailError) { emailError.hidden = false; emailError.textContent = 'Correo electrónico no válido'; }
+            }
+            CVStore.setState(function (s) {
+              return Object.assign({}, s, { personal: Object.assign({}, s.personal, { email: inputEmail.value }) });
+            });
+          });
+        }
       }
 
       // ── Bootstrap ─────────────────────────────────────────────────────────────
@@ -897,7 +940,7 @@
       }
 
       // Expose minimal public API (used by tests and future modules)
-      window.CVStudio = { DEFAULT_CV: DEFAULT_CV, createStore: createStore, CVStore: CVStore, createEventBus: createEventBus, EventBus: EventBus, activateTab: activateTab, render: render, initPersonalFields: initPersonalFields, init: init };
+      window.CVStudio = { DEFAULT_CV: DEFAULT_CV, createStore: createStore, CVStore: CVStore, createEventBus: createEventBus, EventBus: EventBus, activateTab: activateTab, render: render, isValidEmail: isValidEmail, initPersonalFields: initPersonalFields, init: init };
 
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
