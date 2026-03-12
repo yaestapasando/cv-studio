@@ -54,17 +54,17 @@ Permitir al usuario guardar su progreso en un archivo físico para llevarlo a ot
 
 - [x] Crear botón de "Exportar Datos", que genere y descargue un archivo `.json` utilizando la API `Blob` y `URL.createObjectURL`.
 - [x] Crear botón/input file oculto para "Importar Datos", que lea un `.json` local usando `FileReader`.
-- [ ] Implementar validación básica del JSON al importar para evitar romper la aplicación.
+- [x] Implementar validación básica del JSON al importar para evitar romper la aplicación.
 
 ### Feature 6: Exportación a PDF
 Aprovechar las capacidades de impresión del navegador para generar el PDF sin librerías pesadas.
 
-- [ ] Crear el botón "Exportar a PDF" que dispare la función `window.print()`.
-- [ ] Escribir reglas CSS dentro de `@media print`:
-  - [ ] Ocultar el formulario, botones y cualquier elemento que no sea el currículum.
-  - [ ] Forzar el tamaño de página (`@page { size: A4; margin: 0; }`).
-  - [ ] Asegurar que el contenedor del CV ocupe el 100% de la página impresa.
-  - [ ] Evitar saltos de página indeseados dentro de bloques de experiencia/educación (`break-inside: avoid`).
+- [x] Crear el botón "Exportar a PDF" que dispare la función `window.print()`.
+- [x] Escribir reglas CSS dentro de `@media print`:
+  - [x] Ocultar el formulario, botones y cualquier elemento que no sea el currículum.
+  - [x] Forzar el tamaño de página (`@page { size: A4; margin: 0; }`).
+  - [x] Asegurar que el contenedor del CV ocupe el 100% de la página impresa.
+  - [x] Evitar saltos de página indeseados dentro de bloques de experiencia/educación (`break-inside: avoid`).
 
 ### Feature 7: Pulido y Testing Manual
 Asegurar la calidad y robustez de la aplicación "Single-File".
