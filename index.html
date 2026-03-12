@@ -78,20 +78,38 @@
       display: grid;
       grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.15fr);
       gap: 20px;
+      min-height: 0;
     }
 
     /* CSS Section: Components */
     .panel {
-      padding: 24px;
       border: 1px solid var(--border);
       border-radius: 24px;
       background: var(--surface);
       box-shadow: var(--shadow);
       backdrop-filter: blur(14px);
+      min-height: 0;
+    }
+
+    .workspace-panel {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      overflow: hidden;
+    }
+
+    .panel-header,
+    .panel-body {
+      padding: 24px;
+    }
+
+    .panel-header {
+      display: grid;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
     }
 
     .panel h2 {
-      margin: 0 0 8px;
+      margin: 0;
       font-size: 1.4rem;
     }
 
@@ -101,20 +119,81 @@
       line-height: 1.6;
     }
 
-    .editor-placeholder,
-    .preview-placeholder {
-      margin-top: 24px;
+    .panel-body {
+      display: grid;
+      gap: 16px;
+      align-content: start;
+      min-height: 0;
+    }
+
+    .editor-layout {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 16px;
+      min-height: 100%;
+    }
+
+    .editor-toolbar,
+    .editor-canvas,
+    .preview-layout {
       padding: 20px;
-      border: 1px dashed var(--border);
       border-radius: 18px;
       background: var(--surface-strong);
     }
 
-    .preview-placeholder {
+    .editor-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .toolbar-pill {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .editor-canvas {
+      display: grid;
+      align-content: start;
+      gap: 14px;
+      border: 1px dashed var(--border);
       min-height: 320px;
+    }
+
+    .editor-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    .editor-group span {
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .editor-field {
+      min-height: 46px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+    }
+
+    .preview-layout {
+      min-height: 100%;
+      border: 1px solid var(--border);
+    }
+
+    .preview-placeholder {
       display: grid;
       align-content: start;
       gap: 16px;
+      min-height: 320px;
     }
 
     .preview-card {
@@ -141,13 +220,13 @@
 
     /* CSS Section: Responsive */
     @media (max-width: 900px) {
-      .app-header,
-      .workspace {
-        grid-template-columns: 1fr;
+      .app-header {
+        display: grid;
+        align-items: start;
       }
 
-      .app-header {
-        align-items: start;
+      .workspace {
+        grid-template-columns: 1fr;
       }
 
       .app-status {
@@ -171,31 +250,59 @@
     <!-- HTML Section: Workspace -->
     <main class="workspace">
       <!-- HTML Section: Editor Panel -->
-      <section class="panel" id="editor-panel" aria-labelledby="editor-title">
-        <h2 id="editor-title">Editor</h2>
-        <p>Zona reservada para formularios, controles de plantilla y acciones de importacion/exportacion.</p>
-        <div class="editor-placeholder">
-          <p>El siguiente paso anadira los modulos de estado, render y persistencia dentro de este mismo archivo.</p>
+      <section class="panel workspace-panel" id="editor-panel" aria-labelledby="editor-title">
+        <div class="panel-header">
+          <h2 id="editor-title">Editor</h2>
+          <p>Panel principal para capturar contenido, cambiar plantilla y lanzar acciones sobre el CV.</p>
+        </div>
+        <div class="panel-body">
+          <div class="editor-layout" aria-label="Area de trabajo del editor">
+            <div class="editor-toolbar" aria-label="Acciones del editor">
+              <span class="toolbar-pill">Datos personales</span>
+              <span class="toolbar-pill">Experiencia</span>
+              <span class="toolbar-pill">Formacion</span>
+            </div>
+            <div class="editor-canvas">
+              <div class="editor-group">
+                <span>Titular profesional</span>
+                <div class="editor-field" aria-hidden="true"></div>
+              </div>
+              <div class="editor-group">
+                <span>Resumen</span>
+                <div class="editor-field" aria-hidden="true"></div>
+              </div>
+              <div class="editor-group">
+                <span>Bloques editables</span>
+                <p>El formulario completo se integrara aqui, manteniendo este panel como zona principal de edicion.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       <!-- HTML Section: Preview Panel -->
-      <section class="panel" id="preview-panel" aria-labelledby="preview-title">
-        <h2 id="preview-title">Preview</h2>
-        <p>Previsualizacion inicial del CV con layout de dos paneles listo para evolucionar.</p>
-        <div class="preview-placeholder" aria-label="Vista previa del curriculum">
-          <article class="preview-card">
-            <h3>Perfil</h3>
-            <p>Nombre profesional, titular y resumen se mostraran aqui.</p>
-          </article>
-          <article class="preview-card">
-            <h3>Experiencia</h3>
-            <p>La experiencia laboral renderizada aparecera en esta columna.</p>
-          </article>
-          <article class="preview-card">
-            <h3>Formacion</h3>
-            <p>La informacion academica y certificaciones ocuparan este bloque.</p>
-          </article>
+      <section class="panel workspace-panel" id="preview-panel" aria-labelledby="preview-title">
+        <div class="panel-header">
+          <h2 id="preview-title">Preview</h2>
+          <p>Panel dedicado a la vista previa del documento final, separado del flujo de edicion.</p>
+        </div>
+        <div class="panel-body">
+          <div class="preview-layout">
+            <div class="preview-placeholder" aria-label="Vista previa del curriculum">
+              <article class="preview-card">
+                <h3>Perfil</h3>
+                <p>Nombre profesional, titular y resumen se mostraran aqui.</p>
+              </article>
+              <article class="preview-card">
+                <h3>Experiencia</h3>
+                <p>La experiencia laboral renderizada aparecera en esta columna.</p>
+              </article>
+              <article class="preview-card">
+                <h3>Formacion</h3>
+                <p>La informacion academica y certificaciones ocuparan este bloque.</p>
+              </article>
+            </div>
+          </div>
         </div>
       </section>
     </main>

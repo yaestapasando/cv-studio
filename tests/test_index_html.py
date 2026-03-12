@@ -14,13 +14,21 @@ class StructureParser(HTMLParser):
         self.ids = set()
         self.html_lang = None
         self.remote_refs = []
+        self.class_names = set()
+        self.aria_labels = set()
 
     def handle_starttag(self, tag, attrs):
         attrs_dict = dict(attrs)
         self.start_tags.append(tag)
         element_id = attrs_dict.get("id")
         if element_id:
-          self.ids.add(element_id)
+            self.ids.add(element_id)
+        class_attr = attrs_dict.get("class", "")
+        if class_attr:
+            self.class_names.update(class_attr.split())
+        aria_label = attrs_dict.get("aria-label")
+        if aria_label:
+            self.aria_labels.add(aria_label)
         if tag == "html":
             self.html_lang = attrs_dict.get("lang")
         for attr_name in ("src", "href"):
@@ -45,12 +53,44 @@ class IndexHtmlTest(unittest.TestCase):
         self.assertIn("app", self.parser.ids)
         self.assertIn("editor-panel", self.parser.ids)
         self.assertIn("preview-panel", self.parser.ids)
+        self.assertIn("workspace-panel", self.parser.class_names)
 
     def test_embeds_style_and_script(self):
         self.assertIn("style", self.parser.start_tags)
         self.assertIn("script", self.parser.start_tags)
         self.assertIn("const CVStudio = (() => {", self.content)
         self.assertIn("CVStudio.app.boot();", self.content)
+
+    def test_defines_two_panel_workspace_layout(self):
+        expected_snippets = [
+            ".workspace {",
+            "grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.15fr);",
+            ".workspace-panel {",
+            "grid-template-rows: auto 1fr;",
+            ".panel-header,",
+            ".panel-body {",
+            ".editor-layout {",
+            ".preview-layout {",
+            "@media (max-width: 900px) {",
+        ]
+        for snippet in expected_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, self.content)
+
+    def test_exposes_editor_and_preview_regions(self):
+        expected_classes = {
+            "panel-header",
+            "panel-body",
+            "editor-layout",
+            "editor-toolbar",
+            "editor-canvas",
+            "preview-layout",
+            "preview-placeholder",
+        }
+        self.assertTrue(expected_classes.issubset(self.parser.class_names))
+        self.assertIn("Area de trabajo del editor", self.parser.aria_labels)
+        self.assertIn("Acciones del editor", self.parser.aria_labels)
+        self.assertIn("Vista previa del curriculum", self.parser.aria_labels)
 
     def test_defines_internal_html_css_js_sections(self):
         expected_markers = [
